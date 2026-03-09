@@ -50,6 +50,8 @@ app.use(
     .use(
       "/profile",
       Router() //
+        .get("/upload/:uploadId", profile.getUploadById)
+        .post("/:username/upload", profile.postUploadByUsername)
         .post("/:username", profile.postByUsername)
         .get("/:username", profile.getByUsername),
     ),
