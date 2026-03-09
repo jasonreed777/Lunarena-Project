@@ -16,7 +16,6 @@ export const LoginTitle = styled.h1`
   font-size: 75px;
   font-weight: 400;
   font-style: normal;
-  font-variant: all-small-caps;
 `;
 
 export const PageTitle = styled.h1`
@@ -67,4 +66,34 @@ export const SmallText = styled.p`
   font-weight: 500;
   font-style: normal;
   font-size: 0.75rem;
+`;
+
+export const ProfileText = styled.h4`
+  font-family: "filson-pro", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 16px;
+`;
+
+export const Code = styled.p`
+  font-family: "fira-code", serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 16px;
+`;
+
+// TODO: This is the wrong typeface
+export const LargeStat = styled.p`
+  font-family: "fira-code", serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 26px;
+`;
+
+export const RecentlyPlayedText = styled.p`
+  font-family: "fira-sans", serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 16px;
+  color: #c1c1c1;
 `;
