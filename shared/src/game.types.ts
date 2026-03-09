@@ -68,3 +68,8 @@ export const zGameKey = z.union([z.literal("nim"), z.literal("guess")]);
  * GameKey, and the `view` should be the type of the games view.
  */
 export type TaggedGameView = { type: "nim"; view: NimView } | { type: "guess"; view: GuessView };
+
+/**
+ * All supported games on GameNite. This may need to be modified as needed when new games are added/removed.
+ */
+export type Game = "nim" | "guess" | "minesweeper";

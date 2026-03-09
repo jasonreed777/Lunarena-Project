@@ -1,6 +1,5 @@
-import type { SafeUserInfo } from "@gamenite/shared";
+import type { Game, SafeUserInfo } from "@gamenite/shared";
 import * as Typography from "../libs/Typography";
-import type { Game } from "../pages/ClanPage";
 import useTimeSince from "../hooks/useTimeSince";
 import styled from "@emotion/styled";
 
