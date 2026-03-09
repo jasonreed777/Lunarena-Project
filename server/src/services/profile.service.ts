@@ -1,0 +1,128 @@
+import { getUserByUsername } from "./auth.service.ts";
+import { UserProfileRepo } from "../repository.ts";
+import { type UserProfileRecord } from "../models.ts";
+
+/**
+ * Retrieves a single profile from the database
+ *
+ * @param userId - Valid user id
+ * @returns the found profile object
+ */
+export async function populateUserProfile(userId: string): Promise<UserProfileRecord> {
+  const record = await UserProfileRepo.get(userId);
+  return Promise.resolve({
+    username: record.username,
+    bio: record.bio,
+    pfp: record.pfp,
+    titleId: record.titleId,
+    profileBorderColor: record.profileBorderColor,
+    updatedAt: record.updatedAt,
+    onlinePresence: {
+      status: record.onlinePresence.status,
+      activeGameId: record.onlinePresence.activeGameId,
+      lastActive: record.onlinePresence.lastActive,
+    },
+  });
+}
+
+/**
+ * Creates and stores a default profile for a user if one does not already exist
+ *
+ * @param userId - Valid user id
+ * @param username - Username of the user
+ * @returns the created or existing profile
+ */
+export async function createDefaultProfile(
+  userId: string,
+  username: string,
+): Promise<UserProfileRecord> {
+  const existingProfile = await UserProfileRepo.find(userId);
+  if (existingProfile) return existingProfile;
+
+  const now = new Date().toISOString();
+  const profile: UserProfileRecord = {
+    username,
+    bio: "",
+    pfp: {
+      type: "avatar",
+      avatarId: "default",
+    },
+    profileBorderColor: "#ffffff",
+    updatedAt: now,
+    onlinePresence: {
+      status: "offline",
+      lastActive: now,
+    },
+  };
+
+  await UserProfileRepo.set(userId, profile);
+  return profile;
+}
+
+/**
+ * Retrieves a user's profile by username
+ *
+ * @param username - Username of the user
+ * @returns the user's profile
+ * @throws if the username does not exist
+ */
+export async function getProfileByUsername(username: string): Promise<UserProfileRecord> {
+  const user = await getUserByUsername(username);
+  if (!user) throw new Error(`No user ${username}`);
+
+  const existingProfile = await UserProfileRepo.find(user.userId);
+  if (existingProfile) return existingProfile;
+
+  return createDefaultProfile(user.userId, username);
+}
+
+/**
+ * Represents allowed updates to a user's profile customization
+ */
+export interface UserProfileUpdateRequest {
+  bio?: string;
+  pfp?: {
+    type: "upload" | "avatar";
+    uploadId?: string;
+    avatarId?: string;
+  };
+  titleId?: string;
+  profileBorderColor?: string;
+  onlinePresence?: {
+    status: "active" | "inactive" | "offline";
+    activeGameId?: string;
+    lastActive: string;
+  };
+}
+
+/*
+ * Updates a user's profile with the provided information
+ * @param username - Username of the user
+ * @param updates - An object containing the profile fields to update
+ * @returns the updated profile
+ * @throws if the username does not exist
+ */
+export async function updateProfile(
+  username: string,
+  updates: UserProfileUpdateRequest,
+): Promise<UserProfileRecord> {
+  const user = await getUserByUsername(username);
+  if (!user) throw new Error(`No user ${username}`);
+
+  const profile = await createDefaultProfile(user.userId, username);
+
+  if (updates.bio !== undefined) profile.bio = updates.bio;
+  if (updates.pfp !== undefined) profile.pfp = updates.pfp;
+  if (updates.titleId !== undefined) profile.titleId = updates.titleId;
+  if (updates.profileBorderColor !== undefined) {
+    profile.profileBorderColor = updates.profileBorderColor;
+  }
+  if (updates.onlinePresence !== undefined) {
+    profile.onlinePresence = updates.onlinePresence;
+  }
+
+  profile.updatedAt = new Date().toISOString();
+
+  await UserProfileRepo.set(user.userId, profile);
+  return profile;
+}
