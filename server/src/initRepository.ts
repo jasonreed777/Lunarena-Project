@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { getUserByUsername } from "./services/auth.service.ts";
 import {
-  AuthRepo,
-  ChatRepo,
-  CommentRepo,
-  GameRepo,
-  MessageRepo,
-  ThreadRepo,
-  UserRepo,
-} from "./repository.ts";
+  AuthModel,
+  ChatModel,
+  CommentModel,
+  GameModel,
+  MessageModel,
+  ThreadModel,
+  UserModel,
+} from "./mongoose-models.ts";
 import type { GameRecord, ThreadRecord } from "./models.ts";
 import { createChat } from "./services/chat.service.ts";
 import { createUser, updateUser } from "./services/user.service.ts";
@@ -50,8 +50,12 @@ async function resetStoredGames() {
     },
   };
 
-  await GameRepo.clear();
-  await Promise.all(Object.entries(storedGames).map(([id, entry]) => GameRepo.set(id, entry)));
+  await GameModel.deleteMany({});
+  await Promise.all(
+    Object.entries(storedGames).map(([id, entry]) =>
+      GameModel.findByIdAndUpdate(id, { $set: entry }, { upsert: true }),
+    ),
+  );
 }
 
 /** Reset stored threads with example data */
@@ -98,13 +102,18 @@ async function resetStoredThreads() {
       comments: [],
     },
   };
-  await ThreadRepo.clear();
-  await Promise.all(Object.entries(storedThreads).map(([id, entry]) => ThreadRepo.set(id, entry)));
+
+  await ThreadModel.deleteMany({});
+  await Promise.all(
+    Object.entries(storedThreads).map(([id, entry]) =>
+      ThreadModel.findByIdAndUpdate(id, { $set: entry }, { upsert: true }),
+    ),
+  );
 }
 
 /** Reset stored users with example data */
 async function resetStoredUsers() {
-  await UserRepo.clear();
+  await UserModel.deleteMany({});
 
   await createUser("user0", "pwd0000", new Date());
   await createUser("user1", "pwd1111", new Date());
@@ -118,13 +127,13 @@ async function resetStoredUsers() {
 }
 
 export async function resetEverythingToDefaults() {
-  await AuthRepo.clear();
-  await ChatRepo.clear();
-  await CommentRepo.clear();
-  await GameRepo.clear();
-  await MessageRepo.clear();
-  await ThreadRepo.clear();
-  await UserRepo.clear();
+  await AuthModel.deleteMany({});
+  await ChatModel.deleteMany({});
+  await CommentModel.deleteMany({});
+  await GameModel.deleteMany({});
+  await MessageModel.deleteMany({});
+  await ThreadModel.deleteMany({});
+  await UserModel.deleteMany({});
 
   await resetStoredUsers();
   await resetStoredThreads();

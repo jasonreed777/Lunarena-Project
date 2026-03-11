@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { getUserByUsername } from "./auth.service.ts";
-import { UserProfileRepo, UploadedImageRepo } from "../repository.ts";
+import { UserProfileModel, UploadedImageModel } from "../mongoose-models.ts";
 import { type UserProfileRecord, type UploadedImageRecord } from "../models.ts";
 import type { UserProfileImageUploadRequest } from "@gamenite/shared";
 
@@ -10,20 +11,9 @@ import type { UserProfileImageUploadRequest } from "@gamenite/shared";
  * @returns the found profile object
  */
 export async function populateUserProfile(userId: string): Promise<UserProfileRecord> {
-  const record = await UserProfileRepo.get(userId);
-  return Promise.resolve({
-    username: record.username,
-    bio: record.bio,
-    pfp: record.pfp,
-    titleId: record.titleId,
-    profileBorderColor: record.profileBorderColor,
-    updatedAt: record.updatedAt,
-    onlinePresence: {
-      status: record.onlinePresence.status,
-      activeGameId: record.onlinePresence.activeGameId,
-      lastActive: record.onlinePresence.lastActive,
-    },
-  });
+  const doc = await UserProfileModel.findById(userId).lean();
+  if (!doc) throw new Error(`Failed to find profile for user ${userId}`);
+  return doc as unknown as UserProfileRecord;
 }
 
 /**
@@ -37,8 +27,8 @@ export async function createDefaultProfile(
   userId: string,
   username: string,
 ): Promise<UserProfileRecord> {
-  const existingProfile = await UserProfileRepo.find(userId);
-  if (existingProfile) return existingProfile;
+  const existing = await UserProfileModel.findById(userId).lean();
+  if (existing) return existing as unknown as UserProfileRecord;
 
   const now = new Date().toISOString();
   const profile: UserProfileRecord = {
@@ -56,7 +46,7 @@ export async function createDefaultProfile(
     },
   };
 
-  await UserProfileRepo.set(userId, profile);
+  await UserProfileModel.findByIdAndUpdate(userId, { $set: profile }, { upsert: true });
   return profile;
 }
 
@@ -71,8 +61,8 @@ export async function getProfileByUsername(username: string): Promise<UserProfil
   const user = await getUserByUsername(username);
   if (!user) throw new Error(`No user ${username}`);
 
-  const existingProfile = await UserProfileRepo.find(user.userId);
-  if (existingProfile) return existingProfile;
+  const existing = await UserProfileModel.findById(user.userId).lean();
+  if (existing) return existing as unknown as UserProfileRecord;
 
   return createDefaultProfile(user.userId, username);
 }
@@ -124,7 +114,7 @@ export async function updateProfile(
 
   profile.updatedAt = new Date().toISOString();
 
-  await UserProfileRepo.set(user.userId, profile);
+  await UserProfileModel.findByIdAndUpdate(user.userId, { $set: profile }, { upsert: true });
   return profile;
 }
 
@@ -150,15 +140,13 @@ export async function uploadProfileImage(
     uploadedAt: new Date().toISOString(),
   };
 
-  const uploadId = await UploadedImageRepo.add(uploadedImage);
+  const uploadId = randomUUID().toString();
+  await UploadedImageModel.create({ _id: uploadId, ...uploadedImage });
 
-  profile.pfp = {
-    type: "upload",
-    uploadId,
-  };
+  profile.pfp = { type: "upload", uploadId };
   profile.updatedAt = new Date().toISOString();
 
-  await UserProfileRepo.set(user.userId, profile);
+  await UserProfileModel.findByIdAndUpdate(user.userId, { $set: profile }, { upsert: true });
   return profile;
 }
 
@@ -168,5 +156,7 @@ export async function uploadProfileImage(
  * @returns A promise resolving to the uploaded image record
  */
 export async function getUploadedImage(uploadId: string): Promise<UploadedImageRecord> {
-  return UploadedImageRepo.get(uploadId);
+  const doc = await UploadedImageModel.findById(uploadId).lean();
+  if (!doc) throw new Error(`Failed to find uploaded image ${uploadId}`);
+  return doc as unknown as UploadedImageRecord;
 }

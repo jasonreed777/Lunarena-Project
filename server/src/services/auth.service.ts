@@ -1,4 +1,4 @@
-import { AuthRepo } from "../repository.ts";
+import { AuthModel } from "../mongoose-models.ts";
 import type { UserWithId } from "../types.ts";
 import type { UserAuth } from "@gamenite/shared";
 
@@ -9,9 +9,9 @@ import type { UserAuth } from "@gamenite/shared";
  * @returns the found user object (without the password) or null
  */
 export async function getUserByUsername(username: string): Promise<UserWithId | null> {
-  const auth = await AuthRepo.find(username);
+  const auth = await AuthModel.findById(username).lean();
   if (!auth) return null;
-  return Promise.resolve({ userId: auth.userId, username });
+  return { userId: auth.userId, username };
 }
 
 /**
@@ -23,7 +23,7 @@ export async function getUserByUsername(username: string): Promise<UserWithId | 
  * @param userId the User model connected to this username
  */
 export async function updateAuth(username: string, password: string, userId: string) {
-  await AuthRepo.set(username, { password, userId: userId });
+  await AuthModel.findByIdAndUpdate(username, { userId, password }, { upsert: true });
 }
 
 /**
@@ -35,10 +35,10 @@ export async function updateAuth(username: string, password: string, userId: str
  * @returns the corresponding user object (without the password) or null.
  */
 export async function checkAuth({ username, password }: UserAuth): Promise<UserWithId | null> {
-  const auth = await AuthRepo.find(username);
+  const auth = await AuthModel.findById(username).lean();
   if (!auth) return null;
   if (password !== auth.password) return null;
-  return Promise.resolve({ username, userId: auth.userId });
+  return { username, userId: auth.userId };
 }
 
 /**
