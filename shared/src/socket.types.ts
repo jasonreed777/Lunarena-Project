@@ -6,21 +6,22 @@ import {
   type ChatUserLeftPayload,
 } from "./chat.types.ts";
 import { type NewMessagePayload } from "./message.types.ts";
-import { type WithAuth } from "./auth.types.ts";
 import { type GameMakeMovePayload, type GamePlayInfo, type TaggedGameView } from "./game.types.ts";
 import { type SafeUserInfo } from "./user.types.ts";
 
 /**
- * The Socket.io interface for client to server communication
+ * The Socket.io interface for client to server communication.
+ * Auth is handled at connection time via session cookies, so payloads
+ * contain only the data — no auth wrapper.
  */
 export interface ClientToServerEvents {
-  chatJoin: (payload: WithAuth<string>) => void;
-  chatLeave: (payload: WithAuth<string>) => void;
-  chatSendMessage: (payload: WithAuth<NewMessagePayload>) => void;
-  gameJoinAsPlayer: (payload: WithAuth<string>) => void;
-  gameMakeMove: (payload: WithAuth<GameMakeMovePayload>) => void;
-  gameStart: (payload: WithAuth<string>) => void;
-  gameWatch: (payload: WithAuth<string>) => void;
+  chatJoin: (payload: string) => void;
+  chatLeave: (payload: string) => void;
+  chatSendMessage: (payload: NewMessagePayload) => void;
+  gameJoinAsPlayer: (payload: string) => void;
+  gameMakeMove: (payload: GameMakeMovePayload) => void;
+  gameStart: (payload: string) => void;
+  gameWatch: (payload: string) => void;
 }
 
 /**

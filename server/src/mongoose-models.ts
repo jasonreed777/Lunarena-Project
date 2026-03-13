@@ -1,6 +1,5 @@
 import mongoose, { Schema } from "mongoose";
 import type {
-  AuthRecord,
   ChatRecord,
   ClanInviteRecord,
   ClanMemberRecord,
@@ -17,12 +16,6 @@ import type {
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
-
-// Auth: _id is the username
-export const AuthModel = mongoose.model<AuthRecord & { _id: string }>(
-  "auth",
-  new Schema({ _id: String, userId: String, password: String }, opts),
-);
 
 // User: _id is a UUID
 export const UserModel = mongoose.model<UserRecord & { _id: string }>(

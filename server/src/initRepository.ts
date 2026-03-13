@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getUserByUsername } from "./services/auth.service.ts";
 import {
-  AuthModel,
   ChatModel,
   CommentModel,
   FriendshipModel,
@@ -115,11 +114,10 @@ async function resetStoredThreads() {
 /** Reset stored users with example data */
 async function resetStoredUsers() {
   await UserModel.deleteMany({});
-
-  await createUser("user0", "pwd0000", new Date());
-  await createUser("user1", "pwd1111", new Date());
-  await createUser("user2", "pwd2222", new Date());
-  await createUser("user3", "pwd3333", new Date());
+  await createUser("user0", "pwd0000");
+  await createUser("user1", "pwd1111");
+  await createUser("user2", "pwd2222");
+  await createUser("user3", "pwd3333");
 
   await updateUser("user0", { display: "The Knight Of Games" });
   await updateUser("user1", { display: "Yāo" });
@@ -170,7 +168,6 @@ async function resetStoredFriendships() {
 }
 
 export async function resetEverythingToDefaults() {
-  await AuthModel.deleteMany({});
   await ChatModel.deleteMany({});
   await CommentModel.deleteMany({});
   await FriendshipModel.deleteMany({});
