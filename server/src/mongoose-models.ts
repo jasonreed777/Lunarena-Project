@@ -12,7 +12,7 @@ import type {
   UploadedImageRecord,
 } from "./models.ts";
 
-const opts = { versionKey: false };
+const opts = { versionKey: false } as const;
 
 // Auth: _id is the username
 export const AuthModel = mongoose.model<AuthRecord & { _id: string }>(
