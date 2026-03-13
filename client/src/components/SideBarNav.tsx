@@ -1,7 +1,7 @@
 import "./SideBarNav.css";
 import { useState } from "react";
 import { NavLink, type NavLinkRenderProps } from "react-router-dom";
-import useAuth from "../hooks/useAuth.ts";
+import useLoginContext from "../hooks/useLoginContext.ts";
 
 /**
  * The SideBarNav component contains the primary naviagation menu. It
@@ -10,7 +10,8 @@ import useAuth from "../hooks/useAuth.ts";
  */
 export default function SideBarNav() {
   const [showOptions, setShowOptions] = useState<boolean>(false);
-  const { username } = useAuth();
+  const { user } = useLoginContext();
+  const { username } = user;
 
   const toggleOptions = () => {
     setShowOptions(!showOptions);

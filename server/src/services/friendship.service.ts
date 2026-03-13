@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { type FriendInfo, type FriendRequestInfo, type FriendshipInfo } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
@@ -153,10 +152,8 @@ export async function sendFriendRequest(
   }
 
   // Create new friendship request
-  const id = randomUUID().toString();
   const now = createdAt.toISOString();
-  await FriendshipModel.create({
-    _id: id,
+  const friendship = await FriendshipModel.create({
     senderId: sender.userId,
     receiverId: receiverId,
     status: "pending",
@@ -164,7 +161,7 @@ export async function sendFriendRequest(
     updatedAt: now,
   });
 
-  return populateFriendshipInfo(id);
+  return populateFriendshipInfo(friendship._id);
 }
 
 /**

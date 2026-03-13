@@ -5,14 +5,23 @@ import type { ErrorMsg, SafeUserInfo, UserAuth, UserUpdateRequest } from "@gamen
 const USER_API_URL = `/api/user`;
 
 /**
- * Sends a POST request to authenticate a user.
+ * Sends a POST request to authenticate a user via betterAuth.
  */
 export const loginUser = async (auth: UserAuth): APIResponse<SafeUserInfo> => {
   try {
-    const res = await api.post<SafeUserInfo | ErrorMsg>(`${USER_API_URL}/login`, auth);
+    await api.post(`/api/auth/sign-out`).catch(() => {});
+    await api.post(`/api/auth/sign-in/username`, {
+      username: auth.username,
+      password: auth.password,
+    });
+    const res = await api.get<SafeUserInfo | ErrorMsg>(`${USER_API_URL}/${auth.username}`);
     return res.data;
   } catch (error) {
-    return exceptionToErrorMsg(error);
+    const msg = exceptionToErrorMsg(error);
+    if (msg.error === "Invalid email or password") {
+      return { error: "Invalid username or password" };
+    }
+    return msg;
   }
 };
 
@@ -20,12 +29,11 @@ export const loginUser = async (auth: UserAuth): APIResponse<SafeUserInfo> => {
  * Sends a POST request to update parts of a user's profile
  */
 export const updateUser = async (
-  auth: UserAuth,
+  username: string,
   updates: UserUpdateRequest,
 ): APIResponse<SafeUserInfo> => {
   try {
-    const res = await api.post<SafeUserInfo | ErrorMsg>(`${USER_API_URL}/${auth.username}`, {
-      auth,
+    const res = await api.post<SafeUserInfo | ErrorMsg>(`${USER_API_URL}/${username}`, {
       payload: updates,
     });
     return res.data;
@@ -35,14 +43,20 @@ export const updateUser = async (
 };
 
 /**
- * Sends a POST request to create a user
+ * Sends a POST request to create a user via betterAuth.
  *
- * @param user - The user credentials (username and password) for login.
+ * @param user - The user credentials (username and password) for signup.
  * @returns The authenticated user object, or an error message.
  */
 export const signupUser = async (user: UserAuth): APIResponse<SafeUserInfo> => {
   try {
-    const res = await api.post<SafeUserInfo | ErrorMsg>(`${USER_API_URL}/signup`, user);
+    await api.post(`/api/auth/sign-up/email`, {
+      email: `${Date.now()}@example.com`,
+      name: user.username,
+      username: user.username,
+      password: user.password,
+    });
+    const res = await api.get<SafeUserInfo | ErrorMsg>(`${USER_API_URL}/${user.username}`);
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);

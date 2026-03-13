@@ -2,7 +2,7 @@
 
 import express, { Router } from "express";
 import { Server } from "socket.io";
-import { z } from "zod";
+import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import * as http from "node:http";
 import * as chat from "./controllers/chat.controller.ts";
 import * as clan from "./controllers/clan.controller.ts";
@@ -12,10 +12,16 @@ import * as user from "./controllers/user.controller.ts";
 import * as thread from "./controllers/thread.controller.ts";
 import * as profile from "./controllers/profile.controller.ts";
 import { type GameServer } from "./types.ts";
+import { auth } from "./auth.ts";
+import { requireAuth } from "./middleware/auth.middleware.ts";
+import { UserModel } from "./mongoose-models.ts";
 
 export const app = express();
 export const httpServer = http.createServer(app);
 const io: GameServer = new Server(httpServer);
+
+// Mount betterAuth handler before express.json() — it handles its own parsing
+app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
 
@@ -25,46 +31,43 @@ app.use(
     .use(
       "/game",
       express
-        .Router() //
-        .post("/create", game.postCreate)
+        .Router()
+        .post("/create", requireAuth, game.postCreate)
         .get("/list", game.getList)
         .get("/:id", game.getById),
     )
     .use(
       "/thread",
       express
-        .Router() //
-        .post("/create", thread.postCreate)
+        .Router()
+        .post("/create", requireAuth, thread.postCreate)
         .get("/list", thread.getList)
         .get("/:id", thread.getById)
-        .post("/:id/comment", thread.postByIdComment),
+        .post("/:id/comment", requireAuth, thread.postByIdComment),
     )
     .use(
       "/user",
-      Router() // Any concrete routes here should be disallowed as usernames
+      Router()
         .post("/list", user.postList)
-        .post("/login", user.postLogin)
-        .post("/signup", user.postSignup)
-        .post("/:username", user.postByUsername)
+        .post("/:username", requireAuth, user.postByUsername)
         .get("/:username", user.getByUsername),
     )
-    // Added profile routes for profile customization
     .use(
       "/profile",
-      Router() //
+      Router()
         .get("/upload/:uploadId", profile.getUploadById)
-        .post("/:username/upload", profile.postUploadByUsername)
-        .post("/:username", profile.postByUsername)
+        .post("/:username/upload", requireAuth, profile.postUploadByUsername)
+        .post("/:username", requireAuth, profile.postByUsername)
         .get("/:username", profile.getByUsername),
     )
     .use(
       "/friends",
-      Router() //
-        .post("/list", friendship.postList)
-        .post("/requests", friendship.postRequests)
-        .post("/request", friendship.postRequest)
-        .post("/:id/respond", friendship.postRespond)
-        .delete("/:id", friendship.deleteById),
+      Router()
+        .post("/list", requireAuth, friendship.postList)
+        .post("/requests", requireAuth, friendship.postRequests)
+        .post("/request", requireAuth, friendship.postRequest)
+        .post("/:id/respond", requireAuth, friendship.postRespond)
+        .delete("/:id", requireAuth, friendship.deleteById),
     )
     .use(
       "/clans",
@@ -87,9 +90,23 @@ app.use(
     ),
 );
 
+// Authenticate socket connections via betterAuth session
+io.use(async (socket, next) => {
+  const session = await auth.api.getSession({
+    headers: fromNodeHeaders(socket.handshake.headers),
+  });
+  if (!session) return next(new Error("Unauthorized"));
+
+  const appUser = await UserModel.findOne({ username: session.user.username }).lean();
+  if (!appUser) return next(new Error("User not found"));
+
+  socket.data.user = { userId: appUser._id, username: appUser.username };
+  next();
+});
+
 io.on("connection", (socket) => {
   const socketId = socket.id;
-  console.log(`CONN [${socketId}] connected`);
+  console.log(`CONN [${socketId}] connected as ${socket.data.user.username}`);
 
   socket.on("disconnect", () => {
     console.log(`CONN [${socketId}] disconnected`);
@@ -105,16 +122,9 @@ io.on("connection", (socket) => {
   socket.on("gameWatch", game.socketWatch(socket, io));
 
   socket.onAny((name, payload) => {
-    const zPayload = z.object({ auth: z.object({ username: z.string() }), payload: z.any() });
-    const checked = zPayload.safeParse(payload);
-
-    if (checked.error) {
-      console.log(`RECV error: ${checked.error.message}`);
-    } else {
-      console.log(
-        `RECV [${socketId}] got ${name}${checked.data.auth.username} ${JSON.stringify(checked.data.payload)}`,
-      );
-    }
+    console.log(
+      `RECV [${socketId}] got ${name} from ${socket.data.user.username} ${JSON.stringify(payload)}`,
+    );
   });
   socket.onAnyOutgoing((name) => {
     console.log(`SEND [${socketId}] gets ${name}`);

@@ -1,5 +1,4 @@
 import { type ChangeEvent, type SubmitEvent, useState } from "react";
-import useAuth from "./useAuth.ts";
 import { addCommentToThread } from "../services/threadService.ts";
 import type { ThreadInfo } from "@gamenite/shared";
 
@@ -20,8 +19,6 @@ export default function useNewCommentForm(
 ) {
   const [comment, setComment] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const auth = useAuth();
-
   function handleInputChange(e: ChangeEvent<HTMLTextAreaElement>) {
     setComment(e.target.value);
   }
@@ -42,7 +39,7 @@ export default function useNewCommentForm(
       return;
     }
 
-    const newThread = await addCommentToThread(auth, threadId, comment);
+    const newThread = await addCommentToThread(threadId, comment);
     if ("error" in newThread) {
       setErr(newThread.error);
     } else {

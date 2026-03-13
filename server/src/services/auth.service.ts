@@ -1,57 +1,31 @@
-import { AuthModel } from "../mongoose-models.ts";
 import type { UserWithId } from "../types.ts";
-import type { UserAuth } from "@gamenite/shared";
+import { UserModel } from "../mongoose-models.ts";
+import { auth } from "../auth.ts";
 
 /**
- * Retrieves a single user from the database.
+ * Retrieves a single user from the database by username.
  *
  * @param username - The username of the user to find
- * @returns the found user object (without the password) or null
+ * @returns the found user object or null
  */
 export async function getUserByUsername(username: string): Promise<UserWithId | null> {
-  const auth = await AuthModel.findById(username).lean();
-  if (!auth) return null;
-  return { userId: auth.userId, username };
+  const user = await UserModel.findOne({ username }).lean();
+  if (!user) return null;
+  return { userId: user._id, username: user.username };
 }
 
 /**
- * Create or update the authentication information associated with a specific
- * username
- *
- * @param username
- * @param password
- * @param userId the User model connected to this username
+ * Creates a betterAuth account for a user. Used during seeding/initialization.
+ * The databaseHooks on the auth config will automatically create the
+ * corresponding UserModel record.
  */
-export async function updateAuth(username: string, password: string, userId: string) {
-  await AuthModel.findByIdAndUpdate(username, { userId, password }, { upsert: true });
-}
-
-/**
- * Takes a username and password, and either returns the corresponding user object
- * (without the password) or null if the username/password combination does not
- * match stored values.
- *
- * @param auth - A user's authentication information (username and password)
- * @returns the corresponding user object (without the password) or null.
- */
-export async function checkAuth({ username, password }: UserAuth): Promise<UserWithId | null> {
-  const auth = await AuthModel.findById(username).lean();
-  if (!auth) return null;
-  if (password !== auth.password) return null;
-  return { username, userId: auth.userId };
-}
-
-/**
- * Takes a username and password, and returns the corresponding user
- * (without the password) or an error if the username/password combination
- * doesn't match stored values.
- *
- * @param auth - A user's authentication information (username and password)
- * @returns the corresponding user object (without the password)
- * @throws if the auth information is incorrect
- */
-export async function enforceAuth(auth: UserAuth): Promise<UserWithId> {
-  const user = await checkAuth(auth);
-  if (!user) throw new Error("Invalid auth");
-  return user;
+export async function createAuthAccount(username: string, password: string) {
+  await auth.api.signUpEmail({
+    body: {
+      email: `${Date.now()}@example.com`,
+      name: "dummy name",
+      username,
+      password,
+    },
+  });
 }

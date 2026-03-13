@@ -1,6 +1,5 @@
 import { type SubmitEvent, useState } from "react";
 import useLoginContext from "./useLoginContext.ts";
-import useAuth from "./useAuth.ts";
 import { updateUser } from "../services/userService.ts";
 import type { UserUpdateRequest } from "@gamenite/shared";
 
@@ -18,7 +17,6 @@ export default function useEditProfileForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [err, setErr] = useState<null | string>(null);
-  const auth = useAuth();
 
   /**
    * Handles submission of the form
@@ -54,7 +52,7 @@ export default function useEditProfileForm() {
     const updates: UserUpdateRequest = {};
     if (display !== user.display) updates.display = display;
     if (password !== "") updates.password = password;
-    const response = await updateUser(auth, updates);
+    const response = await updateUser(user.username, updates);
     if ("error" in response) {
       setErr(response.error);
       return;

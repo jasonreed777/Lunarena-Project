@@ -1,12 +1,6 @@
 import type { APIResponse } from "../util/types.ts";
 import { api, exceptionToErrorMsg } from "./api.ts";
-import type {
-  CreateThreadMessage,
-  ErrorMsg,
-  ThreadInfo,
-  ThreadSummary,
-  UserAuth,
-} from "@gamenite/shared";
+import type { CreateThreadMessage, ErrorMsg, ThreadInfo, ThreadSummary } from "@gamenite/shared";
 
 const THREAD_API_URL = `/api/thread`;
 
@@ -38,13 +32,11 @@ export const threadInfo = async (id: string): APIResponse<ThreadInfo> => {
  * Sends a POST request to add a comment to a thread
  */
 export const addCommentToThread = async (
-  auth: UserAuth,
   id: string,
   payload: string,
 ): APIResponse<ThreadInfo> => {
   try {
     const res = await api.post<ThreadInfo | ErrorMsg>(`${THREAD_API_URL}/${id}/comment`, {
-      auth,
       payload,
     });
     return res.data;
@@ -56,15 +48,9 @@ export const addCommentToThread = async (
 /**
  * Sends a POST request to create a new thread
  */
-export const createThread = async (
-  auth: UserAuth,
-  payload: CreateThreadMessage,
-): APIResponse<ThreadInfo> => {
+export const createThread = async (payload: CreateThreadMessage): APIResponse<ThreadInfo> => {
   try {
-    const res = await api.post<ThreadInfo | ErrorMsg>(`${THREAD_API_URL}/create`, {
-      auth,
-      payload,
-    });
+    const res = await api.post<ThreadInfo | ErrorMsg>(`${THREAD_API_URL}/create`, { payload });
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);

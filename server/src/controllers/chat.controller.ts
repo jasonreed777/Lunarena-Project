@@ -1,21 +1,20 @@
-import { withAuth, zNewMessageRequest } from "@gamenite/shared";
+import { zNewMessageRequest } from "@gamenite/shared";
 import { type SocketAPI } from "../types.ts";
 import { z } from "zod";
 import { addMessageToChat, forceChatById } from "../services/chat.service.ts";
 import { populateSafeUserInfo } from "../services/user.service.ts";
 import { createMessage } from "../services/message.service.ts";
 import { logSocketError } from "./socket.controller.ts";
-import { enforceAuth } from "../services/auth.service.ts";
 
 /**
  * Handle a socket request to join a chat: send the connection the chat's
- * current contents and  signal to everyone in the chat that the user has
- * joined
+ * current contents and signal to everyone in the chat that the user has joined.
+ * User is authenticated at connection time via socket.data.user.
  */
 export const socketJoin: SocketAPI = (socket) => async (body) => {
   try {
-    const { auth, payload: chatId } = withAuth(z.string()).parse(body);
-    const user = await enforceAuth(auth);
+    const { payload: chatId } = z.object({ payload: z.string() }).parse(body);
+    const user = socket.data.user;
     const chat = await forceChatById(chatId, user);
     await socket.join(chatId);
 
@@ -38,8 +37,8 @@ export const socketJoin: SocketAPI = (socket) => async (body) => {
  */
 export const socketLeave: SocketAPI = (socket) => async (body) => {
   try {
-    const { auth, payload: chatId } = withAuth(z.string()).parse(body);
-    const user = await enforceAuth(auth);
+    const chatId = z.string().parse(body);
+    const user = socket.data.user;
     if (!socket.rooms.has(chatId)) {
       throw new Error(`user ${user.username} left chat they weren't in`);
     }
@@ -58,11 +57,8 @@ export const socketLeave: SocketAPI = (socket) => async (body) => {
  */
 export const socketSendMessage: SocketAPI = (socket, io) => async (body) => {
   try {
-    const {
-      auth,
-      payload: { chatId, text },
-    } = withAuth(zNewMessageRequest).parse(body);
-    const user = await enforceAuth(auth);
+    const { chatId, text } = zNewMessageRequest.parse(body);
+    const user = socket.data.user;
     const now = new Date();
     const message = await createMessage(user, text, now);
     await addMessageToChat(chatId, user, message.messageId);

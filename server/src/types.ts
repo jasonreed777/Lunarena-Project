@@ -6,6 +6,25 @@ import {
   type TaggedGameView,
 } from "@gamenite/shared";
 
+export interface UserWithId {
+  userId: string;
+  username: string;
+}
+
+export interface SocketData {
+  user: UserWithId;
+}
+
+// Augment Express Request so that `req.authUser` is available after requireAuth middleware
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      authUser: UserWithId;
+    }
+  }
+}
+
 export type SocketAPI = (
   socket: GameServerSocket,
   io: GameServer,
@@ -16,15 +35,20 @@ export type RestAPI<R = unknown, P = { [key: string]: string }> = (
   res: Response<R | { error: string }>,
 ) => Promise<void>;
 
-export type GameServer = Server<ClientToServerEvents, ServerToClientEvents>;
-export type GameServerSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
+export type GameServer = Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
+export type GameServerSocket = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
 
 export interface GameViewUpdates {
   watchers: TaggedGameView;
   players: { userId: string; view: TaggedGameView }[];
-}
-
-export interface UserWithId {
-  userId: string;
-  username: string;
 }

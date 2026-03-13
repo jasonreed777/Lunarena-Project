@@ -1,7 +1,8 @@
 /* eslint no-console: "off" */
 
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "./services/api.ts";
 import Login from "./pages/Login.tsx";
 import type { AuthContext } from "./contexts/LoginContext.ts";
 import Layout from "./components/Layout.tsx";
@@ -47,6 +48,32 @@ function NoSuchRoute() {
 
 export default function App() {
   const [auth, setAuth] = useState<AuthContext | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+
+  useEffect(() => {
+    api
+      .get<{ user?: { username?: string } } | null>("/api/auth/get-session")
+      .then(async (res) => {
+        const username = res.data?.user?.username;
+        if (username) {
+          const userRes = await api.get<{
+            error?: string;
+            username?: string;
+            display?: string;
+            createdAt?: Date;
+          }>(`/api/user/${username}`);
+          if (!userRes.data.error) {
+            const user = userRes.data as import("@gamenite/shared").SafeUserInfo;
+            setAuth({ user, pass: "", reset: () => setAuth(null) });
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setSessionChecked(true));
+  }, []);
+
+  if (!sessionChecked) return null;
+
   return (
     socket && (
       <BrowserRouter>

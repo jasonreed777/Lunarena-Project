@@ -1,4 +1,4 @@
-import { type GameInfo, withAuth, zGameKey, zGameMakeMovePayload } from "@gamenite/shared";
+import { type GameInfo, zGameKey, zGameMakeMovePayload } from "@gamenite/shared";
 import { type RestAPI, type GameViewUpdates, type SocketAPI, type GameServer } from "../types.ts";
 import {
   createGame,
@@ -13,26 +13,19 @@ import {
 import { addMoveLogToChat } from "../services/chat.service.ts";
 import { z } from "zod";
 import { logSocketError } from "./socket.controller.ts";
-import { checkAuth, enforceAuth } from "../services/auth.service.ts";
 
 /**
  * Handle POST requests to `/api/game/create` by creating a game. The game
  * starts with one player, the user who made the POST request.
  */
 export const postCreate: RestAPI<GameInfo> = async (req, res) => {
-  const body = withAuth(zGameKey).safeParse(req.body);
-  if (body.error) {
+  const body = z.object({ payload: zGameKey }).safeParse(req.body);
+  if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  const user = await checkAuth(body.data.auth);
-  if (!user) {
-    res.status(403).send({ error: "Invalid credentials" });
-    return;
-  }
-
-  const game = await createGame(user, body.data.payload, new Date());
+  const game = await createGame(req.authUser, body.data.payload, new Date());
   res.send(game);
 };
 
@@ -72,15 +65,13 @@ function userRoom(gameId: string, user: string) {
 }
 
 /**
- * Handle the socket request sent by a user when they load to a game page. The
- * server's job is to respond with full information about the game's current
- * players and the appropriate view of the game's state. The server also needs
- * to register the user for future updates about the game's state.
+ * Handle the socket request sent by a user when they load to a game page.
+ * User is authenticated at connection time via socket.data.user.
  */
 export const socketWatch: SocketAPI = (socket) => async (body) => {
   try {
-    const { auth, payload: gameId } = withAuth(z.string()).parse(body);
-    const user = await enforceAuth(auth);
+    const gameId = z.string().parse(body);
+    const user = socket.data.user;
     const { isPlayer, view, players } = await viewGame(gameId, user);
     const roomsToJoin = isPlayer ? [gameId, userRoom(gameId, user.userId)] : [gameId];
     await socket.join(roomsToJoin);
@@ -105,8 +96,8 @@ function sendViewUpdates(io: GameServer, gameId: string, updates: GameViewUpdate
  */
 export const socketJoinAsPlayer: SocketAPI = (socket, io) => async (body) => {
   try {
-    const { auth, payload: gameId } = withAuth(z.string()).parse(body);
-    const user = await enforceAuth(auth);
+    const gameId = z.string().parse(body);
+    const user = socket.data.user;
     const game = await joinGame(gameId, user);
 
     // Let everyone know the user joined (`io` instead of `socket` includes
@@ -133,8 +124,8 @@ export const socketJoinAsPlayer: SocketAPI = (socket, io) => async (body) => {
  */
 export const socketStart: SocketAPI = (socket, io) => async (body) => {
   try {
-    const { auth, payload: gameId } = withAuth(z.string()).parse(body);
-    const user = await enforceAuth(auth);
+    const gameId = z.string().parse(body);
+    const user = socket.data.user;
     sendViewUpdates(io, gameId, await startGame(gameId, user));
   } catch (err) {
     logSocketError(socket, err);
@@ -148,11 +139,8 @@ export const socketStart: SocketAPI = (socket, io) => async (body) => {
  */
 export const socketMakeMove: SocketAPI = (socket, io) => async (body) => {
   try {
-    const {
-      auth,
-      payload: { gameId, move },
-    } = withAuth(zGameMakeMovePayload).parse(body);
-    const user = await enforceAuth(auth);
+    const { gameId, move } = zGameMakeMovePayload.parse(body);
+    const user = socket.data.user;
     const { views, moveDescription, chatId } = await updateGame(gameId, user, move);
     sendViewUpdates(io, gameId, views);
 

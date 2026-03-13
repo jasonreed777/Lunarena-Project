@@ -8,8 +8,15 @@ import * as path from "node:path";
 import express from "express";
 import { resetEverythingToDefaults } from "./initRepository.ts";
 
-const MONGO_STR = process.env.MONGO_STR || "mongodb://localhost:27017";
+// Assume that a MONGO_STR environment variable is given (or set in `server/.env`),
+// then use MongoDB to create the repository.
+const MONGO_STR = process.env.MONGO_STR;
+
+if (!MONGO_STR) {
+  throw new Error("MongoDB environment variable is missing");
+}
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || "GameNite";
+
 await mongoose.connect(MONGO_STR, { dbName: MONGO_DB_NAME });
 
 // We only want to initialize the database once, so we check whether

@@ -15,16 +15,6 @@ export type RecordId = string;
 export type DateISO = string;
 
 /**
- * Represents a user's authorization record in the database.
- * - `user`: the user ID of the corresponding User model
- * - `password`: the password for this user
- */
-export interface AuthRecord {
-  userId: RecordId; // References User models
-  password: string;
-}
-
-/**
  * Represents a chat document in the database.
  * - `messages`: the ordered list of messages in the chat
  * - `moveLog`: the ordered list of move log entries for this chat

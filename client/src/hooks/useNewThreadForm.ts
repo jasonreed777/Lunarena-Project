@@ -1,5 +1,4 @@
 import { type ChangeEvent, useState, type SubmitEvent } from "react";
-import useAuth from "./useAuth.ts";
 import { useNavigate } from "react-router-dom";
 import { createThread } from "../services/threadService.ts";
 
@@ -15,7 +14,6 @@ export default function useNewThreadForm() {
   const [title, setTitle] = useState("");
   const [contents, setContents] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const auth = useAuth();
   const navigate = useNavigate();
 
   /**
@@ -48,7 +46,7 @@ export default function useNewThreadForm() {
       return;
     }
 
-    const thread = await createThread(auth, { title, text: contents });
+    const thread = await createThread({ title, text: contents });
     if ("error" in thread) {
       setErr(thread.error);
       return;
