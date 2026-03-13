@@ -2,6 +2,9 @@ import mongoose, { Schema } from "mongoose";
 import type {
   AuthRecord,
   ChatRecord,
+  ClanInviteRecord,
+  ClanMemberRecord,
+  ClanRecord,
   CommentRecord,
   FriendshipRecord,
   GameRecord,
@@ -155,6 +158,55 @@ export const FriendshipModel = mongoose.model<FriendshipRecord & { _id: string }
       status: String,
       createdAt: String,
       updatedAt: String,
+    },
+    opts,
+  ),
+);
+
+// Clan: _id is a UUID
+export const ClanModel = mongoose.model<ClanRecord & { _id: string }>(
+  "clan",
+  new Schema(
+    {
+      _id: String,
+      name: { type: String, unique: true },
+      bio: String,
+      color: String,
+      pfp: String,
+      isPublic: Boolean,
+      createdAt: String,
+    },
+    opts,
+  ),
+);
+
+// ClanMember: _id is a UUID
+export const ClanMemberModel = mongoose.model<ClanMemberRecord & { _id: string }>(
+  "clanMember",
+  new Schema(
+    {
+      _id: String,
+      clanId: { type: String, index: true },
+      userId: { type: String, index: true, unique: true },
+      role: String,
+      joinedAt: String,
+    },
+    opts,
+  ),
+);
+
+// ClanInvite: _id is a UUID
+export const ClanInviteModel = mongoose.model<ClanInviteRecord & { _id: string }>(
+  "clanInvite",
+  new Schema(
+    {
+      _id: String,
+      clanId: { type: String, index: true },
+      userId: { type: String, index: true },
+      type: String,
+      status: String,
+      invitedBy: String,
+      createdAt: String,
     },
     opts,
   ),

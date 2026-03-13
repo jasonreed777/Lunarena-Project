@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { z } from "zod";
 import * as http from "node:http";
 import * as chat from "./controllers/chat.controller.ts";
+import * as clan from "./controllers/clan.controller.ts";
 import * as friendship from "./controllers/friendship.controller.ts";
 import * as game from "./controllers/game.controller.ts";
 import * as user from "./controllers/user.controller.ts";
@@ -64,6 +65,25 @@ app.use(
         .post("/request", friendship.postRequest)
         .post("/:id/respond", friendship.postRespond)
         .delete("/:id", friendship.deleteById),
+    )
+    .use(
+      "/clans",
+      Router() //
+        .get("/list", clan.getList)
+        .post("/current", clan.postCurrent)
+        .post("/create", clan.postCreate)
+        .post("/my-invites", clan.postMyInvites)
+        .post("/invites/:inviteId/respond", clan.postRespondInvite)
+        .get("/:id", clan.getById)
+        .get("/:id/members", clan.getMembers)
+        .post("/:id/join", clan.postJoin)
+        .post("/:id/leave", clan.postLeave)
+        .post("/:id/kick", clan.postKick)
+        .post("/:id/invite", clan.postInvite)
+        .post("/:id/invites", clan.postInvites)
+        .post("/:id/update", clan.postUpdate)
+        .post("/:id/role", clan.postUpdateRole)
+        .post("/:id/transfer", clan.postTransfer),
     ),
 );
 

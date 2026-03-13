@@ -188,3 +188,53 @@ export interface FriendshipRecord {
   createdAt: DateISO;
   updatedAt: DateISO;
 }
+
+/**
+ * Represents a clan in the database.
+ * - `name`: clan display name (unique)
+ * - `bio`: optional description
+ * - `color`: hex color for theming
+ * - `pfp`: optional profile picture reference
+ * - `isPublic`: whether anyone can join without invite
+ * - `createdAt`: when the clan was created
+ */
+export interface ClanRecord {
+  name: string;
+  bio: string;
+  color: string;
+  pfp?: string;
+  isPublic: boolean;
+  createdAt: DateISO;
+}
+
+/**
+ * Represents a user's membership in a clan.
+ * - `clanId`: references the Clan record
+ * - `userId`: references the User record (unique - one clan per user)
+ * - `role`: "owner" | "admin" | "member"
+ * - `joinedAt`: when the user joined
+ */
+export interface ClanMemberRecord {
+  clanId: RecordId;
+  userId: RecordId;
+  role: "owner" | "admin" | "member";
+  joinedAt: DateISO;
+}
+
+/**
+ * Represents an invite to or request to join a clan.
+ * - `clanId`: references the Clan record
+ * - `userId`: the user being invited or requesting
+ * - `type`: "invite" (from clan) or "request" (from user)
+ * - `status`: "pending" | "accepted" | "rejected"
+ * - `invitedBy`: userId of who sent the invite (null if request)
+ * - `createdAt`: when created
+ */
+export interface ClanInviteRecord {
+  clanId: RecordId;
+  userId: RecordId;
+  type: "invite" | "request";
+  status: "pending" | "accepted" | "rejected";
+  invitedBy: RecordId | null;
+  createdAt: DateISO;
+}
