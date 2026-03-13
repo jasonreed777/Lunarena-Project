@@ -46,7 +46,7 @@ export const ClanPill: React.FC<{ clan: Clan; value?: number; small?: boolean }>
   return (
     <Container color={clan.color} small={small || false}>
       <Left>
-        <ProfilePicture src={/* clan.pfp */ "src/assets/logos/logo_multicolor.svg"} />
+        <ProfilePicture src={clan.icon || "src/assets/logos/logo_multicolor.svg"} />
         <Typography.ProfileText>{clan.name}</Typography.ProfileText>
       </Left>
       {value && <Typography.LargeStat style={{ float: "right" }}>#{value}</Typography.LargeStat>}

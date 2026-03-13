@@ -1,7 +1,7 @@
 import styled from "@emotion/styled";
 import * as Typography from "../libs/Typography";
 import { hexToRGB } from "../util/utils";
-import type { SafeUserInfoClanStuff } from "../pages/ClanPage";
+import type { UserProfileRecord } from "../util/types";
 
 export type ClanRole = "admin" | "mod" | "member";
 
@@ -38,14 +38,19 @@ const ProfilePicture = styled.img`
   border-radius: 50%;
 `;
 
-export const UserPill: React.FC<{ user: SafeUserInfoClanStuff }> = ({ user }) => {
+/**
+ * Represents a small pill with user info. This includes the user's profile picture, name, and role
+ * @param user the User to display
+ * @returns a user pill
+ */
+export const UserPill: React.FC<{ user: UserProfileRecord }> = ({ user }) => {
   return (
-    <Container color={user.color}>
+    <Container color={user.profileBorderColor}>
       <Left>
-        <ProfilePicture src={/* user.pfp */ "src/assets/logos/logo_multicolor.svg"} />
-        <Typography.ProfileText>{user.display}</Typography.ProfileText>
+        <ProfilePicture src={user.pfp.type === "upload" ? user.pfp.uploadId : user.pfp.avatarId} />
+        <Typography.ProfileText>{user.titleId || user.username}</Typography.ProfileText>
       </Left>
-      <Typography.Code style={{ float: "right" }}>{user.role}</Typography.Code>
+      <Typography.Code style={{ float: "right" }}>{/* user.role */ "admin"}</Typography.Code>
     </Container>
   );
 };

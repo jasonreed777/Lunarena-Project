@@ -25,3 +25,12 @@ export const hexToRGB = (
  * A dummy function with no operation
  */
 export const noOp = () => {};
+
+/**
+ * Capitalizes a piece of text.
+ * @param text the text to capitalize
+ * @returns capitalized text
+ */
+export const capitalizeText = (text: string): string => {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
