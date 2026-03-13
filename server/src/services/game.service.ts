@@ -30,10 +30,10 @@ async function populateGameInfo(gameId: string): Promise<GameInfo> {
     createdBy: await populateSafeUserInfo(doc.createdBy),
     chat: doc.chat,
     createdAt: new Date(doc.createdAt),
-    players: await Promise.all((doc.players as string[]).map(populateSafeUserInfo)),
-    type: doc.type as GameKey,
+    players: await Promise.all(doc.players.map(populateSafeUserInfo)),
+    type: doc.type,
     status: !doc.state ? "waiting" : doc.done ? "done" : "active",
-    minPlayers: gameServices[doc.type as GameKey].minPlayers,
+    minPlayers: gameServices[doc.type].minPlayers,
   };
 }
 
@@ -92,10 +92,10 @@ export async function joinGame(gameId: string, user: UserWithId): Promise<GameIn
   if (game.state) {
     throw new Error(`user ${user.username} joining game that started`);
   }
-  if ((game.players as string[]).some((userId) => userId === user.userId)) {
+  if (game.players.some((userId) => userId === user.userId)) {
     throw new Error(`user ${user.username} joining game they are in already`);
   }
-  if ((game.players as string[]).length === gameServices[game.type as GameKey].maxPlayers) {
+  if (game.players.length === gameServices[game.type].maxPlayers) {
     throw new Error(`user ${user.username} joining full`);
   }
 
@@ -119,8 +119,8 @@ export async function startGame(gameId: string, user: UserWithId): Promise<GameV
     throw new Error(`user ${user.username} starting game that started`);
   }
 
-  const key = game.type as GameKey;
-  const players = game.players as string[];
+  const key = game.type;
+  const players = game.players;
 
   if (players.length < gameServices[key].minPlayers) {
     throw new Error(`user ${user.username} starting underpopulated game`);
@@ -141,7 +141,7 @@ export async function startGame(gameId: string, user: UserWithId): Promise<GameV
  */
 export async function getGames(): Promise<GameInfo[]> {
   const docs = await GameModel.find({}, { _id: 1 }).lean();
-  const ids = docs.map((d) => d._id as string);
+  const ids = docs.map((d) => d._id);
   const unsorted = await Promise.all(ids.map(populateGameInfo));
 
   return unsorted.toSorted((game1, game2) => game2.createdAt.getTime() - game1.createdAt.getTime());
@@ -176,12 +176,12 @@ export async function updateGame(
   if (!game.state) {
     throw new Error(`user ${user.username} made a move in game of that hadn't started`);
   }
-  const players = game.players as string[];
+  const players = game.players;
   const playerIndex = players.findIndex((userId) => userId === user.userId);
   if (playerIndex < 0) {
     throw new Error(`user ${user.username} made a move in a game they weren't playing`);
   }
-  const result = gameServices[game.type as GameKey].update(game.state, move, playerIndex, players);
+  const result = gameServices[game.type].update(game.state, move, playerIndex, players);
   if (!result) throw new Error(`user ${user.username} made an invalid move in ${game.type}`);
 
   await GameModel.findByIdAndUpdate(gameId, {
@@ -205,11 +205,11 @@ export async function updateGame(
 export async function viewGame(gameId: string, user: UserWithId) {
   const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} viewed an invalid game id`);
-  const players = game.players as string[];
+  const players = game.players;
   const playerIndex = players.findIndex((userId) => userId === user.userId);
   let view: TaggedGameView | null = null;
   if (game.state) {
-    view = gameServices[game.type as GameKey].view(game.state, playerIndex);
+    view = gameServices[game.type].view(game.state, playerIndex);
   }
   return {
     isPlayer: playerIndex >= 0,

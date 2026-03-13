@@ -20,7 +20,7 @@ async function populateThreadInfo(threadId: string): Promise<ThreadInfo> {
     text: doc.text,
     createdBy: await populateSafeUserInfo(doc.createdBy),
     createdAt: new Date(doc.createdAt),
-    comments: await Promise.all((doc.comments as string[]).map(populateCommentInfo)),
+    comments: await Promise.all(doc.comments.map(populateCommentInfo)),
   };
 }
 
@@ -38,7 +38,7 @@ async function populateThreadSummary(threadId: string): Promise<ThreadSummary> {
     title: doc.title,
     createdBy: await populateSafeUserInfo(doc.createdBy),
     createdAt: new Date(doc.createdAt),
-    comments: (doc.comments as string[]).length,
+    comments: doc.comments.length,
   };
 }
 
@@ -86,7 +86,7 @@ export async function getThreadById(possibleThreadId: string): Promise<ThreadInf
  */
 export async function getThreadSummaries(): Promise<ThreadSummary[]> {
   const docs = await ThreadModel.find({}, { _id: 1 }).lean();
-  const ids = docs.map((d) => d._id as string);
+  const ids = docs.map((d) => d._id);
   const unsorted = await Promise.all(ids.map(populateThreadSummary));
 
   return unsorted.toSorted(

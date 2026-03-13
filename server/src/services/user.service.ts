@@ -39,7 +39,12 @@ export async function createUser(
     return { error: "That is not a permitted username" };
   }
   const id = randomUUID().toString();
-  await UserModel.create({ _id: id, username, createdAt: createdAt.toISOString(), display: username });
+  await UserModel.create({
+    _id: id,
+    username,
+    createdAt: createdAt.toISOString(),
+    display: username,
+  });
   await updateAuth(username, password, id);
   return { username, createdAt, display: username };
 }

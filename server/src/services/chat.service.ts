@@ -18,7 +18,7 @@ async function populateChatInfo(chatId: RecordId): Promise<ChatInfo> {
   return {
     chatId,
     createdAt: new Date(chat.createdAt),
-    messages: await getMessagesById(chat.messages as string[]),
+    messages: await getMessagesById(chat.messages),
     moveLog: await Promise.all(
       (chat.moveLog as MoveLogEntry[]).map(async (entry) => ({
         moveDescription: entry.moveDescription,
@@ -37,7 +37,12 @@ async function populateChatInfo(chatId: RecordId): Promise<ChatInfo> {
  */
 export async function createChat(createdAt: Date): Promise<ChatInfo> {
   const id = randomUUID().toString();
-  await ChatModel.create({ _id: id, createdAt: createdAt.toISOString(), messages: [], moveLog: [] });
+  await ChatModel.create({
+    _id: id,
+    createdAt: createdAt.toISOString(),
+    messages: [],
+    moveLog: [],
+  });
   return populateChatInfo(id);
 }
 
