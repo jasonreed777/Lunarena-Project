@@ -18,3 +18,4 @@ export * from "./user.types.ts";
 export * from "./profile.types.ts";
 export * from "./profile-picture.types.ts";
 export * from "./friendship.types.ts";
+export * from "./clan.types.ts";
