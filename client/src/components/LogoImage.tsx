@@ -2,10 +2,10 @@ import styled from "@emotion/styled";
 
 // Styled image
 const StyledImage = styled.img`
-  position: absolute;
+  position: fixed;
   bottom: 30px;
   right: 25px;
-  width: 100px;
+  width: 80px;
 `;
 
 /**

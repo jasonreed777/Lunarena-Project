@@ -2,6 +2,7 @@ import type { Game, SafeUserInfo } from "@gamenite/shared";
 import * as Typography from "../libs/Typography";
 import useTimeSince from "../hooks/useTimeSince";
 import styled from "@emotion/styled";
+import { capitalizeText } from "../util/utils";
 
 const Container = styled.div`
   display: flex;
@@ -21,7 +22,7 @@ export const RecentlyPlayed: React.FC<{
   return (
     <Container>
       <Typography.LargeStat>{position}</Typography.LargeStat>
-      <Typography.RecentlyPlayedText>{`${game} • ${displayNames.join(" & ")} • ${timeSince(timeAgo)}`}</Typography.RecentlyPlayedText>
+      <Typography.RecentlyPlayedText>{`${capitalizeText(game)} • ${displayNames.join(" & ")} • ${timeSince(timeAgo)}`}</Typography.RecentlyPlayedText>
     </Container>
   );
 };

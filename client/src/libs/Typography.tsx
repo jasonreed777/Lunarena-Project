@@ -19,11 +19,10 @@ export const LoginTitle = styled.h1`
 `;
 
 export const PageTitle = styled.h1`
-  font-family: "glasgow-strong", sans-serif;
+  font-family: "Righteous", sans-serif;
   font-size: 75px;
   font-weight: 400;
   font-style: normal;
-  font-variant: all-small-caps;
 `;
 
 /**
@@ -73,6 +72,9 @@ export const ProfileText = styled.h4`
   font-weight: 700;
   font-style: normal;
   font-size: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 `;
 
 export const Code = styled.p`
@@ -84,15 +86,15 @@ export const Code = styled.p`
 
 // TODO: This is the wrong typeface
 export const LargeStat = styled.p`
-  font-family: "fira-code", serif;
+  font-family: "Fugaz One", serif;
   font-weight: 700;
   font-style: normal;
   font-size: 26px;
 `;
 
 export const RecentlyPlayedText = styled.p`
-  font-family: "fira-sans", serif;
-  font-weight: 700;
+  font-family: "fira-sans", "avenir", sans-serif;
+  font-weight: 500;
   font-style: normal;
   font-size: 16px;
   color: #c1c1c1;

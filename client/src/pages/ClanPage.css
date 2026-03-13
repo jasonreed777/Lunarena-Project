@@ -1,0 +1,54 @@
+div.clan-container {
+  min-height: 100vh;
+  background-color: #000000;
+  background-image: url(../assets/gradients/clan_gradient.png);
+  padding: 20px;
+  padding-top: 3rem;
+  color: white;
+}
+
+.clan-info {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 2fr 3fr 1fr;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* width: 80%; */
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-bottom: 30px;
+}
+
+.statContainer {
+  width: 80%;
+}
+
+.clan-info-column {
+  height: 100%;
+  border-right: 1px solid #c1c1c1;
+  padding: 0 20px;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.icon-lg {
+  width: auto;
+  height: 100px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+.icon-lg:hover {
+  transform: scale(105%) rotate(15deg);
+}
