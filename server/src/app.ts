@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import { z } from "zod";
 import * as http from "node:http";
 import * as chat from "./controllers/chat.controller.ts";
+import * as friendship from "./controllers/friendship.controller.ts";
 import * as game from "./controllers/game.controller.ts";
 import * as user from "./controllers/user.controller.ts";
 import * as thread from "./controllers/thread.controller.ts";
@@ -54,6 +55,15 @@ app.use(
         .post("/:username/upload", profile.postUploadByUsername)
         .post("/:username", profile.postByUsername)
         .get("/:username", profile.getByUsername),
+    )
+    .use(
+      "/friends",
+      Router() //
+        .post("/list", friendship.postList)
+        .post("/requests", friendship.postRequests)
+        .post("/request", friendship.postRequest)
+        .post("/:id/respond", friendship.postRespond)
+        .delete("/:id", friendship.deleteById),
     ),
 );
 

@@ -3,6 +3,7 @@ import type {
   AuthRecord,
   ChatRecord,
   CommentRecord,
+  FriendshipRecord,
   GameRecord,
   MessageRecord,
   ThreadRecord,
@@ -138,6 +139,22 @@ export const UploadedImageModel = mongoose.model<UploadedImageRecord & { _id: st
       contentType: String,
       data: String,
       uploadedAt: String,
+    },
+    opts,
+  ),
+);
+
+// Friendship: _id is a UUID
+export const FriendshipModel = mongoose.model<FriendshipRecord & { _id: string }>(
+  "friendship",
+  new Schema(
+    {
+      _id: String,
+      senderId: String,
+      receiverId: String,
+      status: String,
+      createdAt: String,
+      updatedAt: String,
     },
     opts,
   ),
