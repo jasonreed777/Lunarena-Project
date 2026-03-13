@@ -33,7 +33,7 @@ div.clan-container {
 
 .clan-info-column {
   height: 100%;
-  border-right: 1px solid #C1C1C1;
+  border-right: 1px solid #c1c1c1;
   padding: 0 20px;
 }
 
@@ -50,5 +50,5 @@ div.clan-container {
   transition: all 0.2s;
 }
 .icon-lg:hover {
-    transform: scale(105%) rotate(15deg);
-  }
+  transform: scale(105%) rotate(15deg);
+}
