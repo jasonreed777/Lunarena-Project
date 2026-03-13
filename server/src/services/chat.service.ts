@@ -1,9 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { type ChatInfo, type ChatMoveLogPayload } from "@gamenite/shared";
 import { getMessagesById } from "./message.service.ts";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
-import type { ChatRecord, MoveLogEntry, RecordId } from "../models.ts";
-import { ChatRepo } from "../repository.ts";
+import type { MoveLogEntry, RecordId } from "../models.ts";
+import { ChatModel } from "../mongoose-models.ts";
 
 /**
  * Expand a stored chat
@@ -12,13 +13,14 @@ import { ChatRepo } from "../repository.ts";
  * @returns the expanded chat info object
  */
 async function populateChatInfo(chatId: RecordId): Promise<ChatInfo> {
-  const chat = await ChatRepo.get(chatId);
+  const chat = await ChatModel.findById(chatId).lean();
+  if (!chat) throw new Error(`Failed to find chat ${chatId}`);
   return {
     chatId,
     createdAt: new Date(chat.createdAt),
     messages: await getMessagesById(chat.messages),
     moveLog: await Promise.all(
-      chat.moveLog.map(async (entry) => ({
+      (chat.moveLog as MoveLogEntry[]).map(async (entry) => ({
         moveDescription: entry.moveDescription,
         user: await populateSafeUserInfo(entry.userId),
         createdAt: new Date(entry.createdAt),
@@ -34,7 +36,9 @@ async function populateChatInfo(chatId: RecordId): Promise<ChatInfo> {
  * @returns the chat's info object
  */
 export async function createChat(createdAt: Date): Promise<ChatInfo> {
-  const id = await ChatRepo.add({
+  const id = randomUUID().toString();
+  await ChatModel.create({
+    _id: id,
     createdAt: createdAt.toISOString(),
     messages: [],
     moveLog: [],
@@ -51,9 +55,8 @@ export async function createChat(createdAt: Date): Promise<ChatInfo> {
  * @throws if the chat id is not valid
  */
 export async function forceChatById(chatId: string, user: UserWithId): Promise<ChatInfo> {
-  const chat = await ChatRepo.find(chatId);
-  if (!chat) throw new Error(`user ${user.username} accessed invalid chat id`);
-
+  const exists = await ChatModel.exists({ _id: chatId });
+  if (!exists) throw new Error(`user ${user.username} accessed invalid chat id`);
   return populateChatInfo(chatId);
 }
 
@@ -71,13 +74,9 @@ export async function addMessageToChat(
   user: UserWithId,
   messageId: string,
 ): Promise<ChatInfo> {
-  const chat = await ChatRepo.find(chatId);
-  if (!chat) throw new Error(`user ${user.username} sent to invalid chat id`);
-  const newChat: ChatRecord = {
-    ...chat,
-    messages: [...chat.messages, messageId],
-  };
-  await ChatRepo.set(chatId, newChat);
+  const exists = await ChatModel.exists({ _id: chatId });
+  if (!exists) throw new Error(`user ${user.username} sent to invalid chat id`);
+  await ChatModel.findByIdAndUpdate(chatId, { $push: { messages: messageId } });
   return populateChatInfo(chatId);
 }
 
@@ -97,18 +96,14 @@ export async function addMoveLogToChat(
   user: UserWithId,
   createdAt: Date,
 ): Promise<ChatMoveLogPayload> {
-  const chat = await ChatRepo.find(chatId);
-  if (!chat) throw new Error(`move log added to invalid chat id`);
+  const exists = await ChatModel.exists({ _id: chatId });
+  if (!exists) throw new Error(`move log added to invalid chat id`);
   const entry: MoveLogEntry = {
     moveDescription,
     userId: user.userId,
     createdAt: createdAt.toISOString(),
   };
-  const newChat: ChatRecord = {
-    ...chat,
-    moveLog: [...chat.moveLog, entry],
-  };
-  await ChatRepo.set(chatId, newChat);
+  await ChatModel.findByIdAndUpdate(chatId, { $push: { moveLog: entry } });
   const safeUser = await populateSafeUserInfo(user.userId);
   return { chatId, moveDescription, user: safeUser, createdAt };
 }
@@ -120,7 +115,7 @@ export async function addMoveLogToChat(
  * @returns the list of move log entries
  */
 export async function getMoveLog(chatId: string): Promise<MoveLogEntry[]> {
-  const chat = await ChatRepo.find(chatId);
+  const chat = await ChatModel.findById(chatId).lean();
   if (!chat) return [];
-  return chat.moveLog;
+  return chat.moveLog as MoveLogEntry[];
 }

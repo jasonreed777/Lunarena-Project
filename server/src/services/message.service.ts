@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { type MessageInfo } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
-import { MessageRepo } from "../repository.ts";
+import { MessageModel } from "../mongoose-models.ts";
 
 /**
  * Expand a stored message
@@ -10,12 +11,13 @@ import { MessageRepo } from "../repository.ts";
  * @returns the expanded message info object
  */
 async function populateMessageInfo(messageId: string): Promise<MessageInfo> {
-  const message = await MessageRepo.get(messageId);
+  const doc = await MessageModel.findById(messageId).lean();
+  if (!doc) throw new Error(`Failed to find message ${messageId}`);
   return {
     messageId,
-    text: message.text,
-    createdAt: new Date(message.createdAt),
-    createdBy: await populateSafeUserInfo(message.createdBy),
+    text: doc.text,
+    createdAt: new Date(doc.createdAt),
+    createdBy: await populateSafeUserInfo(doc.createdBy),
   };
 }
 
@@ -32,7 +34,9 @@ export async function createMessage(
   text: string,
   createdAt: Date,
 ): Promise<MessageInfo> {
-  const messageId = await MessageRepo.add({
+  const messageId = randomUUID().toString();
+  await MessageModel.create({
+    _id: messageId,
     text,
     createdAt: createdAt.toISOString(),
     createdBy: user.userId,
