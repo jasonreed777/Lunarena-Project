@@ -4,12 +4,13 @@ import {
   AuthModel,
   ChatModel,
   CommentModel,
+  FriendshipModel,
   GameModel,
   MessageModel,
   ThreadModel,
   UserModel,
 } from "./mongoose-models.ts";
-import type { GameRecord, ThreadRecord } from "./models.ts";
+import type { FriendshipRecord, GameRecord, ThreadRecord } from "./models.ts";
 import { createChat } from "./services/chat.service.ts";
 import { createUser, updateUser } from "./services/user.service.ts";
 
@@ -126,10 +127,53 @@ async function resetStoredUsers() {
   await updateUser("user3", { display: "Frau Drei" });
 }
 
+/** Reset stored friendships with example data */
+async function resetStoredFriendships() {
+  const user0id = (await getUserByUsername("user0"))!.userId;
+  const user1id = (await getUserByUsername("user1"))!.userId;
+  const user2id = (await getUserByUsername("user2"))!.userId;
+  const user3id = (await getUserByUsername("user3"))!.userId;
+
+  const storedFriendships: { [key: string]: FriendshipRecord } = {
+    // user1 and user2 are friends
+    [randomUUID().toString()]: {
+      senderId: user1id,
+      receiverId: user2id,
+      status: "accepted",
+      createdAt: new Date("2025-04-01").toISOString(),
+      updatedAt: new Date("2025-04-01").toISOString(),
+    },
+    // user3 sent a pending request to user1
+    [randomUUID().toString()]: {
+      senderId: user3id,
+      receiverId: user1id,
+      status: "pending",
+      createdAt: new Date("2025-04-05").toISOString(),
+      updatedAt: new Date("2025-04-05").toISOString(),
+    },
+    // user0 rejected user2's request (for testing re-request)
+    [randomUUID().toString()]: {
+      senderId: user2id,
+      receiverId: user0id,
+      status: "rejected",
+      createdAt: new Date("2025-04-03").toISOString(),
+      updatedAt: new Date("2025-04-03").toISOString(),
+    },
+  };
+
+  await FriendshipModel.deleteMany({});
+  await Promise.all(
+    Object.entries(storedFriendships).map(([id, entry]) =>
+      FriendshipModel.findByIdAndUpdate(id, { $set: entry }, { upsert: true }),
+    ),
+  );
+}
+
 export async function resetEverythingToDefaults() {
   await AuthModel.deleteMany({});
   await ChatModel.deleteMany({});
   await CommentModel.deleteMany({});
+  await FriendshipModel.deleteMany({});
   await GameModel.deleteMany({});
   await MessageModel.deleteMany({});
   await ThreadModel.deleteMany({});
@@ -138,4 +182,5 @@ export async function resetEverythingToDefaults() {
   await resetStoredUsers();
   await resetStoredThreads();
   await resetStoredGames();
+  await resetStoredFriendships();
 }

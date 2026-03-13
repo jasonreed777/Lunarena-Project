@@ -172,3 +172,19 @@ export interface UploadedImageRecord {
   data: string; // base64 image data
   uploadedAt: string;
 }
+
+/**
+ * Represents a friendship record in the database.
+ * - `senderId`: the user ID of who sent the request
+ * - `receiverId`: the user ID of who received the request
+ * - `status`: current state of the friendship ("pending" | "accepted" | "rejected" | "blocked")
+ * - `createdAt`: when the request was created
+ * - `updatedAt`: when the friendship was last updated
+ */
+export interface FriendshipRecord {
+  senderId: RecordId;
+  receiverId: RecordId;
+  status: "pending" | "accepted" | "rejected" | "blocked";
+  createdAt: DateISO;
+  updatedAt: DateISO;
+}
