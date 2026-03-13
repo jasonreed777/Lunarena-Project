@@ -1,0 +1,32 @@
+div.clanContainer {
+  min-height: 100vh;
+  background-color: #000000;
+  background-image: url(../assets/gradients/clan_gradient.png);
+  padding: 20px;
+  padding-top: 6rem;
+  color: white;
+}
+
+.clanInfo {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 2fr 3fr 1fr;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 80%;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-bottom: 30px;
+}
+
+.statContainer {
+  width: 80%;
+}

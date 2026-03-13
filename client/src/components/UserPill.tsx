@@ -3,7 +3,7 @@ import * as Typography from "../libs/Typography";
 import { hexToRGB } from "../util/utils";
 import type { SafeUserInfoClanStuff } from "../pages/ClanPage";
 
-export type ClanRole = "admin" | "moderator" | "member";
+export type ClanRole = "admin" | "mod" | "member";
 
 const Container = styled.div<{ color: string }>`
   width: 100%;
