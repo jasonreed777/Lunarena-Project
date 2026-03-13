@@ -136,7 +136,7 @@ export interface UserProfileRecord {
   bio: string;
   pfp: {
     type: "upload" | "avatar";
-    uploadIf?: string; // References an uploaded image, if type is "upload"
+    uploadId?: string; // References an uploaded image, if type is "upload"
     avatarId?: string; // Avatar identifier, if type is "avatar"
   };
   titleId?: string; // References a title that the user has chosen to display
@@ -157,4 +157,18 @@ export interface UserProfileRecord {
 export interface TitleRecord {
   titleId: string; // Unique identifier for the title
   titleLabel: string; // Human-readable name for the title
+}
+
+/**
+ * Represents an uploaded image for profile pictures
+ * - `username`: username of the user who uploaded the image
+ * - `contentType`: MIME type of the image (e.g., "image/png")
+ * - `data`: base64 image data
+ * - `uploadedAt`: when the image was uploaded
+ */
+export interface UploadedImageRecord {
+  userWhoUploaded: string; // who uploaded the image
+  contentType: string; // e.g. "image/png"
+  data: string; // base64 image data
+  uploadedAt: string;
 }

@@ -1,6 +1,7 @@
 import { getUserByUsername } from "./auth.service.ts";
-import { UserProfileRepo } from "../repository.ts";
-import { type UserProfileRecord } from "../models.ts";
+import { UserProfileRepo, UploadedImageRepo } from "../repository.ts";
+import { type UserProfileRecord, type UploadedImageRecord } from "../models.ts";
+import type { UserProfileImageUploadRequest } from "@gamenite/shared";
 
 /**
  * Retrieves a single profile from the database
@@ -125,4 +126,47 @@ export async function updateProfile(
 
   await UserProfileRepo.set(user.userId, profile);
   return profile;
+}
+
+/**
+ * Uploads a new profile image for a user
+ * @param username username of the user
+ * @param upload profile image upload request
+ * @returns the updated user profile
+ */
+export async function uploadProfileImage(
+  username: string,
+  upload: UserProfileImageUploadRequest,
+): Promise<UserProfileRecord> {
+  const user = await getUserByUsername(username);
+  if (!user) throw new Error(`No user ${username}`);
+
+  const profile = await createDefaultProfile(user.userId, username);
+
+  const uploadedImage: UploadedImageRecord = {
+    userWhoUploaded: username,
+    contentType: upload.contentType,
+    data: upload.data,
+    uploadedAt: new Date().toISOString(),
+  };
+
+  const uploadId = await UploadedImageRepo.add(uploadedImage);
+
+  profile.pfp = {
+    type: "upload",
+    uploadId,
+  };
+  profile.updatedAt = new Date().toISOString();
+
+  await UserProfileRepo.set(user.userId, profile);
+  return profile;
+}
+
+/**
+ * Gets an uploaded image by its upload ID
+ * @param uploadId The ID of the uploaded image to retrieve
+ * @returns A promise resolving to the uploaded image record
+ */
+export async function getUploadedImage(uploadId: string): Promise<UploadedImageRecord> {
+  return UploadedImageRepo.get(uploadId);
 }

@@ -16,3 +16,4 @@ export * from "./socket.types.ts";
 export * from "./thread.types.ts";
 export * from "./user.types.ts";
 export * from "./profile.types.ts";
+export * from "./profile-picture.types.ts";

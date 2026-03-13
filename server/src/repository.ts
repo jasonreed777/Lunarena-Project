@@ -9,6 +9,7 @@ import type {
   UserRecord,
   UserProfileRecord,
   TitleRecord,
+  UploadedImageRecord,
 } from "./models.ts";
 
 export const AuthRepo = createRepo<AuthRecord>("auth");
@@ -21,3 +22,5 @@ export const UserRepo = createRepo<UserRecord>("user");
 // Added repos for profile customization
 export const UserProfileRepo = createRepo<UserProfileRecord>("userProfile");
 export const TitleRepo = createRepo<TitleRecord>("title");
+// Added for pfp upload
+export const UploadedImageRepo = createRepo<UploadedImageRecord>("uploaded_image");
