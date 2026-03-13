@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { type FriendInfo, type FriendRequestInfo, type FriendshipInfo } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";

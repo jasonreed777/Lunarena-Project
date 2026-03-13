@@ -56,7 +56,12 @@ export default function App() {
       .then(async (res) => {
         const username = res.data?.user?.username;
         if (username) {
-          const userRes = await api.get<{ error?: string; username?: string; display?: string; createdAt?: Date }>(`/api/user/${username}`);
+          const userRes = await api.get<{
+            error?: string;
+            username?: string;
+            display?: string;
+            createdAt?: Date;
+          }>(`/api/user/${username}`);
           if (!userRes.data.error) {
             const user = userRes.data as import("@gamenite/shared").SafeUserInfo;
             setAuth({ user, pass: "", reset: () => setAuth(null) });

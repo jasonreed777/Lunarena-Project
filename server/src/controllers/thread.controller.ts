@@ -4,11 +4,7 @@ import {
   getThreadById,
   getThreadSummaries,
 } from "../services/thread.service.ts";
-import {
-  type ThreadInfo,
-  type ThreadSummary,
-  zCreateThreadMessage,
-} from "@gamenite/shared";
+import { type ThreadInfo, type ThreadSummary, zCreateThreadMessage } from "@gamenite/shared";
 import { type RestAPI } from "../types.ts";
 import { z } from "zod";
 

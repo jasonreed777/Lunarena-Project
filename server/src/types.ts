@@ -17,6 +17,7 @@ export interface SocketData {
 
 // Augment Express Request so that `req.authUser` is available after requireAuth middleware
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       authUser: UserWithId;

@@ -100,7 +100,7 @@ io.use(async (socket, next) => {
   const appUser = await UserModel.findOne({ username: session.user.username }).lean();
   if (!appUser) return next(new Error("User not found"));
 
-  socket.data.user = { userId: appUser._id as string, username: appUser.username };
+  socket.data.user = { userId: appUser._id, username: appUser.username };
   next();
 });
 

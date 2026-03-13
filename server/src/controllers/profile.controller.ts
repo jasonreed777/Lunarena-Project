@@ -1,7 +1,4 @@
-import {
-  zUserProfileUpdateRequest,
-  zUserProfileImageUploadRequest,
-} from "@gamenite/shared";
+import { zUserProfileUpdateRequest, zUserProfileImageUploadRequest } from "@gamenite/shared";
 import { type UploadedImageRecord, type UserProfileRecord } from "../models.ts";
 
 import {

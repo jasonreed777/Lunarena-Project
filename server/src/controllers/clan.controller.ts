@@ -98,7 +98,11 @@ export const postKick: RestAPI<{ success: true }, { id: string }> = async (req, 
     return;
   }
 
-  const result = await clanService.kickMember(req.authUser, req.params.id, body.data.payload.username);
+  const result = await clanService.kickMember(
+    req.authUser,
+    req.params.id,
+    body.data.payload.username,
+  );
   res.send(result);
 };
 
