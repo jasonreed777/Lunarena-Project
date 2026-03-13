@@ -110,13 +110,81 @@ export interface ThreadRecord {
 }
 
 /**
- * Represents a user document in the database.
+ * Represents a user document in the database
  * - `password`: user's password
  * - `display`: A display name
- * - `createdAt`: when this user registered.
+ * - `createdAt`: when this user registered
  */
 export interface UserRecord {
   username: string; // References Auth records
   display: string;
   createdAt: DateISO;
+}
+
+/**
+ * Represents a user's profile information for customization
+ * - `username`: the user's username, which references the User record
+ * - `bio`: a short biography or description provided by the user
+ * - `pfp`: profile picture information, which can be either an uploaded image or a selected avatar
+ * - `titleId`: an optional reference to a title that the user has chosen to display on their profile
+ * - `profileBorderColor`: a hex code representing the color of the user's profile border
+ * - `updatedAt`: when the profile was last updated
+ * - `onlinePresence`: information about the user's current online status and activity
+ */
+export interface UserProfileRecord {
+  username: string; // References User records
+  bio: string;
+  pfp: {
+    type: "upload" | "avatar";
+    uploadId?: string; // References an uploaded image, if type is "upload"
+    avatarId?: string; // Avatar identifier, if type is "avatar"
+  };
+  titleId?: string; // References a title that the user has chosen to display
+  profileBorderColor: string; // Hex code for the color of the user's profile border
+  updatedAt: DateISO; // When profile was last updated
+  onlinePresence: {
+    status: "active" | "inactive" | "offline"; // User's current online status
+    activeGameId?: RecordId; // References a Game record if the user is currently in a game
+    lastActive: DateISO; // When the user was last active on the site
+  };
+}
+
+/**
+ * Represents a title that users can choose to display on their profile
+ * - `titleId`: a unique identifier for the title
+ * - `titleLabel`: a human-readable name for the title
+ */
+export interface TitleRecord {
+  titleId: string; // Unique identifier for the title
+  titleLabel: string; // Human-readable name for the title
+}
+
+/**
+ * Represents an uploaded image for profile pictures
+ * - `username`: username of the user who uploaded the image
+ * - `contentType`: MIME type of the image (e.g., "image/png")
+ * - `data`: base64 image data
+ * - `uploadedAt`: when the image was uploaded
+ */
+export interface UploadedImageRecord {
+  userWhoUploaded: string; // who uploaded the image
+  contentType: string; // e.g. "image/png"
+  data: string; // base64 image data
+  uploadedAt: string;
+}
+
+/**
+ * Represents a friendship record in the database.
+ * - `senderId`: the user ID of who sent the request
+ * - `receiverId`: the user ID of who received the request
+ * - `status`: current state of the friendship ("pending" | "accepted" | "rejected" | "blocked")
+ * - `createdAt`: when the request was created
+ * - `updatedAt`: when the friendship was last updated
+ */
+export interface FriendshipRecord {
+  senderId: RecordId;
+  receiverId: RecordId;
+  status: "pending" | "accepted" | "rejected" | "blocked";
+  createdAt: DateISO;
+  updatedAt: DateISO;
 }

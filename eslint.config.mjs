@@ -95,6 +95,12 @@ export default defineConfig([
           format: null,
         },
         {
+          // Allow MongoDB's _id field in object literals and type properties
+          selector: ["objectLiteralProperty", "typeProperty"],
+          filter: { regex: "^_id$", match: true },
+          format: null,
+        },
+        {
           // Usually we want to stick with camelCase for global variables, but
           // some global items want to be PascalCase: `FooModel` in the server,
           // `AuthContext` and `ThreadPage` in the frontend, `MockGameServer`

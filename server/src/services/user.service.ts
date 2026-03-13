@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { type SafeUserInfo, type UserUpdateRequest } from "@gamenite/shared";
 import { getUserByUsername, updateAuth } from "./auth.service.ts";
-import { UserRepo } from "../repository.ts";
+import { UserModel } from "../mongoose-models.ts";
 
 const disallowedUsernames = new Set(["login", "signup", "list"]);
 
@@ -11,12 +12,13 @@ const disallowedUsernames = new Set(["login", "signup", "list"]);
  * @returns the found user object (without the password).
  */
 export async function populateSafeUserInfo(userId: string): Promise<SafeUserInfo> {
-  const record = await UserRepo.get(userId);
-  return Promise.resolve({
-    username: record.username,
-    display: record.display,
-    createdAt: new Date(record.createdAt),
-  });
+  const doc = await UserModel.findById(userId).lean();
+  if (!doc) throw new Error(`Failed to find user ${userId}`);
+  return {
+    username: doc.username,
+    display: doc.display,
+    createdAt: new Date(doc.createdAt),
+  };
 }
 
 /**
@@ -36,17 +38,15 @@ export async function createUser(
   if (disallowedUsernames.has(username)) {
     return { error: "That is not a permitted username" };
   }
-  const id = await UserRepo.add({
+  const id = randomUUID().toString();
+  await UserModel.create({
+    _id: id,
     username,
     createdAt: createdAt.toISOString(),
     display: username,
   });
   await updateAuth(username, password, id);
-  return Promise.resolve({
-    username,
-    createdAt,
-    display: username,
-  });
+  return { username, createdAt, display: username };
 }
 
 /**
@@ -83,8 +83,8 @@ export async function updateUser(
   const user = await getUserByUsername(username);
   if (!user) throw new Error(`No user ${username}`);
   if (password !== undefined) await updateAuth(username, password, user.userId);
-  const newUser = await UserRepo.get(user.userId);
-  if (display !== undefined) newUser.display = display;
-  await UserRepo.set(user.userId, newUser);
+  if (display !== undefined) {
+    await UserModel.findByIdAndUpdate(user.userId, { display });
+  }
   return populateSafeUserInfo(user.userId);
 }

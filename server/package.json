@@ -16,6 +16,7 @@
     "@types/express": "^5.0.6",
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.18",
+    "mongodb-memory-server": "^11.0.1",
     "nodemon": "^3.1.11",
     "supertest": "^7.2.2",
     "vitest": "^4.0.18"
@@ -25,7 +26,7 @@
     "@keyv/mongo": "^3.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "keyv": "^5.5.5",
+    "mongoose": "^8.15.0",
     "socket.io": "^4.8.1",
     "zod": "^4.3.6"
   }

@@ -1,35 +1,29 @@
 // Run this script to launch the server.
 /* eslint no-console: "off" */
 
-import { KeyvMongo } from "@keyv/mongo";
-import { Keyv } from "keyv";
+import mongoose, { Schema } from "mongoose";
 import "dotenv/config";
 import { app, httpServer } from "./app.ts";
 import * as path from "node:path";
 import express from "express";
-import { createRepo, setDbInitializer } from "./keyv.ts";
 import { resetEverythingToDefaults } from "./initRepository.ts";
 
-// If a MONGO_STR environment variable is given (or set in `server/.env`),
-// then use MongoDB to create the repository.
-const MONGO_STR = process.env.MONGO_STR || null;
+const MONGO_STR = process.env.MONGO_STR || "mongodb://localhost:27017";
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || "GameNite";
-if (MONGO_STR) {
-  setDbInitializer(<T>(name: string) => {
-    const mongoConnection = new KeyvMongo(MONGO_STR, { collection: name, db: MONGO_DB_NAME });
-    return new Keyv<T>(mongoConnection);
-  });
-}
+await mongoose.connect(MONGO_STR, { dbName: MONGO_DB_NAME });
 
 // We only want to initialize the database once, so we check whether
 // we've set the INIT_KEY before. If the INIT_KEY is set, then don't
 // initialize the database anew.
 const INIT_KEY = "is_initialized";
-const InitRepo = createRepo<{ exists: true; time: string }>("init");
-const initialized = await InitRepo.find(INIT_KEY);
+const InitModel = mongoose.model(
+  "init",
+  new Schema({ _id: String, time: String }, { versionKey: false }),
+);
+const initialized = await InitModel.findById(INIT_KEY).lean();
 if (!initialized) {
   await resetEverythingToDefaults();
-  await InitRepo.set(INIT_KEY, { exists: true, time: new Date().toISOString() });
+  await InitModel.create({ _id: INIT_KEY, time: new Date().toISOString() });
 }
 
 // This if-then-else check for MODE=production helps avoid a common source of

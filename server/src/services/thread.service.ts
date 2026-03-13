@@ -1,8 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { type CreateThreadMessage, type ThreadInfo, type ThreadSummary } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { createComment, populateCommentInfo } from "./comment.service.ts";
 import { type UserWithId } from "../types.ts";
-import { ThreadRepo } from "../repository.ts";
+import { ThreadModel } from "../mongoose-models.ts";
 
 /**
  * Expand a stored thread
@@ -11,14 +12,15 @@ import { ThreadRepo } from "../repository.ts";
  * @returns the expanded thread info object
  */
 async function populateThreadInfo(threadId: string): Promise<ThreadInfo> {
-  const thread = await ThreadRepo.get(threadId);
+  const doc = await ThreadModel.findById(threadId).lean();
+  if (!doc) throw new Error(`Failed to find thread ${threadId}`);
   return {
     threadId,
-    title: thread.title,
-    text: thread.text,
-    createdBy: await populateSafeUserInfo(thread.createdBy),
-    createdAt: new Date(thread.createdAt),
-    comments: await Promise.all(thread.comments.map(populateCommentInfo)),
+    title: doc.title,
+    text: doc.text,
+    createdBy: await populateSafeUserInfo(doc.createdBy),
+    createdAt: new Date(doc.createdAt),
+    comments: await Promise.all(doc.comments.map(populateCommentInfo)),
   };
 }
 
@@ -29,13 +31,14 @@ async function populateThreadInfo(threadId: string): Promise<ThreadInfo> {
  * @returns the expanded thread info object
  */
 async function populateThreadSummary(threadId: string): Promise<ThreadSummary> {
-  const thread = await ThreadRepo.get(threadId);
+  const doc = await ThreadModel.findById(threadId).lean();
+  if (!doc) throw new Error(`Failed to find thread ${threadId}`);
   return {
     threadId,
-    title: thread.title,
-    createdBy: await populateSafeUserInfo(thread.createdBy),
-    createdAt: new Date(thread.createdAt),
-    comments: thread.comments.length,
+    title: doc.title,
+    createdBy: await populateSafeUserInfo(doc.createdBy),
+    createdAt: new Date(doc.createdAt),
+    comments: doc.comments.length,
   };
 }
 
@@ -52,7 +55,9 @@ export async function createThread(
   { title, text }: CreateThreadMessage,
   createdAt: Date,
 ): Promise<ThreadInfo> {
-  const id = await ThreadRepo.add({
+  const id = randomUUID().toString();
+  await ThreadModel.create({
+    _id: id,
     title,
     text,
     createdAt: createdAt.toISOString(),
@@ -69,8 +74,8 @@ export async function createThread(
  * @returns the thread, or null if no thread with that ID exists
  */
 export async function getThreadById(possibleThreadId: string): Promise<ThreadInfo | null> {
-  const thread = await ThreadRepo.find(possibleThreadId);
-  if (!thread) return null;
+  const exists = await ThreadModel.exists({ _id: possibleThreadId });
+  if (!exists) return null;
   return populateThreadInfo(possibleThreadId);
 }
 
@@ -80,8 +85,9 @@ export async function getThreadById(possibleThreadId: string): Promise<ThreadInf
  * @returns a list of thread summaries, ordered reverse chronologically by creation date
  */
 export async function getThreadSummaries(): Promise<ThreadSummary[]> {
-  const keys = await ThreadRepo.getAllKeys();
-  const unsorted = await Promise.all(keys.map(populateThreadSummary));
+  const docs = await ThreadModel.find({}, { _id: 1 }).lean();
+  const ids = docs.map((d) => d._id);
+  const unsorted = await Promise.all(ids.map(populateThreadSummary));
 
   return unsorted.toSorted(
     (thread1, thread2) => thread2.createdAt.getTime() - thread1.createdAt.getTime(),
@@ -102,11 +108,11 @@ export async function addCommentToThread(
   text: string,
   createdAt: Date,
 ): Promise<ThreadInfo | null> {
-  const oldThread = await ThreadRepo.find(possibleThreadId);
-  if (!oldThread) return null;
-  const threadId = possibleThreadId; // We know the thread ID is valid at this point
+  const exists = await ThreadModel.exists({ _id: possibleThreadId });
+  if (!exists) return null;
   const comment = await createComment(user, text, createdAt);
-  const newThread = { ...oldThread, comments: [...oldThread.comments, comment.commentId] };
-  await ThreadRepo.set(possibleThreadId, newThread);
-  return populateThreadInfo(threadId);
+  await ThreadModel.findByIdAndUpdate(possibleThreadId, {
+    $push: { comments: comment.commentId },
+  });
+  return populateThreadInfo(possibleThreadId);
 }

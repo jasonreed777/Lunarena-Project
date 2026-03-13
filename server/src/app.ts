@@ -5,9 +5,11 @@ import { Server } from "socket.io";
 import { z } from "zod";
 import * as http from "node:http";
 import * as chat from "./controllers/chat.controller.ts";
+import * as friendship from "./controllers/friendship.controller.ts";
 import * as game from "./controllers/game.controller.ts";
 import * as user from "./controllers/user.controller.ts";
 import * as thread from "./controllers/thread.controller.ts";
+import * as profile from "./controllers/profile.controller.ts";
 import { type GameServer } from "./types.ts";
 
 export const app = express();
@@ -44,6 +46,24 @@ app.use(
         .post("/signup", user.postSignup)
         .post("/:username", user.postByUsername)
         .get("/:username", user.getByUsername),
+    )
+    // Added profile routes for profile customization
+    .use(
+      "/profile",
+      Router() //
+        .get("/upload/:uploadId", profile.getUploadById)
+        .post("/:username/upload", profile.postUploadByUsername)
+        .post("/:username", profile.postByUsername)
+        .get("/:username", profile.getByUsername),
+    )
+    .use(
+      "/friends",
+      Router() //
+        .post("/list", friendship.postList)
+        .post("/requests", friendship.postRequests)
+        .post("/request", friendship.postRequest)
+        .post("/:id/respond", friendship.postRespond)
+        .delete("/:id", friendship.deleteById),
     ),
 );
 

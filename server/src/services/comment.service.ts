@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { type CommentInfo } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
-import { CommentRepo } from "../repository.ts";
+import { CommentModel } from "../mongoose-models.ts";
 
 /**
  * Expand a stored comment
@@ -10,13 +11,14 @@ import { CommentRepo } from "../repository.ts";
  * @returns the expanded comment info object
  */
 export async function populateCommentInfo(commentId: string): Promise<CommentInfo> {
-  const comment = await CommentRepo.get(commentId);
+  const doc = await CommentModel.findById(commentId).lean();
+  if (!doc) throw new Error(`Failed to find comment ${commentId}`);
   return {
     commentId,
-    text: comment.text,
-    createdAt: new Date(comment.createdAt),
-    createdBy: await populateSafeUserInfo(comment.createdBy),
-    editedAt: comment.editedAt ? new Date(comment.editedAt) : undefined,
+    text: doc.text,
+    createdAt: new Date(doc.createdAt),
+    createdBy: await populateSafeUserInfo(doc.createdBy),
+    editedAt: doc.editedAt ? new Date(doc.editedAt) : undefined,
   };
 }
 
@@ -33,7 +35,9 @@ export async function createComment(
   text: string,
   createdAt: Date,
 ): Promise<CommentInfo> {
-  const id = await CommentRepo.add({
+  const id = randomUUID().toString();
+  await CommentModel.create({
+    _id: id,
     text,
     createdAt: createdAt.toISOString(),
     createdBy: user.userId,

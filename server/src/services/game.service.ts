@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { type GameInfo, type GameKey, type TaggedGameView } from "@gamenite/shared";
 import { createChat } from "./chat.service.ts";
 import { populateSafeUserInfo } from "./user.service.ts";
@@ -5,7 +6,7 @@ import { type GameServicer } from "../games/gameServiceManager.ts";
 import { nimGameService } from "../games/nim.ts";
 import { guessGameService } from "../games/guess.ts";
 import { type GameViewUpdates, type UserWithId } from "../types.ts";
-import { GameRepo } from "../repository.ts";
+import { GameModel } from "../mongoose-models.ts";
 
 /**
  * The service interface for individual games
@@ -22,16 +23,17 @@ export const gameServices: { [key in GameKey]: GameServicer } = {
  * @returns the expanded game info object
  */
 async function populateGameInfo(gameId: string): Promise<GameInfo> {
-  const game = await GameRepo.get(gameId);
+  const doc = await GameModel.findById(gameId).lean();
+  if (!doc) throw new Error(`Failed to find game ${gameId}`);
   return {
     gameId,
-    createdBy: await populateSafeUserInfo(game.createdBy),
-    chat: game.chat,
-    createdAt: new Date(game.createdAt),
-    players: await Promise.all(game.players.map(populateSafeUserInfo)),
-    type: game.type,
-    status: !game.state ? "waiting" : game.done ? "done" : "active",
-    minPlayers: gameServices[game.type].minPlayers,
+    createdBy: await populateSafeUserInfo(doc.createdBy),
+    chat: doc.chat,
+    createdAt: new Date(doc.createdAt),
+    players: await Promise.all(doc.players.map(populateSafeUserInfo)),
+    type: doc.type,
+    status: !doc.state ? "waiting" : doc.done ? "done" : "active",
+    minPlayers: gameServices[doc.type].minPlayers,
   };
 }
 
@@ -49,7 +51,9 @@ export async function createGame(
   createdAt: Date,
 ): Promise<GameInfo> {
   const chat = await createChat(createdAt);
-  const gameId = await GameRepo.add({
+  const gameId = randomUUID().toString();
+  await GameModel.create({
+    _id: gameId,
     type,
     done: false,
     chat: chat.chatId,
@@ -67,8 +71,8 @@ export async function createGame(
  * @returns the game's info object, or null
  */
 export async function getGameById(gameId: string): Promise<GameInfo | null> {
-  const game = await GameRepo.find(gameId);
-  if (!game) return null;
+  const exists = await GameModel.exists({ _id: gameId });
+  if (!exists) return null;
   return populateGameInfo(gameId);
 }
 
@@ -83,7 +87,7 @@ export async function getGameById(gameId: string): Promise<GameInfo | null> {
  * players
  */
 export async function joinGame(gameId: string, user: UserWithId): Promise<GameInfo> {
-  const game = await GameRepo.find(gameId);
+  const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} joining invalid game`);
   if (game.state) {
     throw new Error(`user ${user.username} joining game that started`);
@@ -95,9 +99,7 @@ export async function joinGame(gameId: string, user: UserWithId): Promise<GameIn
     throw new Error(`user ${user.username} joining full`);
   }
 
-  game.players = [...game.players, user.userId];
-  await GameRepo.set(gameId, game);
-
+  await GameModel.findByIdAndUpdate(gameId, { $push: { players: user.userId } });
   return populateGameInfo(gameId);
 }
 
@@ -111,26 +113,25 @@ export async function joinGame(gameId: string, user: UserWithId): Promise<GameIn
  * players to start
  */
 export async function startGame(gameId: string, user: UserWithId): Promise<GameViewUpdates> {
-  const game = await GameRepo.find(gameId);
+  const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} starting invalid game`);
   if (game.state) {
     throw new Error(`user ${user.username} starting game that started`);
   }
 
-  const key: GameKey = game.type;
+  const key = game.type;
+  const players = game.players;
 
-  if (game.players.length < gameServices[key].minPlayers) {
+  if (players.length < gameServices[key].minPlayers) {
     throw new Error(`user ${user.username} starting underpopulated game`);
   }
-  if (!game.players.some((userId) => userId === user.userId)) {
+  if (!players.some((userId) => userId === user.userId)) {
     throw new Error(`user ${user.username} starting game they're not in`);
   }
-  const { state, views } = gameServices[key].create(game.players);
+  const { state, views } = gameServices[key].create(players);
 
-  game.state = state;
-  await GameRepo.set(gameId, game);
-
-  return Promise.resolve(views);
+  await GameModel.findByIdAndUpdate(gameId, { state });
+  return views;
 }
 
 /**
@@ -139,8 +140,9 @@ export async function startGame(gameId: string, user: UserWithId): Promise<GameV
  * @returns a list of game summaries, ordered reverse chronologically
  */
 export async function getGames(): Promise<GameInfo[]> {
-  const keys = await GameRepo.getAllKeys();
-  const unsorted = await Promise.all(keys.map(populateGameInfo));
+  const docs = await GameModel.find({}, { _id: 1 }).lean();
+  const ids = docs.map((d) => d._id);
+  const unsorted = await Promise.all(ids.map(populateGameInfo));
 
   return unsorted.toSorted((game1, game2) => game2.createdAt.getTime() - game1.createdAt.getTime());
 }
@@ -169,21 +171,23 @@ export async function updateGame(
   user: UserWithId,
   move: unknown,
 ): Promise<GameUpdateResult> {
-  const game = await GameRepo.find(gameId);
+  const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} acted on an invalid game`);
   if (!game.state) {
     throw new Error(`user ${user.username} made a move in game of that hadn't started`);
   }
-  const playerIndex = game.players.findIndex((userId) => userId === user.userId);
+  const players = game.players;
+  const playerIndex = players.findIndex((userId) => userId === user.userId);
   if (playerIndex < 0) {
     throw new Error(`user ${user.username} made a move in a game they weren't playing`);
   }
-  const result = gameServices[game.type].update(game.state, move, playerIndex, game.players);
+  const result = gameServices[game.type].update(game.state, move, playerIndex, players);
   if (!result) throw new Error(`user ${user.username} made an invalid move in ${game.type}`);
 
-  game.state = result.state;
-  game.done = game.done || result.done;
-  await GameRepo.set(gameId, game);
+  await GameModel.findByIdAndUpdate(gameId, {
+    state: result.state,
+    done: game.done || result.done,
+  });
 
   return {
     views: result.views,
@@ -199,9 +203,10 @@ export async function updateGame(
  * @returns A boolean for whether that user is a player, the player's view, and the list of players
  */
 export async function viewGame(gameId: string, user: UserWithId) {
-  const game = await GameRepo.find(gameId);
+  const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} viewed an invalid game id`);
-  const playerIndex = game.players.findIndex((userId) => userId === user.userId);
+  const players = game.players;
+  const playerIndex = players.findIndex((userId) => userId === user.userId);
   let view: TaggedGameView | null = null;
   if (game.state) {
     view = gameServices[game.type].view(game.state, playerIndex);
@@ -209,6 +214,6 @@ export async function viewGame(gameId: string, user: UserWithId) {
   return {
     isPlayer: playerIndex >= 0,
     view,
-    players: await Promise.all(game.players.map(populateSafeUserInfo)),
+    players: await Promise.all(players.map(populateSafeUserInfo)),
   };
 }
