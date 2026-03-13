@@ -98,6 +98,45 @@ endpoints in `server/src/app.ts`.
 | `/:username` | POST   | Update user's displayname or password |
 | `/:username` | GET    | Get information about a user          |
 
+#### `/api/profile`
+
+| Endpoint            | Method | Description                                       |
+| ------------------- | ------ | ------------------------------------------------- |
+| `/:username`        | GET    | Get user profile (pfp, bio, border color, status) |
+| `/:username`        | POST   | Update user profile (bio, pfp type, border, etc.) |
+| `/:username/upload` | POST   | Upload a profile picture (base64 image data)      |
+| `/upload/:uploadId` | GET    | Get an uploaded image by ID                       |
+
+#### `/api/friends`
+
+| Endpoint       | Method | Description                                         |
+| -------------- | ------ | --------------------------------------------------- |
+| `/list`        | POST   | Get the current user's accepted friends             |
+| `/requests`    | POST   | Get all pending friend requests (incoming/outgoing) |
+| `/request`     | POST   | Send a new friend request                           |
+| `/:id/respond` | POST   | Respond to a friend request (accept/reject/block)   |
+| `/:id`         | DELETE | Remove a friend                                     |
+
+#### `/api/clans`
+
+| Endpoint                     | Method | Description                                      |
+| ---------------------------- | ------ | ------------------------------------------------ |
+| `/list`                      | GET    | List all public clans                            |
+| `/current`                   | POST   | Get current user's clan membership               |
+| `/create`                    | POST   | Create a new clan                                |
+| `/my-invites`                | POST   | Get current user's pending clan invites          |
+| `/invites/:inviteId/respond` | POST   | Accept or reject a clan invite/request           |
+| `/:id`                       | GET    | Get clan details including members               |
+| `/:id/members`               | GET    | Get list of clan members                         |
+| `/:id/join`                  | POST   | Join public clan or request to join private clan |
+| `/:id/leave`                 | POST   | Leave current clan                               |
+| `/:id/kick`                  | POST   | Kick a member from clan (admin/owner only)       |
+| `/:id/invite`                | POST   | Invite a user to clan (admin/owner only)         |
+| `/:id/invites`               | POST   | Get pending invites/requests for clan            |
+| `/:id/update`                | POST   | Update clan settings (admin/owner only)          |
+| `/:id/role`                  | POST   | Update member role                               |
+| `/:id/transfer`              | POST   | Transfer clan ownership (owner only)             |
+
 ### Websockets
 
 The Socket.io API for event-driven communication between clients and the
