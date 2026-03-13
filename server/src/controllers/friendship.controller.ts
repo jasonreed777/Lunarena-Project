@@ -14,6 +14,7 @@ import {
   respondToFriendRequest,
   removeFriend,
 } from "../services/friendship.service.ts";
+import { z } from "zod";
 
 /**
  * POST /api/friends/list - Get current user's friends
@@ -41,13 +42,17 @@ export const postRequests: RestAPI<{
  * POST /api/friends/request - Send a friend request
  */
 export const postRequest: RestAPI<FriendshipInfo> = async (req, res) => {
-  const body = zSendFriendRequestPayload.safeParse(req.body);
+  const body = z.object({ payload: zSendFriendRequestPayload }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  const result = await sendFriendRequest(req.authUser, body.data.receiverUsername, new Date());
+  const result = await sendFriendRequest(
+    req.authUser,
+    body.data.payload.receiverUsername,
+    new Date(),
+  );
   res.send(result);
 };
 
@@ -55,13 +60,17 @@ export const postRequest: RestAPI<FriendshipInfo> = async (req, res) => {
  * POST /api/friends/:id/respond - Accept, reject, or block a friend request
  */
 export const postRespond: RestAPI<FriendshipInfo, { id: string }> = async (req, res) => {
-  const body = zRespondFriendRequestPayload.safeParse(req.body);
+  const body = z.object({ payload: zRespondFriendRequestPayload }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  const result = await respondToFriendRequest(req.authUser, req.params.id, body.data.action);
+  const result = await respondToFriendRequest(
+    req.authUser,
+    req.params.id,
+    body.data.payload.action,
+  );
   if (result === null) {
     res.status(404).send({ error: "Friend request not found" });
     return;

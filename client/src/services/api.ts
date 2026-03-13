@@ -38,8 +38,10 @@ api.interceptors.response.use(
  */
 export function exceptionToErrorMsg(error: unknown): ErrorMsg {
   if (axios.isAxiosError(error) && error.response) {
+    const data = error.response.data as Record<string, unknown> | undefined;
+    const msg = data?.message ?? data?.error;
+    if (typeof msg === "string") return { error: msg };
     return { error: `Error during request: ${error.response.statusText}` };
-  } else {
-    return { error: "Error during request" };
   }
+  return { error: "Error during request" };
 }

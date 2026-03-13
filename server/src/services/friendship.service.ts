@@ -153,10 +153,8 @@ export async function sendFriendRequest(
   }
 
   // Create new friendship request
-  const id = randomUUID().toString();
   const now = createdAt.toISOString();
-  await FriendshipModel.create({
-    _id: id,
+  const friendship = await FriendshipModel.create({
     senderId: sender.userId,
     receiverId: receiverId,
     status: "pending",
@@ -164,7 +162,7 @@ export async function sendFriendRequest(
     updatedAt: now,
   });
 
-  return populateFriendshipInfo(id);
+  return populateFriendshipInfo(friendship._id);
 }
 
 /**

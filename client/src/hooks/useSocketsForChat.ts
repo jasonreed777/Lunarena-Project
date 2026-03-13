@@ -7,7 +7,6 @@ import type {
   ChatUserJoinedPayload,
 } from "@gamenite/shared";
 import type { ChatMessage } from "../util/types.ts";
-import useAuth from "./useAuth.ts";
 
 /** Extract the timestamp from any ChatMessage variant */
 function messageTime(msg: ChatMessage): number {
@@ -48,7 +47,6 @@ function mergeByTime(a: ChatMessage[], b: ChatMessage[]): ChatMessage[] {
  */
 
 export default function useSocketsForChat(chatId: string) {
-  const auth = useAuth();
   const { user, socket } = useLoginContext();
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
 
@@ -122,19 +120,19 @@ export default function useSocketsForChat(chatId: string) {
       }
     };
 
-    socket.emit("chatJoin", { auth, payload: chatId });
+    socket.emit("chatJoin", chatId);
     socket.on("chatJoined", handleChatJoined);
     return () => {
       socket.off("chatNewMessage", handleNewMessage);
       socket.off("chatUserJoined", handleUserJoined);
       socket.off("chatJoined", handleChatJoined);
       socket.off("chatMoveLog", handleMoveLog);
-      socket.emit("chatLeave", { auth, payload: chatId });
+      socket.emit("chatLeave", chatId);
     };
-  }, [socket, auth, chatId, user]);
+  }, [socket, chatId, user]);
 
   function handleMessageCreation(text: string) {
-    socket.emit("chatSendMessage", { auth, payload: { chatId, text } });
+    socket.emit("chatSendMessage", { chatId, text });
   }
 
   return { messages, handleMessageCreation };

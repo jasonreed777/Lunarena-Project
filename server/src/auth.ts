@@ -21,6 +21,7 @@ async function getUserModel() {
 
 export const auth = betterAuth({
   basePath: "/api/auth",
+  trustedOrigins: ["http://localhost:4530"],
   database: mongodbAdapter(db),
   allowDuplicateEmails: true,
   emailAndPassword: {

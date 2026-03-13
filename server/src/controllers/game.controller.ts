@@ -19,13 +19,13 @@ import { logSocketError } from "./socket.controller.ts";
  * starts with one player, the user who made the POST request.
  */
 export const postCreate: RestAPI<GameInfo> = async (req, res) => {
-  const body = zGameKey.safeParse(req.body);
+  const body = z.object({ payload: zGameKey }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  const game = await createGame(req.authUser, body.data, new Date());
+  const game = await createGame(req.authUser, body.data.payload, new Date());
   res.send(game);
 };
 

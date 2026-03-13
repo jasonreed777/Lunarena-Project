@@ -12,7 +12,7 @@ import { getUserByUsername } from "../services/auth.service.ts";
  * Update a user's information (auth via session middleware)
  */
 export const postByUsername: RestAPI<SafeUserInfo, { username: string }> = async (req, res) => {
-  const body = zUserUpdateRequest.safeParse(req.body);
+  const body = z.object({ payload: zUserUpdateRequest }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
@@ -23,7 +23,7 @@ export const postByUsername: RestAPI<SafeUserInfo, { username: string }> = async
     return;
   }
 
-  res.send(await updateUser(req.params.username, body.data));
+  res.send(await updateUser(req.params.username, body.data.payload));
 };
 
 /**

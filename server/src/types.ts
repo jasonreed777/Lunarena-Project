@@ -34,8 +34,18 @@ export type RestAPI<R = unknown, P = { [key: string]: string }> = (
   res: Response<R | { error: string }>,
 ) => Promise<void>;
 
-export type GameServer = Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
-export type GameServerSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<string, never>, SocketData>;
+export type GameServer = Server<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
+export type GameServerSocket = Socket<
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Record<string, never>,
+  SocketData
+>;
 
 export interface GameViewUpdates {
   watchers: TaggedGameView;

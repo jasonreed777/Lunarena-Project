@@ -38,13 +38,13 @@ export const getById: RestAPI<ThreadInfo, { id: string }> = async (req, res) => 
  * Handle POST requests to `/api/thread/create` that post a new thread.
  */
 export const postCreate: RestAPI<ThreadInfo> = async (req, res) => {
-  const body = zCreateThreadMessage.safeParse(req.body);
+  const body = z.object({ payload: zCreateThreadMessage }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  res.send(await createThread(req.authUser, body.data, new Date()));
+  res.send(await createThread(req.authUser, body.data.payload, new Date()));
 };
 
 /**
@@ -52,13 +52,18 @@ export const postCreate: RestAPI<ThreadInfo> = async (req, res) => {
  * comment to a thread.
  */
 export const postByIdComment: RestAPI<ThreadInfo, { id: string }> = async (req, res) => {
-  const body = z.string().safeParse(req.body);
+  const body = z.object({ payload: z.string() }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  const thread = await addCommentToThread(req.params.id, req.authUser, body.data, new Date());
+  const thread = await addCommentToThread(
+    req.params.id,
+    req.authUser,
+    body.data.payload,
+    new Date(),
+  );
   if (!thread) {
     res.status(404).send({ error: "Thread not found" });
     return;
