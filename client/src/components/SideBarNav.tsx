@@ -1,7 +1,23 @@
 import "./SideBarNav.css";
-import { useState } from "react";
+import React, { useState } from "react";
 import { NavLink, type NavLinkRenderProps } from "react-router-dom";
 import useLoginContext from "../hooks/useLoginContext.ts";
+import { ThemeContext } from "../contexts/ThemeContext.ts";
+import styled from "@emotion/styled";
+import type { ColorTheme } from "../util/types.ts";
+import * as Typography from "../libs/Typography.tsx";
+
+const Container = styled.div<{ theme: ColorTheme }>`
+  background-color: ${({ theme }) => theme.navBar};
+  color: ${({ theme }) => theme.text};
+  padding-inline: 1rem;
+  display: flex;
+  flex-direction: column;
+  width: 150px;
+  gap: 1rem;
+  padding-block: 1rem;
+  grid-area: sidebar;
+`;
 
 /**
  * The SideBarNav component contains the primary naviagation menu. It
@@ -12,6 +28,7 @@ export default function SideBarNav() {
   const [showOptions, setShowOptions] = useState<boolean>(false);
   const { user } = useLoginContext();
   const { username } = user;
+  const { theme } = React.useContext(ThemeContext);
 
   const toggleOptions = () => {
     setShowOptions(!showOptions);
@@ -21,21 +38,21 @@ export default function SideBarNav() {
     `menu_button ${isActive ? "menu_selected" : ""}`;
 
   return (
-    <div className="sideBarNav">
+    <Container className="side-bar-nav" theme={theme}>
       <NavLink to="/" className={navClass}>
-        Home
+        <Typography.NavBar>Home</Typography.NavBar>
       </NavLink>
       <NavLink to="/games" className={navClass}>
-        Games
+        <Typography.NavBar>Games</Typography.NavBar>
       </NavLink>
       <NavLink to="/clan" className={navClass}>
-        Clan
+        <Typography.NavBar>Clan</Typography.NavBar>
       </NavLink>
       <NavLink to="/forum" className={navClass}>
-        Forum
+        <Typography.NavBar> Forum</Typography.NavBar>
       </NavLink>
       <NavLink to="/friends" className={navClass}>
-        Friends
+        <Typography.NavBar>Friends</Typography.NavBar>
       </NavLink>
       <NavLink
         to={`/profile/${username}`}
@@ -43,8 +60,8 @@ export default function SideBarNav() {
         className={navClass}
         onClick={toggleOptions}
       >
-        Profile
+        <Typography.NavBar>Profile</Typography.NavBar>
       </NavLink>
-    </div>
+    </Container>
   );
 }
