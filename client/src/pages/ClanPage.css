@@ -1,10 +1,8 @@
 div.clan-container {
   min-height: 100vh;
-  background-color: #000000;
   background-image: url(../assets/gradients/clan_gradient.png);
   padding: 20px;
   padding-top: 3rem;
-  color: white;
 }
 
 .clan-info {
@@ -33,7 +31,7 @@ div.clan-container {
 
 .clan-info-column {
   height: 100%;
-  border-right: 1px solid #c1c1c1;
+  border-right: 1px solid rgba(150, 150, 150, 0.8);
   padding: 0 20px;
 }
 

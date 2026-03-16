@@ -1,9 +1,9 @@
 import styled from "@emotion/styled";
 import { hexToRGB } from "../util/utils";
 
-export const TransluscentButton = styled.button<{ color: string }>`
+export const TransluscentButton = styled.button<{ color: string; text?: string }>`
   width: 100%;
-  color: white;
+  color: ${({ text }) => text ?? "white"};
   background-color: rgba(
     ${({ color }) => `${hexToRGB(color).r}, ${hexToRGB(color).g}, ${hexToRGB(color).b}`},
     0.2

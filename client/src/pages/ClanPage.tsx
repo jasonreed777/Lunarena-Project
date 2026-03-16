@@ -8,6 +8,8 @@ import { RecentlyPlayed } from "../components/RecentlyPlayed";
 import type { Game, GameInfo } from "@gamenite/shared";
 import type { UserProfileRecord } from "../util/types";
 import { LogoImage } from "../components/LogoImage";
+import React from "react";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 // TODO: This can include more if needed-right now it just references the overall placement of the clan
 type Statistics = {
@@ -162,14 +164,16 @@ export const ClanPage: React.FC = () => {
     icon: "src/assets/avatars/tiger.png",
   };
 
+  const { theme } = React.useContext(ThemeContext);
+
   return (
-    <div className="clan-container">
+    <div className="clan-container" style={{ backgroundColor: theme.primary, color: theme.text }}>
       <div className="title-row">
         <Typography.PageTitle>{clan.name}</Typography.PageTitle>
         <img src={clan.icon} className="icon-lg" style={{ border: `10px solid ${clan.color}` }} />
       </div>
       <Typography.Subtitle>Statistics</Typography.Subtitle>
-      <Divider />
+      <Divider color={theme.text} />
       <div className="stats">
         {ALL_GAMES.map((game) => (
           <div className="statContainer">
@@ -184,7 +188,7 @@ export const ClanPage: React.FC = () => {
       <div className="clan-info">
         <div className="members">
           <Typography.Subtitle>Members</Typography.Subtitle>
-          <Divider style={{ marginBottom: 20 }} />
+          <Divider color={theme.text} style={{ marginBottom: 20 }} />
           <div className="member-list clan-info-column">
             {clan.members.map((member) => {
               /* Sort by role */
@@ -194,7 +198,7 @@ export const ClanPage: React.FC = () => {
         </div>
         <div className="recently-played">
           <Typography.Subtitle>Recently Played</Typography.Subtitle>
-          <Divider style={{ marginBottom: 10 }} />
+          <Divider color={theme.text} style={{ marginBottom: 10 }} />
           <div className="recently-played-list clan-info-column">
             {"message" in gameList ? (
               <p>waiting</p>
@@ -213,7 +217,7 @@ export const ClanPage: React.FC = () => {
         {
           <div className="sponsors">
             <Typography.Subtitle>Sponsors</Typography.Subtitle>
-            <Divider style={{ marginBottom: 20 }} />
+            <Divider color={theme.text} style={{ marginBottom: 20 }} />
             <div className="sponsor-list">
               {clan.sponsors?.map((sponsor) => (
                 <img src="src/assets/avatars/knight.png" />
