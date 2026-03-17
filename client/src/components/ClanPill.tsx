@@ -1,17 +1,23 @@
 import styled from "@emotion/styled";
 import * as Typography from "../libs/Typography";
-import { hexToRGB } from "../util/utils";
+import { darkenColor, hexToRGB } from "../util/utils";
 import type { Clan } from "../pages/ClanPage";
+import React from "react";
+import type { RGBColor } from "../util/types";
 
-const Container = styled.div<{ color: string; small: boolean }>`
+const Container = styled.div<{ customColor: RGBColor; small: boolean }>`
   width: 100%;
   height: 50px;
-  color: ${({ color }) => color ?? "white"};
+
   background-color: rgba(
-    ${({ color }) => `${hexToRGB(color).r}, ${hexToRGB(color).g}, ${hexToRGB(color).b}`},
+    ${({ customColor }) => `${customColor.r}, ${customColor.g}, ${customColor.b}`},
     0.2
   );
-  border: 3px solid ${({ color }) => color};
+  color: ${({ customColor }) =>
+    customColor ? `rgb(${customColor.r}, ${customColor.g}, ${customColor.b})` : "white"};
+  border: 3px solid
+    ${({ customColor }) => `rgb(${customColor.r}, ${customColor.g}, ${customColor.b})`};
+
   border-radius: 100px;
   padding: 6px 10px;
   transition: all 0.2s;
@@ -38,13 +44,22 @@ const ProfilePicture = styled.img`
   border-radius: 50%;
 `;
 
-export const ClanPill: React.FC<{ clan: Clan; value?: number; small?: boolean }> = ({
-  clan,
-  value,
-  small,
-}) => {
+export const ClanPill: React.FC<{
+  clan: Clan;
+  value?: number;
+  small?: boolean;
+  themeId: string;
+}> = ({ clan, value, small, themeId }) => {
+  const [color, setColor] = React.useState<RGBColor>(
+    themeId === "dark" ? hexToRGB(clan.color) : darkenColor(hexToRGB(clan.color)),
+  );
+
+  React.useEffect(() => {
+    setColor(themeId === "dark" ? hexToRGB(clan.color) : darkenColor(hexToRGB(clan.color)));
+  }, [themeId, clan.color]);
+
   return (
-    <Container color={clan.color} small={small || false}>
+    <Container customColor={color} small={small || false}>
       <Left>
         <ProfilePicture src={clan.icon || "src/assets/logos/logo_multicolor.svg"} />
         <Typography.ProfileText>{clan.name}</Typography.ProfileText>

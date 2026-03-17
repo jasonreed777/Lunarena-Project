@@ -23,10 +23,23 @@ div.clan-container {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   margin-bottom: 30px;
+
+  @media screen and (max-width: 850px) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+  }
 }
 
-.statContainer {
+.stat-container {
   width: 80%;
+
+  @media screen and (max-width: 850px) {
+    width: 50%;
+  }
 }
 
 .clan-info-column {

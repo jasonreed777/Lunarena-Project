@@ -88,10 +88,9 @@ export type ColorTheme = {
   primary: string;
   secondary: string;
   text: string;
+  secondaryText: string;
   navBar: string;
   navButton: string;
-  primaryRow: string;
-  secondaryRow: string;
 };
 
 /**
@@ -100,22 +99,25 @@ export type ColorTheme = {
 export const Colors: Record<Theme, ColorTheme> = {
   light: {
     _id: "light",
-    primary: "#FFFFFF",
-    secondary: "#24989E",
+    primary: "#ffffff",
+    secondary: "#24989e",
     text: "#252525",
-    navBar: "rgba(222, 222, 222, 0.30);",
+    secondaryText: "#535353",
+    navBar: "#ffffff",
     navButton: "#119C26",
-    primaryRow: "#252525",
-    secondaryRow: "#434343",
   },
   dark: {
     _id: "dark",
     primary: "#000000",
-    secondary: "#14DCE7",
-    text: "#FFFFFF",
-    navBar: "rgba(29, 29, 29, 0.8);",
-    navButton: "#2AD143",
-    primaryRow: "#FFFFFF",
-    secondaryRow: "#A9A9A9",
+    secondary: "#14dce7",
+    text: "#ffffff",
+    secondaryText: "#c1c1c1",
+    navBar: "#252525",
+    navButton: "#2ad143",
   },
 };
+
+/**
+ * Represents a color with red, green, and blue values
+ */
+export type RGBColor = { r: number; g: number; b: number };

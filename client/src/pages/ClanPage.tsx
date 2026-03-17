@@ -36,17 +36,21 @@ const ALL_GAMES = ["nim", "guess", "minesweeper"];
  * @param value the placement of the user's clan in a game
  * @returns
  */
-const StatList: React.FC<{ game: Game; clans: Clan[]; value: number }> = ({
-  game,
-  clans,
-  value,
-}) => {
+const StatList: React.FC<{
+  game: Game;
+  clans: Clan[];
+  value: number;
+  color: string;
+  themeId: string;
+}> = ({ game, clans, value, color, themeId }) => {
   return (
-    <div id="statContainer">
-      <Typography.SubtitleSmall>{game.toString().toUpperCase()}</Typography.SubtitleSmall>
+    <div>
+      <Typography.SubtitleSmall style={{ color }}>
+        {game.toString().toUpperCase()}
+      </Typography.SubtitleSmall>
       <div id="clanGroup">
         {clans.map((clan, index) => (
-          <ClanPill clan={clan} small={index !== 1} value={index - 1 + value} />
+          <ClanPill clan={clan} small={index !== 1} value={index - 1 + value} themeId={themeId} />
         ))}
       </div>
     </div>
@@ -176,11 +180,13 @@ export const ClanPage: React.FC = () => {
       <Divider color={theme.text} />
       <div className="stats">
         {ALL_GAMES.map((game) => (
-          <div className="statContainer">
+          <div className="stat-container">
             <StatList
               game={game as unknown as Game}
               clans={/* this should pull two clans from the backend */ [clan, clan2, clan3]}
               value={clan.stats[game as Game]}
+              color={theme.secondaryText}
+              themeId={theme._id}
             />
           </div>
         ))}
@@ -192,7 +198,7 @@ export const ClanPage: React.FC = () => {
           <div className="member-list clan-info-column">
             {clan.members.map((member) => {
               /* Sort by role */
-              return <UserPill user={member} />;
+              return <UserPill user={member} themeId={theme._id} />;
             })}
           </div>
         </div>

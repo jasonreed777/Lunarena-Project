@@ -58,7 +58,6 @@ export const Subtitle = styled.h2`
  */
 export const SubtitleSmall = styled.h5`
   font-family: "apparat-semicond", sans-serif;
-  color: #c1c1c1;
   font-weight: 500;
   font-size: 16px;
   font-style: normal;
