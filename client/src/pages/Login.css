@@ -7,7 +7,7 @@
   min-height: 100vh;
   background-color: black;
   color: white;
-  background-image: url('../assets/gradients/login_gradient.png');
+  background-image: url("../assets/gradients/login_gradient.png");
   padding: 20px;
 }
 
@@ -38,4 +38,4 @@ form.login .labeled-section {
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
-} 
+}
