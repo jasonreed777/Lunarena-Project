@@ -1,14 +1,35 @@
 import { randomUUID } from "node:crypto";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import supertest, { type Response } from "supertest";
 import { app } from "../src/app.ts";
+import { getUserByUsername } from "../src/services/auth.service.ts";
+
+const testAuth = vi.hoisted(() => ({ user: null as { userId: string; username: string } | null }));
+
+vi.mock("../src/middleware/auth.middleware.ts", () => ({
+  requireAuth: vi.fn((req, res, next) => {
+    if (!testAuth.user) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      res.status(401).send({ error: "Not authenticated" });
+      return;
+    }
+    req.authUser = testAuth.user;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    next();
+  }),
+}));
+
+async function loginAs(username: string) {
+  const u = await getUserByUsername(username);
+  if (!u) throw new Error(`test user ${username} not found`);
+  testAuth.user = { userId: u.userId, username: u.username };
+}
+
+function logout() {
+  testAuth.user = null;
+}
 
 let response: Response;
-
-const auth0 = { username: "user0", password: "pwd0000" };
-const auth1 = { username: "user1", password: "pwd1111" };
-const auth2 = { username: "user2", password: "pwd2222" };
-const auth3 = { username: "user3", password: "pwd3333" };
 
 interface FriendEntry {
   friendshipId: string;
@@ -22,27 +43,24 @@ interface RequestEntry {
   createdAt: string;
 }
 
-describe("POST /api/friends/list", () => {
-  it("should return 400 on ill-formed payload", async () => {
-    response = await supertest(app).post("/api/friends/list").send({});
-    expect(response.status).toBe(400);
-  });
+beforeEach(() => logout());
 
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post("/api/friends/list")
-      .send({ auth: { ...auth1, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
+describe("POST /api/friends/list", () => {
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app).post("/api/friends/list").send({});
+    expect(response.status).toBe(401);
   });
 
   it("should return friends list for authenticated user", async () => {
-    response = await supertest(app).post("/api/friends/list").send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    response = await supertest(app).post("/api/friends/list").send({});
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
   });
 
   it("should return friends with correct structure", async () => {
-    response = await supertest(app).post("/api/friends/list").send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    response = await supertest(app).post("/api/friends/list").send({});
     expect(response.status).toBe(200);
 
     const friends = response.body as FriendEntry[];
@@ -57,12 +75,11 @@ describe("POST /api/friends/list", () => {
   });
 
   it("should show friendship from both participants' perspectives", async () => {
-    const user1Friends = await supertest(app)
-      .post("/api/friends/list")
-      .send({ auth: auth1, payload: {} });
-    const user2Friends = await supertest(app)
-      .post("/api/friends/list")
-      .send({ auth: auth2, payload: {} });
+    await loginAs("user1");
+    const user1Friends = await supertest(app).post("/api/friends/list").send({});
+
+    await loginAs("user2");
+    const user2Friends = await supertest(app).post("/api/friends/list").send({});
 
     expect(user1Friends.status).toBe(200);
     expect(user2Friends.status).toBe(200);
@@ -82,22 +99,14 @@ describe("POST /api/friends/list", () => {
 });
 
 describe("POST /api/friends/requests", () => {
-  it("should return 400 on ill-formed payload", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app).post("/api/friends/requests").send({});
-    expect(response.status).toBe(400);
-  });
-
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post("/api/friends/requests")
-      .send({ auth: { ...auth1, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
   });
 
   it("should return incoming and outgoing requests", async () => {
-    response = await supertest(app)
-      .post("/api/friends/requests")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    response = await supertest(app).post("/api/friends/requests").send({});
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("incoming");
     expect(response.body).toHaveProperty("outgoing");
@@ -106,9 +115,8 @@ describe("POST /api/friends/requests", () => {
   });
 
   it("should show pending request from user3 in user1 incoming", async () => {
-    response = await supertest(app)
-      .post("/api/friends/requests")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    response = await supertest(app).post("/api/friends/requests").send({});
     expect(response.status).toBe(200);
 
     const incoming = response.body.incoming as RequestEntry[];
@@ -121,37 +129,41 @@ describe("POST /api/friends/requests", () => {
 
 describe("POST /api/friends/request", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user1");
     response = await supertest(app).post("/api/friends/request").send({});
     expect(response.status).toBe(400);
   });
 
-  it("should return 403 on invalid credentials", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app)
       .post("/api/friends/request")
-      .send({ auth: { ...auth1, password: "wrong" }, payload: { receiverUsername: "user2" } });
-    expect(response.status).toBe(403);
+      .send({ payload: { receiverUsername: "user2" } });
+    expect(response.status).toBe(401);
   });
 
   it("should not allow sending friend request to yourself", async () => {
+    await loginAs("user1");
     response = await supertest(app)
       .post("/api/friends/request")
-      .send({ auth: auth1, payload: { receiverUsername: "user1" } });
+      .send({ payload: { receiverUsername: "user1" } });
     expect(response.status).toBe(200);
     expect(response.body).toStrictEqual({ error: "Cannot send friend request to yourself" });
   });
 
   it("should return error for non-existent user", async () => {
+    await loginAs("user1");
     response = await supertest(app)
       .post("/api/friends/request")
-      .send({ auth: auth1, payload: { receiverUsername: randomUUID().toString() } });
+      .send({ payload: { receiverUsername: randomUUID().toString() } });
     expect(response.status).toBe(200);
     expect(response.body).toStrictEqual({ error: "User not found" });
   });
 
   it("should return error when already friends", async () => {
+    await loginAs("user1");
     response = await supertest(app)
       .post("/api/friends/request")
-      .send({ auth: auth1, payload: { receiverUsername: "user2" } });
+      .send({ payload: { receiverUsername: "user2" } });
     expect(response.status).toBe(200);
     expect(response.body).toStrictEqual({ error: "Already friends with this user" });
   });
@@ -159,13 +171,15 @@ describe("POST /api/friends/request", () => {
 
 describe("POST /api/friends/:id/respond", () => {
   it("should return 404 for non-existent friendship", async () => {
+    await loginAs("user1");
     response = await supertest(app)
       .post(`/api/friends/${randomUUID().toString()}/respond`)
-      .send({ auth: auth1, payload: { action: "accept" } });
+      .send({ payload: { action: "accept" } });
     expect(response.status).toBe(404);
   });
 
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user1");
     response = await supertest(app)
       .post(`/api/friends/${randomUUID().toString()}/respond`)
       .send({});
@@ -173,16 +187,16 @@ describe("POST /api/friends/:id/respond", () => {
   });
 
   it("should return 400 on invalid action", async () => {
+    await loginAs("user1");
     response = await supertest(app)
       .post(`/api/friends/${randomUUID().toString()}/respond`)
-      .send({ auth: auth1, payload: { action: "invalid" } });
+      .send({ payload: { action: "invalid" } });
     expect(response.status).toBe(400);
   });
 
   it("should allow receiver to accept pending request", async () => {
-    const requestsRes = await supertest(app)
-      .post("/api/friends/requests")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const requestsRes = await supertest(app).post("/api/friends/requests").send({});
 
     const incoming = requestsRes.body.incoming as RequestEntry[];
     const fromUser3 = incoming.find((r) => r.user.username === "user3");
@@ -190,22 +204,21 @@ describe("POST /api/friends/:id/respond", () => {
     if (fromUser3) {
       response = await supertest(app)
         .post(`/api/friends/${fromUser3.friendshipId}/respond`)
-        .send({ auth: auth1, payload: { action: "accept" } });
+        .send({ payload: { action: "accept" } });
       expect(response.status).toBe(200);
       expect(response.body.status).toBe("accepted");
     }
   });
 
   it("should not allow sender to respond to their own request", async () => {
-    const requestsRes = await supertest(app)
-      .post("/api/friends/requests")
-      .send({ auth: auth3, payload: {} });
+    await loginAs("user3");
+    const requestsRes = await supertest(app).post("/api/friends/requests").send({});
 
     if (requestsRes.body.outgoing.length > 0) {
       const outgoingRequest = requestsRes.body.outgoing[0];
       response = await supertest(app)
         .post(`/api/friends/${outgoingRequest.friendshipId}/respond`)
-        .send({ auth: auth3, payload: { action: "accept" } });
+        .send({ payload: { action: "accept" } });
       expect(response.status).toBe(200);
       expect(response.body.error).toBe("Not authorized to respond to this request");
     }
@@ -214,50 +227,36 @@ describe("POST /api/friends/:id/respond", () => {
 
 describe("DELETE /api/friends/:id", () => {
   it("should return 404 for non-existent friendship", async () => {
-    response = await supertest(app)
-      .delete(`/api/friends/${randomUUID().toString()}`)
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    response = await supertest(app).delete(`/api/friends/${randomUUID().toString()}`).send({});
     expect(response.status).toBe(404);
   });
 
-  it("should return 400 on ill-formed payload", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app).delete(`/api/friends/${randomUUID().toString()}`).send({});
-    expect(response.status).toBe(400);
-  });
-
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .delete(`/api/friends/${randomUUID().toString()}`)
-      .send({ auth: { ...auth1, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
   });
 
   it("should allow participant to remove friendship and affect both sides", async () => {
-    const friendsRes = await supertest(app)
-      .post("/api/friends/list")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const friendsRes = await supertest(app).post("/api/friends/list").send({});
 
     const friends = friendsRes.body as FriendEntry[];
     const user2Friend = friends.find((f) => f.friend.username === "user2");
 
     if (user2Friend) {
-      response = await supertest(app)
-        .delete(`/api/friends/${user2Friend.friendshipId}`)
-        .send({ auth: auth1, payload: {} });
+      response = await supertest(app).delete(`/api/friends/${user2Friend.friendshipId}`).send({});
       expect(response.status).toBe(200);
       expect(response.body).toStrictEqual({ success: true });
 
-      const user1FriendsAfter = await supertest(app)
-        .post("/api/friends/list")
-        .send({ auth: auth1, payload: {} });
+      const user1FriendsAfter = await supertest(app).post("/api/friends/list").send({});
       const user1StillFriends = (user1FriendsAfter.body as FriendEntry[]).find(
         (f) => f.friend.username === "user2",
       );
       expect(user1StillFriends).toBeUndefined();
 
-      const user2FriendsAfter = await supertest(app)
-        .post("/api/friends/list")
-        .send({ auth: auth2, payload: {} });
+      await loginAs("user2");
+      const user2FriendsAfter = await supertest(app).post("/api/friends/list").send({});
       const user2StillFriends = (user2FriendsAfter.body as FriendEntry[]).find(
         (f) => f.friend.username === "user1",
       );
@@ -267,19 +266,20 @@ describe("DELETE /api/friends/:id", () => {
 
   it("should allow either participant to remove friendship", async () => {
     // Create friendship: user0 sends request, user2 accepts
+    await loginAs("user0");
     const requestRes = await supertest(app)
       .post("/api/friends/request")
-      .send({ auth: auth0, payload: { receiverUsername: "user2" } });
+      .send({ payload: { receiverUsername: "user2" } });
 
     if (requestRes.body.friendshipId) {
+      await loginAs("user2");
       await supertest(app)
         .post(`/api/friends/${requestRes.body.friendshipId}/respond`)
-        .send({ auth: auth2, payload: { action: "accept" } });
+        .send({ payload: { action: "accept" } });
     }
 
-    const user2Friends = await supertest(app)
-      .post("/api/friends/list")
-      .send({ auth: auth2, payload: {} });
+    await loginAs("user2");
+    const user2Friends = await supertest(app).post("/api/friends/list").send({});
 
     const user0Friend = (user2Friends.body as FriendEntry[]).find(
       (f) => f.friend.username === "user0",
@@ -287,23 +287,19 @@ describe("DELETE /api/friends/:id", () => {
 
     if (user0Friend) {
       // user2 (the receiver, not original requester) removes the friendship
-      response = await supertest(app)
-        .delete(`/api/friends/${user0Friend.friendshipId}`)
-        .send({ auth: auth2, payload: {} });
+      response = await supertest(app).delete(`/api/friends/${user0Friend.friendshipId}`).send({});
       expect(response.status).toBe(200);
       expect(response.body).toStrictEqual({ success: true });
 
-      const user0FriendsAfter = await supertest(app)
-        .post("/api/friends/list")
-        .send({ auth: auth0, payload: {} });
+      await loginAs("user0");
+      const user0FriendsAfter = await supertest(app).post("/api/friends/list").send({});
       const user0StillFriends = (user0FriendsAfter.body as FriendEntry[]).find(
         (f) => f.friend.username === "user2",
       );
       expect(user0StillFriends).toBeUndefined();
 
-      const user2FriendsAfter = await supertest(app)
-        .post("/api/friends/list")
-        .send({ auth: auth2, payload: {} });
+      await loginAs("user2");
+      const user2FriendsAfter = await supertest(app).post("/api/friends/list").send({});
       const user2StillFriends = (user2FriendsAfter.body as FriendEntry[]).find(
         (f) => f.friend.username === "user0",
       );
@@ -312,16 +308,14 @@ describe("DELETE /api/friends/:id", () => {
   });
 
   it("should not allow non-participant to remove friendship", async () => {
-    const friendsRes = await supertest(app)
-      .post("/api/friends/list")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const friendsRes = await supertest(app).post("/api/friends/list").send({});
 
     const anyFriend = friendsRes.body[0];
 
     if (anyFriend) {
-      response = await supertest(app)
-        .delete(`/api/friends/${anyFriend.friendshipId}`)
-        .send({ auth: auth0, payload: {} });
+      await loginAs("user0");
+      response = await supertest(app).delete(`/api/friends/${anyFriend.friendshipId}`).send({});
       expect(response.status).toBe(200);
       expect(response.body.error).toBe("Not authorized to remove this friendship");
     }

@@ -31,10 +31,7 @@ export const threadInfo = async (id: string): APIResponse<ThreadInfo> => {
 /**
  * Sends a POST request to add a comment to a thread
  */
-export const addCommentToThread = async (
-  id: string,
-  payload: string,
-): APIResponse<ThreadInfo> => {
+export const addCommentToThread = async (id: string, payload: string): APIResponse<ThreadInfo> => {
   try {
     const res = await api.post<ThreadInfo | ErrorMsg>(`${THREAD_API_URL}/${id}/comment`, {
       payload,

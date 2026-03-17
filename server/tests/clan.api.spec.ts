@@ -1,14 +1,35 @@
 import { randomUUID } from "node:crypto";
-import { describe, expect, it, beforeAll } from "vitest";
+import { describe, expect, it, beforeAll, beforeEach, vi } from "vitest";
 import supertest, { type Response } from "supertest";
 import { app } from "../src/app.ts";
+import { getUserByUsername } from "../src/services/auth.service.ts";
+
+const testAuth = vi.hoisted(() => ({ user: null as { userId: string; username: string } | null }));
+
+vi.mock("../src/middleware/auth.middleware.ts", () => ({
+  requireAuth: vi.fn((req, res, next) => {
+    if (!testAuth.user) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      res.status(401).send({ error: "Not authenticated" });
+      return;
+    }
+    req.authUser = testAuth.user;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    next();
+  }),
+}));
+
+async function loginAs(username: string) {
+  const u = await getUserByUsername(username);
+  if (!u) throw new Error(`test user ${username} not found`);
+  testAuth.user = { userId: u.userId, username: u.username };
+}
+
+function logout() {
+  testAuth.user = null;
+}
 
 let response: Response;
-
-const auth0 = { username: "user0", password: "pwd0000" };
-const auth1 = { username: "user1", password: "pwd1111" };
-const auth2 = { username: "user2", password: "pwd2222" };
-const auth3 = { username: "user3", password: "pwd3333" };
 
 interface ClanInfo {
   clanId: string;
@@ -35,15 +56,14 @@ interface ClanInviteInfo {
   createdAt: string;
 }
 
-// Helper to clean up - leave any clan the user might be in
-async function leaveAnyClan(auth: { username: string; password: string }) {
-  const currentRes = await supertest(app).post("/api/clans/current").send({ auth, payload: {} });
+beforeEach(() => logout());
 
-  if (currentRes.body && currentRes.body.clan) {
-    // Try to leave, might fail if owner
-    await supertest(app)
-      .post(`/api/clans/${currentRes.body.clan.clanId}/leave`)
-      .send({ auth, payload: {} });
+// Helper to leave any clan the user might be in
+async function leaveAnyClan(username: string) {
+  await loginAs(username);
+  const currentRes = await supertest(app).post("/api/clans/current").send({});
+  if (currentRes.body?.clan) {
+    await supertest(app).post(`/api/clans/${currentRes.body.clan.clanId}/leave`).send({});
   }
 }
 
@@ -56,23 +76,16 @@ describe("GET /api/clans/list", () => {
 });
 
 describe("POST /api/clans/current", () => {
-  it("should return 400 on ill-formed payload", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app).post("/api/clans/current").send({});
-    expect(response.status).toBe(400);
-  });
-
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: { ...auth1, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
   });
 
   it("should return null when user has no clan", async () => {
-    await leaveAnyClan(auth0);
-    response = await supertest(app).post("/api/clans/current").send({ auth: auth0, payload: {} });
+    await leaveAnyClan("user0");
+    await loginAs("user0");
+    response = await supertest(app).post("/api/clans/current").send({});
     expect(response.status).toBe(200);
-    // Express can send null, {}, or body without clan property - all indicate no clan
     const body = response.body as Record<string, unknown> | null;
     const hasNoClan =
       body === null ||
@@ -84,42 +97,37 @@ describe("POST /api/clans/current", () => {
 
 describe("POST /api/clans/create", () => {
   beforeAll(async () => {
-    // Make sure user0 is not in a clan
-    await leaveAnyClan(auth0);
+    await leaveAnyClan("user0");
   });
 
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
     response = await supertest(app).post("/api/clans/create").send({});
     expect(response.status).toBe(400);
   });
 
-  it("should return 403 on invalid credentials", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app)
       .post("/api/clans/create")
-      .send({
-        auth: { ...auth0, password: "wrong" },
-        payload: { name: "Test Clan", color: "#FF0000", isPublic: true },
-      });
-    expect(response.status).toBe(403);
+      .send({ payload: { name: "Test Clan", color: "#FF0000", isPublic: true } });
+    expect(response.status).toBe(401);
   });
 
   it("should return 400 on invalid color format", async () => {
+    await loginAs("user0");
     response = await supertest(app)
       .post("/api/clans/create")
-      .send({
-        auth: auth0,
-        payload: { name: "Test Clan", color: "red", isPublic: true },
-      });
+      .send({ payload: { name: "Test Clan", color: "red", isPublic: true } });
     expect(response.status).toBe(400);
   });
 
   it("should create a public clan and make creator owner", async () => {
-    await leaveAnyClan(auth0);
+    await leaveAnyClan("user0");
+    await loginAs("user0");
 
     response = await supertest(app)
       .post("/api/clans/create")
       .send({
-        auth: auth0,
         payload: {
           name: "Test Public Clan",
           bio: "A test clan",
@@ -135,24 +143,18 @@ describe("POST /api/clans/create", () => {
     expect(response.body.memberCount).toBe(1);
 
     // Verify user is owner
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
     expect(currentRes.body.role).toBe("owner");
   });
 
   it("should not allow creating clan when already in one", async () => {
-    // First ensure user0 is in a clan (might not be if previous test failed or tests ran in parallel)
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (!currentRes.body?.clan) {
-      // Create a clan first
       await supertest(app)
         .post("/api/clans/create")
         .send({
-          auth: auth0,
           payload: {
             name: `SetupClan_${Date.now()}`,
             color: "#FF6B35",
@@ -161,11 +163,9 @@ describe("POST /api/clans/create", () => {
         });
     }
 
-    // Now try to create another clan - should fail
     response = await supertest(app)
       .post("/api/clans/create")
       .send({
-        auth: auth0,
         payload: {
           name: "Another Clan",
           color: "#00FF00",
@@ -178,12 +178,12 @@ describe("POST /api/clans/create", () => {
   });
 
   it("should not allow duplicate clan names", async () => {
-    await leaveAnyClan(auth1);
+    await leaveAnyClan("user1");
+    await loginAs("user1");
 
     response = await supertest(app)
       .post("/api/clans/create")
       .send({
-        auth: auth1,
         payload: {
           name: "Test Public Clan",
           color: "#0000FF",
@@ -203,10 +203,8 @@ describe("GET /api/clans/:id", () => {
   });
 
   it("should return clan details with members", async () => {
-    // Get user0's clan
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app).get(`/api/clans/${currentRes.body.clan.clanId}`);
@@ -215,7 +213,6 @@ describe("GET /api/clans/:id", () => {
       expect(Array.isArray(response.body.members)).toBe(true);
       expect(response.body.members.length).toBeGreaterThan(0);
 
-      // Check owner is in members
       const members = response.body.members as ClanMemberInfo[];
       const owner = members.find((m) => m.role === "owner");
       expect(owner).toBeDefined();
@@ -231,9 +228,8 @@ describe("GET /api/clans/:id/members", () => {
   });
 
   it("should return members list", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app).get(`/api/clans/${currentRes.body.clan.clanId}/members`);
@@ -244,39 +240,29 @@ describe("GET /api/clans/:id/members", () => {
 });
 
 describe("POST /api/clans/:id/join", () => {
-  it("should return 400 on ill-formed payload", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app).post(`/api/clans/${randomUUID()}/join`).send({});
-    expect(response.status).toBe(400);
-  });
-
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/join`)
-      .send({ auth: { ...auth1, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
   });
 
   it("should return error for non-existent clan", async () => {
-    await leaveAnyClan(auth1);
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/join`)
-      .send({ auth: auth1, payload: {} });
+    await leaveAnyClan("user1");
+    await loginAs("user1");
+    response = await supertest(app).post(`/api/clans/${randomUUID()}/join`).send({});
     expect(response.status).toBe(200);
     expect(response.body.error).toBe("Clan not found");
   });
 
   it("should allow joining a public clan", async () => {
-    await leaveAnyClan(auth1);
-
-    // Get user0's public clan
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await leaveAnyClan("user1");
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
+      await loginAs("user1");
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/join`)
-        .send({ auth: auth1, payload: {} });
+        .send({});
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("clan");
@@ -285,14 +271,14 @@ describe("POST /api/clans/:id/join", () => {
   });
 
   it("should not allow joining when already in a clan", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
+      await loginAs("user1");
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/join`)
-        .send({ auth: auth1, payload: {} });
+        .send({});
 
       expect(response.status).toBe(200);
       expect(response.body.error).toMatch(/already|must leave/i);
@@ -302,22 +288,26 @@ describe("POST /api/clans/:id/join", () => {
 
 describe("POST /api/clans/:id/role", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
     response = await supertest(app).post(`/api/clans/${randomUUID()}/role`).send({});
     expect(response.status).toBe(400);
   });
 
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app)
+      .post(`/api/clans/${randomUUID()}/role`)
+      .send({ payload: { username: "user1", role: "admin" } });
+    expect(response.status).toBe(401);
+  });
+
   it("should allow owner to promote member to admin", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/role`)
-        .send({
-          auth: auth0,
-          payload: { username: "user1", role: "admin" },
-        });
+        .send({ payload: { username: "user1", role: "admin" } });
 
       expect(response.status).toBe(200);
       if (!response.body.error) {
@@ -327,25 +317,17 @@ describe("POST /api/clans/:id/role", () => {
   });
 
   it("should not allow member to change roles", async () => {
-    await leaveAnyClan(auth2);
-
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await leaveAnyClan("user2");
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
-      // user2 joins as member
-      await supertest(app)
-        .post(`/api/clans/${currentRes.body.clan.clanId}/join`)
-        .send({ auth: auth2, payload: {} });
+      await loginAs("user2");
+      await supertest(app).post(`/api/clans/${currentRes.body.clan.clanId}/join`).send({});
 
-      // user2 tries to promote themselves
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/role`)
-        .send({
-          auth: auth2,
-          payload: { username: "user2", role: "admin" },
-        });
+        .send({ payload: { username: "user2", role: "admin" } });
 
       expect(response.status).toBe(200);
       expect(response.body.error).toBeDefined();
@@ -355,22 +337,27 @@ describe("POST /api/clans/:id/role", () => {
 
 describe("POST /api/clans/:id/kick", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
     response = await supertest(app).post(`/api/clans/${randomUUID()}/kick`).send({});
     expect(response.status).toBe(400);
   });
 
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app)
+      .post(`/api/clans/${randomUUID()}/kick`)
+      .send({ payload: { username: "user1" } });
+    expect(response.status).toBe(401);
+  });
+
   it("should not allow member to kick", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
+      await loginAs("user2");
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/kick`)
-        .send({
-          auth: auth2,
-          payload: { username: "user1" },
-        });
+        .send({ payload: { username: "user1" } });
 
       expect(response.status).toBe(200);
       expect(response.body.error).toMatch(/only.*admin|not authorized/i);
@@ -378,18 +365,14 @@ describe("POST /api/clans/:id/kick", () => {
   });
 
   it("should not allow kicking the owner", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
-      // user1 is admin, tries to kick owner
+      await loginAs("user1");
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/kick`)
-        .send({
-          auth: auth1,
-          payload: { username: "user0" },
-        });
+        .send({ payload: { username: "user0" } });
 
       expect(response.status).toBe(200);
       expect(response.body.error).toBe("Cannot kick the clan owner");
@@ -397,17 +380,13 @@ describe("POST /api/clans/:id/kick", () => {
   });
 
   it("should allow owner to kick member", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/kick`)
-        .send({
-          auth: auth0,
-          payload: { username: "user2" },
-        });
+        .send({ payload: { username: "user2" } });
 
       expect(response.status).toBe(200);
       if (!response.body.error) {
@@ -418,22 +397,21 @@ describe("POST /api/clans/:id/kick", () => {
 });
 
 describe("POST /api/clans/:id/leave", () => {
-  it("should return 400 on ill-formed payload", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app).post(`/api/clans/${randomUUID()}/leave`).send({});
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
   });
 
   it("should return error when not a member", async () => {
-    await leaveAnyClan(auth3);
-
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await leaveAnyClan("user3");
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
+      await loginAs("user3");
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/leave`)
-        .send({ auth: auth3, payload: {} });
+        .send({});
 
       expect(response.status).toBe(200);
       expect(response.body.error).toBe("You are not a member of this clan");
@@ -441,14 +419,13 @@ describe("POST /api/clans/:id/leave", () => {
   });
 
   it("should not allow owner to leave without transferring ownership", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan && currentRes.body.role === "owner") {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/leave`)
-        .send({ auth: auth0, payload: {} });
+        .send({});
 
       expect(response.status).toBe(200);
       expect(response.body.error).toBe("You must transfer ownership before leaving");
@@ -456,22 +433,18 @@ describe("POST /api/clans/:id/leave", () => {
   });
 
   it("should allow member to leave", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan && currentRes.body.role !== "owner") {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/leave`)
-        .send({ auth: auth1, payload: {} });
+        .send({});
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
-      // Verify they left - response body will be null, {}, or have no clan property
-      const afterRes = await supertest(app)
-        .post("/api/clans/current")
-        .send({ auth: auth1, payload: {} });
+      const afterRes = await supertest(app).post("/api/clans/current").send({});
       const afterBody = afterRes.body as Record<string, unknown> | null;
       const hasNoClan =
         afterBody === null ||
@@ -484,36 +457,37 @@ describe("POST /api/clans/:id/leave", () => {
 
 describe("POST /api/clans/:id/transfer", () => {
   beforeAll(async () => {
-    // Ensure user1 is in the clan for transfer test
-    await leaveAnyClan(auth1);
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await leaveAnyClan("user1");
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
-      await supertest(app)
-        .post(`/api/clans/${currentRes.body.clan.clanId}/join`)
-        .send({ auth: auth1, payload: {} });
+      await loginAs("user1");
+      await supertest(app).post(`/api/clans/${currentRes.body.clan.clanId}/join`).send({});
     }
   });
 
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
     response = await supertest(app).post(`/api/clans/${randomUUID()}/transfer`).send({});
     expect(response.status).toBe(400);
   });
 
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app)
+      .post(`/api/clans/${randomUUID()}/transfer`)
+      .send({ payload: { newOwnerUsername: "user1" } });
+    expect(response.status).toBe(401);
+  });
+
   it("should not allow non-owner to transfer", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/transfer`)
-        .send({
-          auth: auth1,
-          payload: { newOwnerUsername: "user0" },
-        });
+        .send({ payload: { newOwnerUsername: "user0" } });
 
       expect(response.status).toBe(200);
       expect(response.body.error).toBe("Only the owner can transfer ownership");
@@ -521,31 +495,23 @@ describe("POST /api/clans/:id/transfer", () => {
   });
 
   it("should allow owner to transfer ownership", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan && currentRes.body.role === "owner") {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/transfer`)
-        .send({
-          auth: auth0,
-          payload: { newOwnerUsername: "user1" },
-        });
+        .send({ payload: { newOwnerUsername: "user1" } });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
-      // Verify user1 is now owner
-      const user1Res = await supertest(app)
-        .post("/api/clans/current")
-        .send({ auth: auth1, payload: {} });
+      await loginAs("user1");
+      const user1Res = await supertest(app).post("/api/clans/current").send({});
       expect(user1Res.body.role).toBe("owner");
 
-      // Verify user0 is now member
-      const user0Res = await supertest(app)
-        .post("/api/clans/current")
-        .send({ auth: auth0, payload: {} });
+      await loginAs("user0");
+      const user0Res = await supertest(app).post("/api/clans/current").send({});
       expect(user0Res.body.role).toBe("member");
     }
   });
@@ -553,22 +519,26 @@ describe("POST /api/clans/:id/transfer", () => {
 
 describe("POST /api/clans/:id/invite", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
     response = await supertest(app).post(`/api/clans/${randomUUID()}/invite`).send({});
     expect(response.status).toBe(400);
   });
 
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app)
+      .post(`/api/clans/${randomUUID()}/invite`)
+      .send({ payload: { username: "user3" } });
+    expect(response.status).toBe(401);
+  });
+
   it("should not allow member to invite", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan && currentRes.body.role === "member") {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/invite`)
-        .send({
-          auth: auth0,
-          payload: { username: "user3" },
-        });
+        .send({ payload: { username: "user3" } });
 
       expect(response.status).toBe(200);
       expect(response.body.error).toMatch(/only.*admin/i);
@@ -576,19 +546,14 @@ describe("POST /api/clans/:id/invite", () => {
   });
 
   it("should allow admin/owner to invite user", async () => {
-    await leaveAnyClan(auth3);
-
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await leaveAnyClan("user3");
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/invite`)
-        .send({
-          auth: auth1,
-          payload: { username: "user3" },
-        });
+        .send({ payload: { username: "user3" } });
 
       expect(response.status).toBe(200);
       if (!response.body.error) {
@@ -600,15 +565,14 @@ describe("POST /api/clans/:id/invite", () => {
 });
 
 describe("POST /api/clans/my-invites", () => {
-  it("should return 400 on ill-formed payload", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app).post("/api/clans/my-invites").send({});
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
   });
 
   it("should return pending invites for user", async () => {
-    response = await supertest(app)
-      .post("/api/clans/my-invites")
-      .send({ auth: auth3, payload: {} });
+    await loginAs("user3");
+    response = await supertest(app).post("/api/clans/my-invites").send({});
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -617,27 +581,35 @@ describe("POST /api/clans/my-invites", () => {
 
 describe("POST /api/clans/invites/:inviteId/respond", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user3");
     response = await supertest(app).post(`/api/clans/invites/${randomUUID()}/respond`).send({});
     expect(response.status).toBe(400);
   });
 
-  it("should return 404 for non-existent invite", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app)
       .post(`/api/clans/invites/${randomUUID()}/respond`)
-      .send({ auth: auth3, payload: { action: "accept" } });
+      .send({ payload: { action: "accept" } });
+    expect(response.status).toBe(401);
+  });
+
+  it("should return 404 for non-existent invite", async () => {
+    await loginAs("user3");
+    response = await supertest(app)
+      .post(`/api/clans/invites/${randomUUID()}/respond`)
+      .send({ payload: { action: "accept" } });
     expect(response.status).toBe(404);
   });
 
   it("should allow user to accept invite", async () => {
-    const invitesRes = await supertest(app)
-      .post("/api/clans/my-invites")
-      .send({ auth: auth3, payload: {} });
+    await loginAs("user3");
+    const invitesRes = await supertest(app).post("/api/clans/my-invites").send({});
 
     const invites = invitesRes.body as ClanInviteInfo[];
     if (invites.length > 0) {
       response = await supertest(app)
         .post(`/api/clans/invites/${invites[0].inviteId}/respond`)
-        .send({ auth: auth3, payload: { action: "accept" } });
+        .send({ payload: { action: "accept" } });
 
       expect(response.status).toBe(200);
       if (!response.body.error) {
@@ -660,63 +632,30 @@ describe("Clan list visibility", () => {
   });
 });
 
-// Additional tests for improved coverage
-describe("POST /api/clans/:id/leave - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/leave`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
-  });
-});
-
-describe("POST /api/clans/:id/kick - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/kick`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: { username: "user1" } });
-    expect(response.status).toBe(403);
-  });
-});
-
-describe("POST /api/clans/:id/invite - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/invite`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: { username: "user3" } });
-    expect(response.status).toBe(403);
-  });
-});
-
 describe("POST /api/clans/:id/invites - clan pending invites", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
+    // postInvites doesn't parse body so there's no 400 path; send and expect 401 baseline
+    // This route now requires auth; ensure 401 when unauthenticated
+    logout();
     response = await supertest(app).post(`/api/clans/${randomUUID()}/invites`).send({});
-    expect(response.status).toBe(400);
-  });
-
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/invites`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
   });
 
   it("should return 404 for non-existent clan", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/invites`)
-      .send({ auth: auth0, payload: {} });
+    await loginAs("user0");
+    response = await supertest(app).post(`/api/clans/${randomUUID()}/invites`).send({});
     expect(response.status).toBe(404);
   });
 
   it("should return pending invites for clan admin/owner", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/invites`)
-        .send({ auth: auth1, payload: {} });
+        .send({});
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body) || response.body.error).toBe(true);
@@ -724,56 +663,36 @@ describe("POST /api/clans/:id/invites - clan pending invites", () => {
   });
 });
 
-describe("POST /api/clans/invites/:inviteId/respond - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/invites/${randomUUID()}/respond`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: { action: "accept" } });
-    expect(response.status).toBe(403);
-  });
-});
-
-describe("POST /api/clans/my-invites - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post("/api/clans/my-invites")
-      .send({ auth: { ...auth0, password: "wrong" }, payload: {} });
-    expect(response.status).toBe(403);
-  });
-});
-
 describe("POST /api/clans/:id/update - update clan settings", () => {
   it("should return 400 on ill-formed payload", async () => {
+    await loginAs("user0");
     response = await supertest(app).post(`/api/clans/${randomUUID()}/update`).send({});
     expect(response.status).toBe(400);
   });
 
-  it("should return 403 on invalid credentials", async () => {
+  it("should return 401 when not authenticated", async () => {
     response = await supertest(app)
       .post(`/api/clans/${randomUUID()}/update`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: { bio: "new bio" } });
-    expect(response.status).toBe(403);
+      .send({ payload: { bio: "new bio" } });
+    expect(response.status).toBe(401);
   });
 
   it("should return 404 for non-existent clan", async () => {
+    await loginAs("user0");
     response = await supertest(app)
       .post(`/api/clans/${randomUUID()}/update`)
-      .send({ auth: auth0, payload: { bio: "new bio" } });
+      .send({ payload: { bio: "new bio" } });
     expect(response.status).toBe(404);
   });
 
   it("should allow admin/owner to update clan settings", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan) {
       response = await supertest(app)
         .post(`/api/clans/${currentRes.body.clan.clanId}/update`)
-        .send({
-          auth: auth1,
-          payload: { bio: "Updated clan bio" },
-        });
+        .send({ payload: { bio: "Updated clan bio" } });
 
       expect(response.status).toBe(200);
       if (!response.body.error) {
@@ -783,33 +702,10 @@ describe("POST /api/clans/:id/update - update clan settings", () => {
   });
 });
 
-describe("POST /api/clans/:id/role - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/role`)
-      .send({
-        auth: { ...auth0, password: "wrong" },
-        payload: { username: "user1", role: "admin" },
-      });
-    expect(response.status).toBe(403);
-  });
-});
-
-describe("POST /api/clans/:id/transfer - auth coverage", () => {
-  it("should return 403 on invalid credentials", async () => {
-    response = await supertest(app)
-      .post(`/api/clans/${randomUUID()}/transfer`)
-      .send({ auth: { ...auth0, password: "wrong" }, payload: { newOwnerUsername: "user1" } });
-    expect(response.status).toBe(403);
-  });
-});
-
 describe("GET /api/clans/:id - successful fetch", () => {
   it("should return clan details for existing clan", async () => {
-    // Get a clan via current user endpoint which returns valid clanId
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan?.clanId) {
       response = await supertest(app).get(`/api/clans/${currentRes.body.clan.clanId}`);
@@ -822,9 +718,8 @@ describe("GET /api/clans/:id - successful fetch", () => {
 
 describe("GET /api/clans/:id/members - successful fetch", () => {
   it("should return members for existing clan", async () => {
-    const currentRes = await supertest(app)
-      .post("/api/clans/current")
-      .send({ auth: auth1, payload: {} });
+    await loginAs("user1");
+    const currentRes = await supertest(app).post("/api/clans/current").send({});
 
     if (currentRes.body?.clan?.clanId) {
       response = await supertest(app).get(`/api/clans/${currentRes.body.clan.clanId}/members`);
@@ -836,21 +731,18 @@ describe("GET /api/clans/:id/members - successful fetch", () => {
 
 // Deterministic tests for role and transfer - creates fresh state
 describe("Role and Transfer - deterministic coverage", () => {
-  // Use existing test users (auth2 and auth3)
-  const ownerAuth = auth2;
-  const memberAuth = auth3;
+  const ownerUsername = "user2";
+  const memberUsername = "user3";
   let testClanId: string;
 
   it("should setup fresh clan for role/transfer tests", async () => {
-    // Ensure both users are not in any clan
-    await leaveAnyClan(ownerAuth);
-    await leaveAnyClan(memberAuth);
+    await leaveAnyClan(ownerUsername);
+    await leaveAnyClan(memberUsername);
 
-    // owner creates a new clan
+    await loginAs(ownerUsername);
     response = await supertest(app)
       .post("/api/clans/create")
       .send({
-        auth: ownerAuth,
         payload: {
           name: `RoleTestClan_${Date.now()}`,
           color: "#123456",
@@ -862,47 +754,35 @@ describe("Role and Transfer - deterministic coverage", () => {
     expect(response.body.clanId).toBeDefined();
     testClanId = response.body.clanId;
 
-    // member joins the clan
-    const joinRes = await supertest(app)
-      .post(`/api/clans/${testClanId}/join`)
-      .send({ auth: memberAuth, payload: {} });
+    await loginAs(memberUsername);
+    const joinRes = await supertest(app).post(`/api/clans/${testClanId}/join`).send({});
     expect(joinRes.status).toBe(200);
     expect(joinRes.body.role).toBe("member");
   });
 
   it("should call updateMemberRole service and promote to admin", async () => {
-    // owner promotes member to admin
+    await loginAs(ownerUsername);
     response = await supertest(app)
       .post(`/api/clans/${testClanId}/role`)
-      .send({
-        auth: ownerAuth,
-        payload: { username: memberAuth.username, role: "admin" },
-      });
+      .send({ payload: { username: memberUsername, role: "admin" } });
 
     expect(response.status).toBe(200);
-    // Service was called - either success or business logic error
     if (response.body.error) {
-      // Service returned an error but was still called (coverage achieved)
       expect(response.body.error).toBeDefined();
     } else {
       expect(response.body.role).toBe("admin");
-      expect(response.body.user.username).toBe(memberAuth.username);
+      expect(response.body.user.username).toBe(memberUsername);
     }
   });
 
   it("should call transferOwnership service", async () => {
-    // owner transfers ownership to member
+    await loginAs(ownerUsername);
     response = await supertest(app)
       .post(`/api/clans/${testClanId}/transfer`)
-      .send({
-        auth: ownerAuth,
-        payload: { newOwnerUsername: memberAuth.username },
-      });
+      .send({ payload: { newOwnerUsername: memberUsername } });
 
     expect(response.status).toBe(200);
-    // Service was called - either success or business logic error
     if (response.body.error) {
-      // Service returned an error but was still called (coverage achieved)
       expect(response.body.error).toBeDefined();
     } else {
       expect(response.body.success).toBe(true);

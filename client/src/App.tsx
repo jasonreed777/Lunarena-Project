@@ -33,7 +33,10 @@ const DEBUG_SOCKETS = false;
  * */
 let socket: GameSocket | null = null;
 if (typeof window !== "undefined") {
-  socket = io();
+  socket = io({ autoConnect: false });
+  socket.on("connect", () => console.log("[socket] connected, id=", socket?.id));
+  socket.on("connect_error", (err) => console.log("[socket] connect_error:", err.message));
+  socket.on("disconnect", (reason) => console.log("[socket] disconnected:", reason));
   if (DEBUG_SOCKETS) {
     socket.onAny((tag, payload) => {
       console.log(`from socket got ${tag}(${JSON.stringify(payload)})`);
@@ -49,6 +52,14 @@ function NoSuchRoute() {
 export default function App() {
   const [auth, setAuth] = useState<AuthContext | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+
+  useEffect(() => {
+    if (auth) {
+      socket?.connect();
+    } else {
+      socket?.disconnect();
+    }
+  }, [auth]);
 
   useEffect(() => {
     api

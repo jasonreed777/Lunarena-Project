@@ -13,7 +13,7 @@ import { logSocketError } from "./socket.controller.ts";
  */
 export const socketJoin: SocketAPI = (socket) => async (body) => {
   try {
-    const { payload: chatId } = z.object({ payload: z.string() }).parse(body);
+    const chatId = z.string().parse(body);
     const user = socket.data.user;
     const chat = await forceChatById(chatId, user);
     await socket.join(chatId);

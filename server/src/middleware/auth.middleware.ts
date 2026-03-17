@@ -1,7 +1,7 @@
 import { type RequestHandler } from "express";
 import { fromNodeHeaders } from "better-auth/node";
-import { auth } from "../auth.ts";
 import { UserModel } from "../mongoose-models.ts";
+import { getAuth } from "../auth.ts";
 
 /**
  * Express middleware that validates a betterAuth session from request cookies/headers.
@@ -9,7 +9,7 @@ import { UserModel } from "../mongoose-models.ts";
  * Returns 401 if no valid session is found.
  */
 export const requireAuth: RequestHandler = async (req, res, next) => {
-  const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+  const session = await getAuth().api.getSession({ headers: fromNodeHeaders(req.headers) });
   if (!session) {
     res.status(401).send({ error: "Not authenticated" });
     return;

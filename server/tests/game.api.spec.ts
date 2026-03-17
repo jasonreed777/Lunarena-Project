@@ -1,39 +1,58 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import supertest, { type Response } from "supertest";
 import { app } from "../src/app.ts";
 import { randomUUID } from "crypto";
+import { getUserByUsername } from "../src/services/auth.service.ts";
+
+const testAuth = vi.hoisted(() => ({ user: null as { userId: string; username: string } | null }));
+
+vi.mock("../src/middleware/auth.middleware.ts", () => ({
+  requireAuth: vi.fn((req, res, next) => {
+    if (!testAuth.user) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      res.status(401).send({ error: "Not authenticated" });
+      return;
+    }
+    req.authUser = testAuth.user;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    next();
+  }),
+}));
+
+async function loginAs(username: string) {
+  const u = await getUserByUsername(username);
+  if (!u) throw new Error(`test user ${username} not found`);
+  testAuth.user = { userId: u.userId, username: u.username };
+}
+
+function logout() {
+  testAuth.user = null;
+}
 
 let response: Response;
 
-const auth3 = { username: "user3", password: "pwd3333" };
-const authBad = { username: "user3", password: "user3" };
+beforeEach(() => logout());
 
 describe("POST /api/game/create", () => {
   it("should return 400 on ill-formed payload or invalid game key", async () => {
-    response = await supertest(app).post(`/api/game/create`).send({
-      auth: auth3,
-      payload: 9,
-    });
+    await loginAs("user3");
+    response = await supertest(app).post(`/api/game/create`).send({ payload: 9 });
     expect(response.status).toBe(400);
 
     response = await supertest(app)
       .post(`/api/game/create`)
-      .send({ auth: auth3, payload: "gameThatDoesNotExist" });
+      .send({ payload: "gameThatDoesNotExist" });
     expect(response.status).toBe(400);
   });
 
-  it("should return 403 with bad auth", async () => {
-    response = await supertest(app)
-      .post(`/api/game/create`)
-      .send({ auth: authBad, payload: "nim" });
-    expect(response.status).toBe(403);
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app).post(`/api/game/create`).send({ payload: "nim" });
+    expect(response.status).toBe(401);
   });
 
   it("should succeed when asked to create a game of nim", async () => {
-    response = await supertest(app).post(`/api/game/create`).send({
-      auth: auth3,
-      payload: "nim",
-    });
+    await loginAs("user3");
+    response = await supertest(app).post(`/api/game/create`).send({ payload: "nim" });
     expect(response.status).toBe(200);
     expect(response.body).toStrictEqual({
       gameId: expect.anything(),
@@ -65,10 +84,8 @@ describe("GET /api/game/:id", () => {
   });
 
   it("should succeed if a created game is requested", async () => {
-    response = await supertest(app).post(`/api/game/create`).send({
-      auth: auth3,
-      payload: "nim",
-    });
+    await loginAs("user3");
+    response = await supertest(app).post(`/api/game/create`).send({ payload: "nim" });
     expect(response.status).toBe(200);
     const gameInfo = response.body;
 
