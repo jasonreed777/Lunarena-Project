@@ -1,6 +1,6 @@
 import type { UserWithId } from "../types.ts";
 import { UserModel } from "../mongoose-models.ts";
-import { auth } from "../auth.ts";
+import { getAuth } from "../auth.ts";
 
 /**
  * Retrieves a single user from the database by username.
@@ -20,7 +20,7 @@ export async function getUserByUsername(username: string): Promise<UserWithId | 
  * corresponding UserModel record.
  */
 export async function createAuthAccount(username: string, password: string) {
-  await auth.api.signUpEmail({
+  await getAuth().api.signUpEmail({
     body: {
       email: `${Date.now()}@example.com`,
       name: "dummy name",

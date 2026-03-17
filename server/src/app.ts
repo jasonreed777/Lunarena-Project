@@ -12,16 +12,29 @@ import * as user from "./controllers/user.controller.ts";
 import * as thread from "./controllers/thread.controller.ts";
 import * as profile from "./controllers/profile.controller.ts";
 import { type GameServer } from "./types.ts";
-import { auth } from "./auth.ts";
 import { requireAuth } from "./middleware/auth.middleware.ts";
 import { UserModel } from "./mongoose-models.ts";
+import { MongoClient } from "mongodb";
+import { getAuth, setupAuth } from "./auth.ts";
 
 export const app = express();
 export const httpServer = http.createServer(app);
 const io: GameServer = new Server(httpServer);
 
-// Mount betterAuth handler before express.json() — it handles its own parsing
-app.all("/api/auth/*splat", toNodeHandler(auth));
+const MONGO_STR = process.env.MONGO_STR;
+const MONGO_DB_NAME = process.env.MONGO_DB_NAME || "GameNite";
+
+// Only connect to MongoDB when a connection string is provided.
+// In tests the test setup (tests/setup.ts) initialises auth via its own in-memory server.
+if (MONGO_STR) {
+  const client = new MongoClient(MONGO_STR);
+  const db = client.db(MONGO_DB_NAME + "Auth");
+  setupAuth(db);
+}
+
+// Mount betterAuth handler before express.json() — it handles its own parsing.
+// Use a lazy wrapper so getAuth() is not called at module load time (tests set up auth in beforeAll).
+app.all("/api/auth/*splat", (req, res) => toNodeHandler(getAuth())(req, res));
 
 app.use(express.json());
 
@@ -73,26 +86,26 @@ app.use(
       "/clans",
       Router() //
         .get("/list", clan.getList)
-        .post("/current", clan.postCurrent)
-        .post("/create", clan.postCreate)
-        .post("/my-invites", clan.postMyInvites)
-        .post("/invites/:inviteId/respond", clan.postRespondInvite)
+        .post("/current", requireAuth, clan.postCurrent)
+        .post("/create", requireAuth, clan.postCreate)
+        .post("/my-invites", requireAuth, clan.postMyInvites)
+        .post("/invites/:inviteId/respond", requireAuth, clan.postRespondInvite)
         .get("/:id", clan.getById)
         .get("/:id/members", clan.getMembers)
-        .post("/:id/join", clan.postJoin)
-        .post("/:id/leave", clan.postLeave)
-        .post("/:id/kick", clan.postKick)
-        .post("/:id/invite", clan.postInvite)
-        .post("/:id/invites", clan.postInvites)
-        .post("/:id/update", clan.postUpdate)
-        .post("/:id/role", clan.postUpdateRole)
-        .post("/:id/transfer", clan.postTransfer),
+        .post("/:id/join", requireAuth, clan.postJoin)
+        .post("/:id/leave", requireAuth, clan.postLeave)
+        .post("/:id/kick", requireAuth, clan.postKick)
+        .post("/:id/invite", requireAuth, clan.postInvite)
+        .post("/:id/invites", requireAuth, clan.postInvites)
+        .post("/:id/update", requireAuth, clan.postUpdate)
+        .post("/:id/role", requireAuth, clan.postUpdateRole)
+        .post("/:id/transfer", requireAuth, clan.postTransfer),
     ),
 );
 
 // Authenticate socket connections via betterAuth session
 io.use(async (socket, next) => {
-  const session = await auth.api.getSession({
+  const session = await getAuth().api.getSession({
     headers: fromNodeHeaders(socket.handshake.headers),
   });
   if (!session) return next(new Error("Unauthorized"));

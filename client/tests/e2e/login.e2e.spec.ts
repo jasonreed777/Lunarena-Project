@@ -80,7 +80,7 @@ test.describe("The login page", () => {
     await page.getByLabel("Confirm Password").fill(randPassword);
     await page.getByRole("button", { name: "Sign Up" }).click();
 
-    await expect(page.getByText("User already exists")).toBeVisible();
+    await expect(page.getByText("Username is already taken")).toBeVisible();
 
     await page.getByLabel("Username", { exact: true }).fill(randUsername);
     await page.getByRole("button", { name: "Sign Up" }).click();

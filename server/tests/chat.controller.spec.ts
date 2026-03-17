@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameServer, GameServerSocket } from "../src/types.ts";
 import { logSocketError } from "../src/controllers/socket.controller.ts";
 import { socketJoin } from "../src/controllers/chat.controller.ts";
@@ -29,6 +29,7 @@ const MockGameServer = vi.fn(
 const MockGameServerSocket = vi.fn(
   class {
     id = "mockGameServerSocket";
+    data = { user: null as never };
     join = vi.fn();
     leave = vi.fn();
     emit = vi.fn();
@@ -42,23 +43,26 @@ const MockGameServerSocket = vi.fn(
 // functionality that we're not implementing
 const mockServer = new MockGameServer() as unknown as GameServer;
 const mockSocket = new MockGameServerSocket() as unknown as GameServerSocket;
-const auth = { username: "user1", password: "pwd1111" };
-const badAuth = { username: "user2", password: "nope" };
 
 afterEach(() => {
-  // This can be more elegantly achieved by setting mockReset: true in the vitest config
   vi.resetAllMocks();
+  // Reset socket user after each test
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  mockSocket.data = { user: null };
+});
+
+beforeEach(async () => {
+  // Set a default authenticated user for most tests
+  const user = await getUserByUsername("user1");
+  if (user) {
+    mockSocket.data = { user: { userId: user.userId, username: user.username } };
+  }
 });
 
 describe("socketJoin", () => {
-  it("should check auth and reject invalid auth", async () => {
-    const chat = await createChat(new Date());
-    await socketJoin(mockSocket, mockServer)({ auth: badAuth, payload: chat.chatId });
-    expect(logSocketError).toHaveBeenCalledExactlyOnceWith(mockSocket, new Error("Invalid auth"));
-  });
-
   it("should reject an invalid chat id", async () => {
-    await socketJoin(mockSocket, mockServer)({ auth, payload: "hi" });
+    await socketJoin(mockSocket, mockServer)("hi");
     expect(logSocketError).toHaveBeenCalledExactlyOnceWith(
       mockSocket,
       new Error("user user1 accessed invalid chat id"),
@@ -67,16 +71,16 @@ describe("socketJoin", () => {
 
   it("should proceed without errors, add the user to the room connection, and send chatJoined and chatUserJoined messages", async () => {
     const chat = await createChat(new Date());
-    const record = await getUserByUsername(auth.username);
-    const user = await populateSafeUserInfo(record!.userId);
-    await socketJoin(mockSocket, mockServer)({ auth, payload: chat.chatId });
+    const user = await getUserByUsername("user1");
+    const safeUser = await populateSafeUserInfo(user!.userId);
+    await socketJoin(mockSocket, mockServer)(chat.chatId);
     expect(logSocketError).not.toHaveBeenCalled();
     expect(mockSocket.join).toHaveBeenCalledExactlyOnceWith(chat.chatId);
     expect(mockSocket.emit).toHaveBeenCalledWith("chatJoined", chat);
     expect(mockSocket.to).toHaveBeenCalledExactlyOnceWith(chat.chatId);
     expect(mockSocket.emit).toHaveBeenCalledWith("chatUserJoined", {
       chatId: chat.chatId,
-      user,
+      user: safeUser,
     });
   });
 });
