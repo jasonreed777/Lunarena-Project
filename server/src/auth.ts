@@ -61,9 +61,7 @@ export function createAuth(mongoDB: Db, passwordOptions?: PasswordOptions) {
 }
 
 export function setupAuth(mongoDB: Db, passwordOptions?: PasswordOptions) {
-  if (auth) {
-    throw new Error("auth already set up");
-  }
+  // Reset any existing auth to support test isolation
   auth = createAuth(mongoDB, passwordOptions);
 }
 
@@ -72,4 +70,9 @@ export function getAuth(): ReturnType<typeof createAuth> {
     throw new Error("auth not set up");
   }
   return auth;
+}
+
+/** Reset auth state - for test cleanup */
+export function resetAuth() {
+  auth = null;
 }

@@ -16,6 +16,12 @@ jobs:
         ports:
           - 27017:27017
 
+    env:
+      MONGO_STR: mongodb://127.0.0.1:27017
+      MONGO_DB_NAME: GameNite
+      BETTER_AUTH_SECRET: EZdE8P5kYFC4m1KzReDdXw8X4Zqp00c6
+      BETTER_AUTH_URL: http://localhost:8000
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
