@@ -38,7 +38,7 @@ export const capitalizeText = (text: string): string => {
  */
 export const darkenColor = (color: RGBColor): RGBColor => {
   const newColor = (color: number) => {
-    return Math.abs(color - 50);
+    return Math.max(color - 50, 0);
   };
 
   return { r: newColor(color.r), g: newColor(color.g), b: newColor(color.b) };
