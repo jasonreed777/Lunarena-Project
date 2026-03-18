@@ -1,15 +1,11 @@
+import type { RGBColor } from "./types";
+
 /**
  * Turns a hexadecimal color into an "RGB" object.
  * @param hex hexadecimal color to convert
  * @returns Object containing r, g, and b values as numbers
  */
-export const hexToRGB = (
-  hex: string,
-): {
-  r: number;
-  g: number;
-  b: number;
-} => {
+export const hexToRGB = (hex: string): RGBColor => {
   const conversion = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!conversion || conversion.length < 4) {
     throw new Error("Invalid Conversion Attempted");
@@ -33,4 +29,17 @@ export const noOp = () => {};
  */
 export const capitalizeText = (text: string): string => {
   return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+/**
+ * Darkens an RGB color by 50 each.
+ * @param color the color to darken
+ * @returns darked color as an object with R, G, and B values
+ */
+export const darkenColor = (color: RGBColor): RGBColor => {
+  const newColor = (color: number) => {
+    return Math.max(color - 50, 0);
+  };
+
+  return { r: newColor(color.r), g: newColor(color.g), b: newColor(color.b) };
 };

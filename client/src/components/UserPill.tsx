@@ -1,25 +1,30 @@
 import styled from "@emotion/styled";
 import * as Typography from "../libs/Typography";
-import { hexToRGB } from "../util/utils";
-import type { UserProfileRecord } from "../util/types";
+import { darkenColor, hexToRGB } from "../util/utils";
+import type { RGBColor, Theme, UserProfileRecord } from "../util/types";
+import React from "react";
 
 export type ClanRole = "admin" | "mod" | "member";
 
-const Container = styled.div<{ color: string }>`
+const Container = styled.div<{ customColor: RGBColor; themeId: string }>`
   width: 100%;
   height: 50px;
-  color: ${({ color }) => color ?? "white"};
-  background-color: rgba(
-    ${({ color }) => `${hexToRGB(color).r}, ${hexToRGB(color).g}, ${hexToRGB(color).b}`},
-    0.2
-  );
-  border: 3px solid ${({ color }) => color};
-  border-radius: 100px;
   padding: 6px 10px;
-  transition: all 0.2s;
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  background-color: rgba(
+    ${({ customColor }) => `${customColor.r}, ${customColor.g}, ${customColor.b}`},
+    0.2
+  );
+  color: ${({ customColor }) =>
+    customColor ? `rgb(${customColor.r}, ${customColor.g}, ${customColor.b})` : "white"};
+  border: 3px solid
+    ${({ customColor }) => `rgb(${customColor.r}, ${customColor.g}, ${customColor.b})`};
+
+  border-radius: 100px;
+  transition: all 0.2s;
 
   :hover {
     transform: scale(105%);
@@ -43,9 +48,26 @@ const ProfilePicture = styled.img`
  * @param user the User to display
  * @returns a user pill
  */
-export const UserPill: React.FC<{ user: UserProfileRecord }> = ({ user }) => {
+export const UserPill: React.FC<{ user: UserProfileRecord; themeId: Theme }> = ({
+  user,
+  themeId,
+}) => {
+  const [color, setColor] = React.useState<RGBColor>(
+    themeId === "dark"
+      ? hexToRGB(user.profileBorderColor)
+      : darkenColor(hexToRGB(user.profileBorderColor)),
+  );
+
+  React.useEffect(() => {
+    setColor(
+      themeId === "dark"
+        ? hexToRGB(user.profileBorderColor)
+        : darkenColor(hexToRGB(user.profileBorderColor)),
+    );
+  }, [themeId, user.profileBorderColor]);
+
   return (
-    <Container color={user.profileBorderColor}>
+    <Container customColor={color} themeId={themeId}>
       <Left>
         <ProfilePicture src={user.pfp.type === "upload" ? user.pfp.uploadId : user.pfp.avatarId} />
         <Typography.ProfileText>{user.titleId || user.username}</Typography.ProfileText>

@@ -10,7 +10,7 @@ import Home from "./pages/Home.tsx";
 import ThreadList from "./pages/ThreadList.tsx";
 import Profile from "./pages/Profile.tsx";
 import { io } from "socket.io-client";
-import type { GameSocket } from "./util/types.ts";
+import { Colors, type ColorTheme, type GameSocket } from "./util/types.ts";
 import LoggedInRoute from "./components/LoggedInRoute.tsx";
 import NewGame from "./pages/NewGame.tsx";
 import Game from "./pages/Game.tsx";
@@ -22,6 +22,7 @@ import fallback from "./fallback.tsx";
 import NewThread from "./pages/NewThread.tsx";
 import TimeContextKeeper from "./components/UpdatingTimeContext.tsx";
 import { ClanPage } from "./pages/ClanPage.tsx";
+import { THEME_KEY, ThemeContext } from "./contexts/ThemeContext.ts";
 
 /** If `true`, all incoming socket messages will be logged */
 const DEBUG_SOCKETS = false;
@@ -52,6 +53,9 @@ function NoSuchRoute() {
 export default function App() {
   const [auth, setAuth] = useState<AuthContext | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [theme, setTheme] = useState<ColorTheme>(
+    window.localStorage.getItem(THEME_KEY) === "light" ? Colors.light : Colors.dark,
+  );
 
   useEffect(() => {
     if (auth) {
@@ -88,32 +92,34 @@ export default function App() {
   return (
     socket && (
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login setAuth={(auth) => setAuth(auth)} />} />
-          <Route
-            element={
-              <LoggedInRoute auth={auth} socket={socket}>
-                <TimeContextKeeper updateFrequency={20 * 1000}>
-                  <ErrorBoundary fallbackRender={fallback}>
-                    <Layout />
-                  </ErrorBoundary>
-                </TimeContextKeeper>
-              </LoggedInRoute>
-            }
-          >
-            <Route path="/" element={<Home />} />
-            <Route path="/forum" element={<ThreadList />} />
-            <Route path="/forum/post/new" element={<NewThread />} />
-            <Route path="/forum/post/:threadId" element={<ThreadPage />} />
-            <Route path="/games" element={<GameList />} />
-            <Route path="/friends" element={<FriendsList />} />
-            <Route path="/game/new" element={<NewGame />} />
-            <Route path="/game/:gameId" element={<Game />} />
-            <Route path="/clan" element={<ClanPage />} />
-            <Route path="/profile/:username" element={<Profile />} />
-            <Route path="/*" element={<NoSuchRoute />} />
-          </Route>
-        </Routes>
+        <ThemeContext.Provider value={{ theme, setTheme }}>
+          <Routes>
+            <Route path="/login" element={<Login setAuth={(auth) => setAuth(auth)} />} />
+            <Route
+              element={
+                <LoggedInRoute auth={auth} socket={socket}>
+                  <TimeContextKeeper updateFrequency={20 * 1000}>
+                    <ErrorBoundary fallbackRender={fallback}>
+                      <Layout />
+                    </ErrorBoundary>
+                  </TimeContextKeeper>
+                </LoggedInRoute>
+              }
+            >
+              <Route path="/" element={<Home />} />
+              <Route path="/forum" element={<ThreadList />} />
+              <Route path="/forum/post/new" element={<NewThread />} />
+              <Route path="/forum/post/:threadId" element={<ThreadPage />} />
+              <Route path="/games" element={<GameList />} />
+              <Route path="/friends" element={<FriendsList />} />
+              <Route path="/game/new" element={<NewGame />} />
+              <Route path="/game/:gameId" element={<Game />} />
+              <Route path="/clan" element={<ClanPage />} />
+              <Route path="/profile/:username" element={<Profile />} />
+              <Route path="/*" element={<NoSuchRoute />} />
+            </Route>
+          </Routes>
+        </ThemeContext.Provider>
       </BrowserRouter>
     )
   );

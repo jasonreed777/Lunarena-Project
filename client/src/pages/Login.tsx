@@ -2,6 +2,11 @@ import useLoginForm from "../hooks/useLoginForm.ts";
 import "./Login.css";
 import { useState } from "react";
 import { type AuthContext } from "../contexts/LoginContext.ts";
+import { InputWithLabel } from "../components/Input.tsx";
+import { LogoImage } from "../components/LogoImage.tsx";
+import * as Typography from "../libs/Typography.tsx";
+import { Divider } from "../components/Divider.tsx";
+import { TransluscentButton } from "../components/Buttons.tsx";
 
 interface LoginProps {
   setAuth: (s: AuthContext | null) => void;
@@ -18,33 +23,42 @@ export default function Login({ setAuth }: LoginProps) {
 
   return (
     <div className="container">
-      <h1>GameNite</h1>
+      <div className="login-title">
+        <Typography.WelcomeText>Welcome to</Typography.WelcomeText>
+        <Typography.LoginTitle style={{ marginTop: -20 }}>GameNite</Typography.LoginTitle>
+      </div>
       <form className="login" onSubmit={(e) => handleSubmit(e)}>
-        <h2>Log into GameNite</h2>
-        <input
+        <div>
+          <Typography.Subtitle>Log into GameNite</Typography.Subtitle>
+          <Divider />
+        </div>
+        <InputWithLabel
           type="text"
           value={username}
           onChange={(event) => handleInputChange(event, "username")}
           placeholder="Username"
           aria-label="Username"
-          className="widefill"
+          label="Username"
+          color="#d193ed"
         />
-        <input
+        <InputWithLabel
           type={showPassword ? "text" : "password"}
           value={password}
           onChange={(event) => handleInputChange(event, "password")}
           placeholder="Password"
           aria-label="Password"
-          className="widefill"
+          label="Password"
+          color="#d193ed"
         />
         {mode === "signup" && (
-          <input
+          <InputWithLabel
             type={showPassword ? "text" : "password"}
             value={confirm}
             onChange={(event) => handleInputChange(event, "confirm")}
             placeholder="Confirm Password"
             aria-label="Confirm Password"
-            className="widefill"
+            label="Confirm Password"
+            color="#d193ed"
           />
         )}
         <div className="labeled-section">
@@ -54,27 +68,35 @@ export default function Login({ setAuth }: LoginProps) {
             checked={showPassword}
             onChange={() => setShowPassword((prevShowPassword) => !prevShowPassword)}
           />
-          <label htmlFor="showPasswordToggle">Show Password</label>
+          <label htmlFor="showPasswordToggle">
+            <Typography.SubtitleSmall>Show Password</Typography.SubtitleSmall>
+          </label>
         </div>
-        {err && <p className="error-message centered">{err}</p>}
-        <button type="submit" className="widefill primary">
-          {mode === "signup" ? "Sign Up" : "Log In"}
-        </button>
-        <div className="intertext">or</div>
-        <button
-          className="narrowcenter secondary"
-          onClick={(e) => {
-            e.preventDefault();
-            toggleMode();
-          }}
-        >
-          {mode === "signup" ? "Use Existing Account" : "Create New Account"}
-        </button>
+        <Divider />
+        <div>
+          <div className="form-btns">
+            <TransluscentButton type="submit" color="#43B9C6">
+              {mode === "signup" ? "Sign Up" : "Log In"}
+            </TransluscentButton>
+            <Typography.SmallText className="intertext">or</Typography.SmallText>
+            <TransluscentButton
+              onClick={(e) => {
+                e.preventDefault();
+                toggleMode();
+              }}
+              color="#DE1212"
+            >
+              {mode === "signup" ? "Use Existing Account" : "Create Account"}
+            </TransluscentButton>
+          </div>
+          {err && (
+            <Typography.Code className="error-message centered" style={{ paddingTop: 10 }}>
+              {err}
+            </Typography.Code>
+          )}
+        </div>
       </form>
-      <div className="smallAndGray" style={{ marginTop: "1rem" }}>
-        GameNite stores passwords in cleartext; reusing passwords here is a catastrophically bad
-        idea
-      </div>
+      <LogoImage />
     </div>
   );
 }

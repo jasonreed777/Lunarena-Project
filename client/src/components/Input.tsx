@@ -42,7 +42,7 @@ export const InputWithLabel: React.FC<{
     <div>
       {label && <Typography.SubtitleSmall>{label}</Typography.SubtitleSmall>}
       <StyledInput
-        color={color}
+        color={/^#[0-9a-f]{3,6}$/i.test(color) ? color : "#ffffff"}
         type={type}
         value={value}
         onChange={onChange}

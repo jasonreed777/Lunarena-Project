@@ -74,3 +74,50 @@ export interface UserProfileRecord {
     lastActive: Date; // When the user was last active on the site
   };
 }
+
+/**
+ * Two theme types - light and dark. This can be expanded later if needed
+ */
+export type Theme = "light" | "dark";
+
+/**
+ * Represents a color theme with various values,
+ */
+export type ColorTheme = {
+  _id: Theme;
+  primary: string;
+  secondary: string;
+  text: string;
+  secondaryText: string;
+  navBar: string;
+  navButton: string;
+};
+
+/**
+ * Two color themes, each corresponding with light and dark
+ */
+export const Colors: Record<Theme, ColorTheme> = {
+  light: {
+    _id: "light",
+    primary: "#ffffff",
+    secondary: "#24989e",
+    text: "#252525",
+    secondaryText: "#535353",
+    navBar: "#ffffff",
+    navButton: "#119C26",
+  },
+  dark: {
+    _id: "dark",
+    primary: "#000000",
+    secondary: "#14dce7",
+    text: "#ffffff",
+    secondaryText: "#c1c1c1",
+    navBar: "#252525",
+    navButton: "#2ad143",
+  },
+};
+
+/**
+ * Represents a color with red, green, and blue values
+ */
+export type RGBColor = { r: number; g: number; b: number };

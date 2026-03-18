@@ -17,11 +17,29 @@ export const LoginTitle = styled.h1`
   font-weight: 400;
   font-style: normal;
 `;
-
+/**
+ * Small title for the header
+ */
+export const SmallTitle = styled.h1`
+  font-family: "Righteous", sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  font-style: normal;
+`;
+/**
+ * The title of each page
+ */
 export const PageTitle = styled.h1`
   font-family: "Righteous", sans-serif;
   font-size: 75px;
   font-weight: 400;
+  font-style: normal;
+`;
+
+export const NavBar = styled.h2`
+  font-family: "filson-pro", sans-serif;
+  font-size: 16px;
+  font-weight: 300;
   font-style: normal;
 `;
 
@@ -40,7 +58,6 @@ export const Subtitle = styled.h2`
  */
 export const SubtitleSmall = styled.h5`
   font-family: "apparat-semicond", sans-serif;
-  color: #c1c1c1;
   font-weight: 500;
   font-size: 16px;
   font-style: normal;
@@ -97,5 +114,5 @@ export const RecentlyPlayedText = styled.p`
   font-weight: 500;
   font-style: normal;
   font-size: 16px;
-  color: #c1c1c1;
+  opacity: 0.75;
 `;

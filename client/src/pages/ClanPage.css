@@ -1,10 +1,8 @@
 div.clan-container {
   min-height: 100vh;
-  background-color: #000000;
   background-image: url(../assets/gradients/clan_gradient.png);
   padding: 20px;
   padding-top: 3rem;
-  color: white;
 }
 
 .clan-info {
@@ -25,15 +23,28 @@ div.clan-container {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   margin-bottom: 30px;
+
+  @media screen and (max-width: 850px) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+  }
 }
 
-.statContainer {
+.stat-container {
   width: 80%;
+
+  @media screen and (max-width: 850px) {
+    width: 50%;
+  }
 }
 
 .clan-info-column {
   height: 100%;
-  border-right: 1px solid #c1c1c1;
+  border-right: 1px solid rgba(150, 150, 150, 0.8);
   padding: 0 20px;
 }
 
