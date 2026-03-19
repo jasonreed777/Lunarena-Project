@@ -1,11 +1,13 @@
 import "./SideBarNav.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, type NavLinkRenderProps } from "react-router-dom";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { ThemeContext } from "../contexts/ThemeContext.ts";
 import styled from "@emotion/styled";
 import type { ColorTheme } from "../util/types.ts";
 import * as Typography from "../libs/Typography.tsx";
+import { getProfileByUsername, getUploadedImage } from "../services/profileService.ts";
+import { AVATARS } from "../util/consts.ts";
 
 const Container = styled.div<{ theme: ColorTheme }>`
   background-color: ${({ theme }) => theme.navBar};
@@ -29,6 +31,39 @@ export default function SideBarNav() {
   const { user } = useLoginContext();
   const { username } = user;
   const { theme } = React.useContext(ThemeContext);
+  const [avatarId, setAvatarId] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [profileBorderColor, setProfileBorderColor] = useState("#888888");
+
+  // Listen for profile updates to update the avatar and profile border color in the sidebar
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      getProfileByUsername(user.username).then(async (response) => {
+        if ("error" in response) return;
+
+        setProfileBorderColor(response.profileBorderColor ?? "#888888");
+
+        if (response.pfp?.type === "avatar" && response.pfp.avatarId) {
+          setAvatarId(response.pfp.avatarId);
+          setUploadedImage(null);
+        }
+
+        if (response.pfp?.type === "upload" && response.pfp.uploadId) {
+          const imageResponse = await getUploadedImage(response.pfp.uploadId);
+          if (!("error" in imageResponse)) {
+            setUploadedImage(imageResponse.data);
+            setAvatarId(null);
+          }
+        }
+      });
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdate);
+    };
+  }, [user.username]);
 
   const toggleOptions = () => {
     setShowOptions(!showOptions);
@@ -62,6 +97,31 @@ export default function SideBarNav() {
       >
         <Typography.NavBar>Profile</Typography.NavBar>
       </NavLink>
+      <div
+        style={{
+          width: "110px",
+          height: "110px",
+          borderRadius: "20%",
+          border: `3px solid ${profileBorderColor}`,
+          overflow: "hidden",
+          margin: "2rem 0",
+          marginLeft: "6px",
+        }}
+      >
+        {uploadedImage ? (
+          <img
+            src={uploadedImage}
+            alt="Profile"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : avatarId ? (
+          <img
+            src={AVATARS.find((a) => a.avatarId === avatarId)?.imageUrl}
+            alt="Profile"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : null}
+      </div>
     </Container>
   );
 }

@@ -18,6 +18,8 @@ export const zUserProfileUpdateRequest = z.object({
 
   titleId: z.string().optional(),
 
+  avatarId: z.string().optional(),
+
   profileBorderColor: z.string().optional(),
 
   onlinePresence: z

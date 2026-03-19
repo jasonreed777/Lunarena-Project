@@ -1,93 +1,321 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import useLoginContext from "../hooks/useLoginContext";
 import useTimeSince from "../hooks/useTimeSince";
 import useEditProfileForm from "../hooks/useEditProfileForm";
+import { AVATARS } from "../util/consts.ts";
+import "./ProfilePage.css";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 export default function UpdateProfile() {
   const { user } = useLoginContext();
   const timeSince = useTimeSince();
   const [showPass, setShowPass] = useState(false);
-  const { display, setDisplay, password, setPassword, confirm, setConfirm, err, handleSubmit } =
-    useEditProfileForm();
+  const {
+    display,
+    setDisplay,
+    bio,
+    setBio,
+    titleId,
+    setTitleId,
+    profileBorderColor,
+    setProfileBorderColor,
+    avatarId,
+    setAvatarId,
+    password,
+    setPassword,
+    confirm,
+    setConfirm,
+    pfpType,
+    setPfpType,
+    uploadedImage,
+    setUploadedImage,
+    setUploadedImageType,
+    err,
+    handleSubmit,
+    successfulSubmit,
+  } = useEditProfileForm();
+
+  const { theme } = React.useContext(ThemeContext);
 
   return (
-    <form className="content spacedSection" onSubmit={handleSubmit}>
-      <h2>Profile</h2>
-      <div>
-        <h3>General information</h3>
-        <ul>
-          <li>Username: {user.username}</li>
-          <li>Account created {timeSince(user.createdAt)}</li>
-        </ul>
-      </div>
-      <hr />
-      <div className="spacedSection">
-        <h3>Display name</h3>
-        <div style={{ display: "flex", flexDirection: "row", gap: "0.5rem" }}>
-          <input
-            className="widefill notTooWide"
-            value={display}
-            onChange={(e) => setDisplay(e.target.value)}
-          />
-          <button
-            className="secondary narrow"
-            onClick={(e) => {
-              e.preventDefault(); // Don't submit form
-              setDisplay(user.display);
-            }}
-          >
-            Reset
-          </button>
+    <form
+      className="content profile-container"
+      onSubmit={handleSubmit}
+      style={{ backgroundColor: theme.primary, color: theme.text }}
+    >
+      <div
+        className="profile-card"
+        style={{
+          border: `8px solid ${profileBorderColor}`,
+          borderRadius: "24px",
+          background: "rgba(255, 255, 255, 0.04)",
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
+        }}
+      >
+        <div className="profile-header">
+          <div>
+            <h2>Profile</h2>
+            <p>Username: {user.username}</p>
+            <p>Account created {timeSince(user.createdAt)}</p>
+          </div>
+        </div>
+        <div className="profile-main">
+          <div className="profile-column">
+            <div className="profile-section">
+              <h3>Display name</h3>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "0.5rem",
+                }}
+              >
+                <input
+                  className="widefill"
+                  value={display}
+                  onChange={(e) => setDisplay(e.target.value)}
+                  style={{
+                    color: theme.text,
+                    borderColor: theme.text,
+                  }}
+                />
+                <button
+                  className="secondary narrow"
+                  onClick={(e) => {
+                    e.preventDefault(); // Don't submit form
+                    setDisplay(user.display);
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+            <div className="profile-section">
+              <h3>Bio</h3>
+              <textarea
+                className="widefill"
+                placeholder="Tell people a bit about yourself!"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={160}
+                rows={6}
+                style={{
+                  width: "100%",
+                  minHeight: "140px",
+                  resize: "vertical",
+                  color: theme.text,
+                  borderColor: theme.text,
+                }}
+              />
+            </div>
+            <div className="profile-section">
+              <h3>Title</h3>
+              <select
+                className="widefill notTooWide"
+                value={titleId}
+                onChange={(e) => setTitleId(e.target.value)}
+              >
+                <option value="">Select a title</option>
+                <option value="Nim Master">Nim Master</option>
+                <option value="Number Guesser Master">Number Guesser Master</option>
+                <option value="Knowledge Titan">Knowledge Titan</option>
+                <option value="Game Master">Game Master</option>
+                <option value="Puzzle Prophet">Puzzle Prophet</option>
+                <option value="Strategy Sage">Strategy Sage</option>
+                <option value="Lucky Legend">Lucky Legend</option>
+                <option value="The Chosen One">The Chosen One</option>
+                <option value="Chief">Chief</option>
+              </select>
+            </div>
+            <div className="profile-section">
+              <h3>Profile Border Color</h3>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "0.6rem",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="color"
+                  value={profileBorderColor}
+                  onChange={(e) => setProfileBorderColor(e.target.value)}
+                />
+                <span>{profileBorderColor}</span>
+              </div>
+            </div>
+            <div className="profile-section">
+              <h3>Reset password</h3>
+              <div style={{ display: "flex", flexDirection: "row", gap: "0.5rem" }}>
+                <input
+                  type={showPass ? "input" : "password"}
+                  className="widefill notTooWide"
+                  placeholder="New password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{
+                    color: theme.text,
+                    borderColor: theme.text,
+                  }}
+                />
+                <button
+                  className="secondary narrow"
+                  onClick={(e) => {
+                    e.preventDefault(); // Don't submit form
+                    setPassword("");
+                    setConfirm("");
+                  }}
+                >
+                  Reset
+                </button>
+                <button
+                  className="secondary narrow"
+                  aria-label="Toggle show password"
+                  onClick={(e) => {
+                    e.preventDefault(); // Don't submit form
+                    setShowPass((v) => !v);
+                  }}
+                >
+                  {showPass ? "Hide" : "Reveal"}
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "row", gap: "0.5rem" }}>
+                <input
+                  type={showPass ? "input" : "password"}
+                  className="widefill notTooWide"
+                  placeholder="Confirm new password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  style={{
+                    color: theme.text,
+                    borderColor: theme.text,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="profile-column">
+            <div className="profile-section">
+              <h3>Avatar</h3>
+
+              <div style={{ marginBottom: "0.75rem" }}>
+                <img
+                  src={
+                    pfpType === "upload" && uploadedImage
+                      ? uploadedImage
+                      : AVATARS.find((avatar) => avatar.avatarId === avatarId)?.imageUrl
+                  }
+                  alt="Current profile picture"
+                  style={{
+                    width: "120px",
+                    height: "120px",
+                    objectFit: "cover",
+                    borderRadius: "12px",
+                    border: `5px solid ${profileBorderColor}`,
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <button
+                  type="button"
+                  className={pfpType === "avatar" ? "primary narrow" : "secondary narrow"}
+                  onClick={() => setPfpType("avatar")}
+                >
+                  Choose Avatar
+                </button>
+                <button
+                  type="button"
+                  className={pfpType === "upload" ? "primary narrow" : "secondary narrow"}
+                  onClick={() => setPfpType("upload")}
+                >
+                  Upload Image
+                </button>
+              </div>
+
+              {pfpType === "avatar" && (
+                <div className="profile-avatar-grid">
+                  {AVATARS.map((avatar) => (
+                    <button
+                      key={avatar.avatarId}
+                      type="button"
+                      className="secondary"
+                      onClick={() => setAvatarId(avatar.avatarId)}
+                      style={{
+                        border:
+                          avatarId === avatar.avatarId
+                            ? `3px solid ${profileBorderColor}`
+                            : "1px solid #0c0b0b",
+                        borderRadius: "12px",
+                        padding: "0.5rem",
+                      }}
+                    >
+                      <img
+                        src={avatar.imageUrl}
+                        alt={avatar.label}
+                        style={{ width: "64px", height: "64px", display: "block" }}
+                      />
+                      <div>{avatar.label}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {pfpType === "upload" && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.75rem",
+                    width: "300px",
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadedImageType(file.type as "image/png" | "image/jpeg" | "image/webp");
+
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        if (typeof reader.result === "string") {
+                          setUploadedImage(reader.result);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+
+                  {uploadedImage && (
+                    <img
+                      src={uploadedImage}
+                      alt="Uploaded profile preview"
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        objectFit: "cover",
+                        borderRadius: "12px",
+                        border: `3px solid ${profileBorderColor}`,
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+            {err && <p className="error-message">{err}</p>}
+            {successfulSubmit && <p className="smallAndGray">{successfulSubmit}</p>}
+            <div>
+              <button className="primary narrow">Submit</button>
+            </div>
+            <div className="smallAndGray">
+              After updating your display name or password, you will be logged out
+            </div>
+          </div>
         </div>
       </div>
-      <hr />
-      <div className="spacedSection">
-        <h3>Reset password</h3>
-        <div style={{ display: "flex", flexDirection: "row", gap: "0.5rem" }}>
-          <input
-            type={showPass ? "input" : "password"}
-            className="widefill notTooWide"
-            placeholder="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            className="secondary narrow"
-            onClick={(e) => {
-              e.preventDefault(); // Don't submit form
-              setPassword("");
-              setConfirm("");
-            }}
-          >
-            Reset
-          </button>
-          <button
-            className="secondary narrow"
-            aria-label="Toggle show password"
-            onClick={(e) => {
-              e.preventDefault(); // Don't submit form
-              setShowPass((v) => !v);
-            }}
-          >
-            {showPass ? "Hide" : "Reveal"}
-          </button>
-        </div>
-        <div style={{ display: "flex", flexDirection: "row", gap: "0.5rem" }}>
-          <input
-            type={showPass ? "input" : "password"}
-            className="widefill notTooWide"
-            placeholder="Confirm new password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-          />
-        </div>
-      </div>
-      <hr />
-      {err && <p className="error-message">{err}</p>}
-      <div>
-        <button className="primary narrow">Submit</button>
-      </div>
-      <div className="smallAndGray">After updating your profile, you will be logged out</div>
     </form>
   );
 }

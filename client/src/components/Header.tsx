@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import "./Header.css";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import styled from "@emotion/styled";
 import { Colors, type ColorTheme } from "../util/types.ts";
 import { TransluscentButton as Button } from "./Buttons.tsx";
 import { DefaultIcon } from "./StyledSVG.tsx";
+import { getProfileByUsername, getUploadedImage } from "../services/profileService.ts";
+import { AVATARS } from "../util/consts.ts";
 
 /**
  * Container which houses all elements.
@@ -18,7 +20,7 @@ const Container = styled.div<{ theme: ColorTheme }>`
   height: 3rem;
   gap: 15px;
   padding-inline: 1rem;
-  grid-template-columns: 1fr repeat(4, max-content);
+  grid-template-columns: 1fr repeat(5, max-content);
   width: 100%;
   grid-area: header;
   background-color: ${({ theme }) => theme.navBar};
@@ -41,6 +43,39 @@ export default function Header() {
   const { user, reset } = useLoginContext();
   const navigate = useNavigate();
 
+  const [avatarId, setAvatarId] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [profileBorderColor, setProfileBorderColor] = useState("#888888");
+  // Listen for profile updates to update the avatar and profile border color in the header
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      getProfileByUsername(user.username).then(async (response) => {
+        if ("error" in response) return;
+
+        setProfileBorderColor(response.profileBorderColor ?? "#888888");
+
+        if (response.pfp?.type === "avatar" && response.pfp.avatarId) {
+          setAvatarId(response.pfp.avatarId);
+          setUploadedImage(null);
+        }
+
+        if (response.pfp?.type === "upload" && response.pfp.uploadId) {
+          const imageResponse = await getUploadedImage(response.pfp.uploadId);
+          if (!("error" in imageResponse)) {
+            setUploadedImage(imageResponse.data);
+            setAvatarId(null);
+          }
+        }
+      });
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profile-updated", handleProfileUpdate);
+    };
+  }, [user.username]);
+
   const { theme, setTheme } = React.useContext(ThemeContext);
 
   /**
@@ -57,6 +92,25 @@ export default function Header() {
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <DefaultIcon src="src/assets/logos/logo_grayscale.svg" />
         <Typography.SmallTitle className="title">GameNite!</Typography.SmallTitle>
+      </div>
+      <div
+        style={{
+          width: "40px",
+          height: "40px",
+          borderRadius: "35%",
+          border: `3px solid ${profileBorderColor}`,
+          overflow: "hidden",
+          marginTop: "3px",
+        }}
+      >
+        {uploadedImage ? (
+          <img src={uploadedImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : avatarId ? (
+          <img
+            src={AVATARS.find((a) => a.avatarId === avatarId)?.imageUrl}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : null}
       </div>
       <Typography.Code>Welcome, {user.display}!</Typography.Code>
       <StyledImg
