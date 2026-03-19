@@ -19,35 +19,45 @@ type PasswordOptions = {
   verify: (data: { password: string; hash: string }) => Promise<boolean>;
 };
 
-export const auth = betterAuth({
-  basePath: "/api/auth",
-  trustedOrigins: ["http://localhost:4530", "https://spring26-project-group-307.onrender.com"],
-  database: mongodbAdapter(db),
-  allowDuplicateEmails: true,
-  emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 1,
-  },
-  plugins: [
-    username({
-      usernameNormalization: false,
-    }),
-  ],
-  disabledPaths: ["/is-username-available"],
-  databaseHooks: {
-    user: {
-      create: {
-        after: async (user) => {
-          const userModel = await getUserModel();
-          const existing = await userModel.findOne({ username: user.username }).lean();
-          if (!existing) {
-            await userModel.create({
-              _id: randomUUID().toString(),
-              username: user.username,
-              createdAt: new Date().toISOString(),
-              display: user.username,
-            });
-          }
+export function createAuth(mongoDB: Db, passwordOptions?: PasswordOptions) {
+  return betterAuth({
+    basePath: "/api/auth",
+    // localhost:8000 is needed because Vite's proxy rewrites the WebSocket Origin
+    // header to the backend's own URL (rewriteWsOrigin: true in vite.config.mjs),
+    // and better-auth validates Origin against trustedOrigins in getSession.
+    trustedOrigins: [
+      "http://localhost:4530",
+      "http://localhost:8000",
+      "https://spring26-project-group-307.onrender.com",
+    ],
+    database: mongodbAdapter(mongoDB),
+    allowDuplicateEmails: true,
+    emailAndPassword: {
+      enabled: true,
+      minPasswordLength: 1,
+      ...(passwordOptions ? { password: passwordOptions } : {}),
+    },
+    plugins: [
+      username({
+        usernameNormalization: false,
+      }),
+    ],
+    disabledPaths: ["/is-username-available"],
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            const userModel = await getUserModel();
+            const existing = await userModel.findOne({ username: user.username }).lean();
+            if (!existing) {
+              await userModel.create({
+                _id: randomUUID().toString(),
+                username: user.username,
+                createdAt: new Date().toISOString(),
+                display: user.username,
+              });
+            }
+          },
         },
       },
     },
