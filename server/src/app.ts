@@ -4,7 +4,8 @@ import express, { Router } from "express";
 import { Server } from "socket.io";
 import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import * as http from "node:http";
-import * as chat from "./controllers/chat.controller.ts";
+import * as gameChat from "./controllers/game-chat.controller.ts";
+import * as dmChat from "./controllers/dm-chat-controller.ts";
 import * as clan from "./controllers/clan.controller.ts";
 import * as friendship from "./controllers/friendship.controller.ts";
 import * as game from "./controllers/game.controller.ts";
@@ -57,6 +58,12 @@ app.use(
         .get("/list", thread.getList)
         .get("/:id", thread.getById)
         .post("/:id/comment", requireAuth, thread.postByIdComment),
+    )
+    .use(
+      "/messages",
+      Router()
+        .post("/createDM", requireAuth, dmChat.chatCreate)
+        .get("/getChatMessages", requireAuth, dmChat.getChatPaginated),
     )
     .use(
       "/user",
@@ -125,9 +132,11 @@ io.on("connection", (socket) => {
     console.log(`CONN [${socketId}] disconnected`);
   });
 
-  socket.on("chatJoin", chat.socketJoin(socket, io));
-  socket.on("chatLeave", chat.socketLeave(socket, io));
-  socket.on("chatSendMessage", chat.socketSendMessage(socket, io));
+  socket.on("chatJoin", gameChat.socketJoin(socket, io));
+  socket.on("dmChatJoin", dmChat.socketJoin(socket, io));
+  socket.on("chatLeave", gameChat.socketLeave(socket, io));
+  socket.on("chatSendMessage", gameChat.socketSendMessage(socket, io));
+  socket.on("dmSendMessage", dmChat.socketSendMessage(socket, io));
 
   socket.on("gameJoinAsPlayer", game.socketJoinAsPlayer(socket, io));
   socket.on("gameMakeMove", game.socketMakeMove(socket, io));

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useLoginContext from "./useLoginContext.ts";
 import type {
-  ChatInfo,
+  GameChatInfo,
   ChatMoveLogPayload,
   ChatNewMessagePayload,
   ChatUserJoinedPayload,
@@ -51,7 +51,7 @@ export default function useSocketsForChat(chatId: string) {
   const [messages, setMessages] = useState<ChatMessage[] | null>(null);
 
   useEffect(() => {
-    const handleChatJoined = (chat: ChatInfo) => {
+    const handleChatJoined = (chat: GameChatInfo) => {
       if (chat.chatId !== chatId) return;
       socket.off("chatJoined", handleChatJoined);
 

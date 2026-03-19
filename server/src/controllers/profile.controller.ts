@@ -1,6 +1,6 @@
 import { zUserProfileUpdateRequest, zUserProfileImageUploadRequest } from "@gamenite/shared";
-import { type UploadedImageRecord, type UserProfileRecord } from "../models.ts";
-
+import { type UploadedImageRecord, type UserProfileRecord } from "../records.ts";
+import { z } from "zod";
 import {
   getProfileByUsername,
   getUploadedImage,
@@ -27,7 +27,7 @@ export const postByUsername: RestAPI<UserProfileRecord, { username: string }> = 
   req,
   res,
 ) => {
-  const body = zUserProfileUpdateRequest.safeParse(req.body);
+  const body = z.object({ payload: zUserProfileUpdateRequest }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Bad request" });
     return;
@@ -38,7 +38,7 @@ export const postByUsername: RestAPI<UserProfileRecord, { username: string }> = 
     return;
   }
 
-  res.send(await updateProfile(req.params.username, body.data));
+  res.send(await updateProfile(req.params.username, body.data.payload));
 };
 
 /**
@@ -48,18 +48,17 @@ export const postUploadByUsername: RestAPI<UserProfileRecord, { username: string
   req,
   res,
 ) => {
-  const body = zUserProfileImageUploadRequest.safeParse(req.body);
+  const body = z.object({ payload: zUserProfileImageUploadRequest }).safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
-
   if (req.authUser.username !== req.params.username) {
     res.status(403).send({ error: "Invalid credentials" });
     return;
   }
 
-  res.send(await uploadProfileImage(req.params.username, body.data));
+  res.send(await uploadProfileImage(req.params.username, body.data.payload));
 };
 
 /**

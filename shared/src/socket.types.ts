@@ -1,5 +1,5 @@
 import {
-  type ChatInfo,
+  type GameChatInfo,
   type ChatMoveLogPayload,
   type ChatNewMessagePayload,
   type ChatUserJoinedPayload,
@@ -16,8 +16,10 @@ import { type SafeUserInfo } from "./user.types.ts";
  */
 export interface ClientToServerEvents {
   chatJoin: (payload: string) => void;
+  dmChatJoin: (payload: string) => void;
   chatLeave: (payload: string) => void;
   chatSendMessage: (payload: NewMessagePayload) => void;
+  dmSendMessage: (payload: NewMessagePayload) => void;
   gameJoinAsPlayer: (payload: string) => void;
   gameMakeMove: (payload: GameMakeMovePayload) => void;
   gameStart: (payload: string) => void;
@@ -28,9 +30,10 @@ export interface ClientToServerEvents {
  * The Socket.io interface for server to client information
  */
 export interface ServerToClientEvents {
-  chatJoined: (payload: ChatInfo) => void;
+  chatJoined: (payload: GameChatInfo) => void;
   chatMoveLog: (payload: ChatMoveLogPayload) => void;
   chatNewMessage: (payload: ChatNewMessagePayload) => void;
+  dmNewMessage: (payload: ChatNewMessagePayload) => void;
   chatUserJoined: (payload: ChatUserJoinedPayload) => void;
   chatUserLeft: (payload: ChatUserLeftPayload) => void;
   gamePlayersUpdated: (payload: SafeUserInfo[]) => void;

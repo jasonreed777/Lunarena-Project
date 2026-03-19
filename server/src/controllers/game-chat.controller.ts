@@ -1,9 +1,8 @@
 import { zNewMessageRequest } from "@gamenite/shared";
 import { type SocketAPI } from "../types.ts";
 import { z } from "zod";
-import { addMessageToChat, forceChatById } from "../services/chat.service.ts";
+import { addMessageToChat, createMessage, forceChatById } from "../services/game-chat.service.ts";
 import { populateSafeUserInfo } from "../services/user.service.ts";
-import { createMessage } from "../services/message.service.ts";
 import { logSocketError } from "./socket.controller.ts";
 
 /**

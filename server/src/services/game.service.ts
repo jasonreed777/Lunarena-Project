@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { type GameInfo, type GameKey, type TaggedGameView } from "@gamenite/shared";
-import { createChat } from "./chat.service.ts";
+import { createChat } from "./game-chat.service.ts";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type GameServicer } from "../games/gameServiceManager.ts";
 import { nimGameService } from "../games/nim.ts";
