@@ -63,7 +63,8 @@ app.use(
       "/messages",
       Router()
         .post("/createDM", requireAuth, dmChat.chatCreate)
-        .get("/getChatMessages", requireAuth, dmChat.getChatPaginated),
+        .post("/getChatMessages", requireAuth, dmChat.getChatPaginated)
+        .get("/getChatList", requireAuth, dmChat.getChatList),
     )
     .use(
       "/user",

@@ -60,7 +60,7 @@ describe("profile.controller", () => {
         params: { username: "profileUser2" },
         authUser: { userId: "any-id", username: "profileUser2" },
         // pfp.type must be "upload" | "avatar" — passing an invalid value triggers 400
-        body: { payload: { pfp: { type: "not-a-valid-type" } } },
+        body: { pfp: { type: "not-a-valid-type" } },
       } as unknown as Parameters<typeof postByUsername>[0];
 
       const res = makeRes() as unknown as Parameters<typeof postByUsername>[1];
@@ -76,13 +76,12 @@ describe("profile.controller", () => {
       const req = {
         params: { username: "profileUser3" },
         authUser: { userId: "other-id", username: "differentUser" },
-        body: { payload: { bio: "new bio" } },
+        body: { bio: "new bio" },
       } as unknown as Parameters<typeof postByUsername>[0];
 
       const res = makeRes() as unknown as Parameters<typeof postByUsername>[1];
 
       await postByUsername(req, res);
-      console.log(res.status);
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.send).toHaveBeenCalledWith({ error: "Invalid login" });
     });
@@ -93,13 +92,11 @@ describe("profile.controller", () => {
         params: { username: "profileUser4" },
         authUser: { userId: "any-id", username: "profileUser4" },
         body: {
-          payload: {
-            bio: "updated bio",
-            profileBorderColor: "#ff0000",
-            pfp: {
-              type: "avatar",
-              avatarId: "wizard",
-            },
+          bio: "updated bio",
+          profileBorderColor: "#ff0000",
+          pfp: {
+            type: "avatar",
+            avatarId: "wizard",
           },
         },
       } as unknown as Parameters<typeof postByUsername>[0];
@@ -132,10 +129,8 @@ describe("profile.controller", () => {
         params: { username: "profileUser5" },
         authUser: { userId: "any-id", username: "profileUser5" },
         body: {
-          payload: {
-            contentType: "image/png",
-            data: "abc123base64",
-          },
+          contentType: "image/png",
+          data: "abc123base64",
         },
       } as unknown as Parameters<typeof postUploadByUsername>[0];
 

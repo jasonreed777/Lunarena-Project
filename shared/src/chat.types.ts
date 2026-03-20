@@ -69,6 +69,7 @@ export interface ChatMoveLogPayload {
   createdAt: Date;
 }
 
+// Request to create a new DM. Array of usernames
 export type CreateDMRequest = z.infer<typeof zCreateDMRequest>;
 export const zCreateDMRequest = z.array(z.string());
 
@@ -78,3 +79,10 @@ export const zDMPaginatedRequest = z.object({
   pageIndex: z.number().nonnegative(),
   pageSize: z.number().gt(0),
 });
+
+export type DMChatOverview = {
+  chatId: string;
+  participants: SafeUserInfo[];
+  createdAt: Date;
+  lastMessageAt: Date;
+};

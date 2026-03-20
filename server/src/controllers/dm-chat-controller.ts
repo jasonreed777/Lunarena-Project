@@ -1,5 +1,6 @@
 import type { RestAPI, SocketAPI } from "../types.ts";
 import {
+  type DMChatOverview,
   type MessageInfo,
   zCreateDMRequest,
   zDMPaginatedRequest,
@@ -10,11 +11,13 @@ import { logSocketError } from "./socket.controller.ts";
 import {
   checkUserBelongs,
   createChat,
+  getChats,
   getMessages,
   sendMessage,
 } from "../services/dm-chat.service.ts";
 import { populateSafeUserInfo } from "../services/user.service.ts";
 import { z } from "zod";
+import { getUserByUsername } from "../services/auth.service.ts";
 
 /**
  * Handle a socket request to send a direct message: store the message and
@@ -70,7 +73,16 @@ export const chatCreate: RestAPI = async (req, res) => {
     return;
   }
   try {
-    await createChat([req.authUser.userId, ...body.data.payload]);
+    const userIds = [];
+    for (const username of body.data.payload) {
+      const userWithId = await getUserByUsername(username);
+      if (!userWithId) {
+        res.status(400).send({ error: "user does not exist" });
+        return;
+      }
+      userIds.push(userWithId.userId);
+    }
+    await createChat([req.authUser.userId, ...userIds]);
     res.status(200).send();
   } catch (err) {
     res.status(400).send("error creating chat");
@@ -107,4 +119,19 @@ export const getChatPaginated: RestAPI<MessageInfo[]> = async (req, res) => {
   } catch (err) {
     res.status(400).send({ error: "error getting messages" });
   }
+};
+
+export const getChatList: RestAPI<DMChatOverview[]> = async (req, res) => {
+  const chats = await getChats(req.authUser.userId);
+  const cleanedChats = await Promise.all(
+    chats.map(async (chat) => ({
+      chatId: chat._id.toString(),
+      participants: await Promise.all(
+        chat.participants.map((participant) => populateSafeUserInfo(participant)),
+      ),
+      createdAt: chat.createdAt,
+      lastMessageAt: chat.lastMessageAt,
+    })),
+  );
+  res.send(cleanedChats);
 };

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getUserByUsername } from "./auth.service.ts";
 import { UserProfileModel, UploadedImageModel } from "../mongoose-models.ts";
-import { type UserProfileRecord, type UploadedImageRecord } from "../records.ts";
+import { type UserProfileRecord, type UploadedImageRecord } from "../models.ts";
 import type { UserProfileImageUploadRequest } from "@gamenite/shared";
 
 /**
