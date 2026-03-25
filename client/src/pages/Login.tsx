@@ -86,7 +86,7 @@ export default function Login({ setAuth }: LoginProps) {
               }}
               color="#DE1212"
             >
-              {mode === "signup" ? "Use Existing Account" : "Create Account"}
+              {mode === "signup" ? "Use Existing Account" : "Create New Account"}
             </TransluscentButton>
           </div>
           {err && (
