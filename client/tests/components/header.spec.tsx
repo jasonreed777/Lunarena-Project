@@ -11,9 +11,13 @@ vi.mock("react-router-dom", async () => {
   return { ...mod, useNavigate: () => mockedUseNavigate };
 });
 const mockedReset = vi.fn();
-const mockedGetProfileByUsername = vi.fn();
-const mockedGetUploadedImage = vi.fn();
-const mockedUpdateProfile = vi.fn();
+const { mockedGetProfileByUsername, mockedGetUploadedImage, mockedUpdateProfile } = vi.hoisted(
+  () => ({
+    mockedGetProfileByUsername: vi.fn(),
+    mockedGetUploadedImage: vi.fn(),
+    mockedUpdateProfile: vi.fn(),
+  }),
+);
 
 vi.mock("../../src/services/profileService.ts", () => ({
   getProfileByUsername: mockedGetProfileByUsername,
