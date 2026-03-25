@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { PointsLedgerModel, UserPointsModel } from "../mongoose-models.ts";
+import { PointsLedgerModel, UserPointsModel, UserModel } from "../mongoose-models.ts";
 import type { PointReasonType } from "@gamenite/shared";
 
 /**
@@ -85,6 +85,7 @@ export async function hasExistingPointAward(
  */
 export interface LeaderboardEntry {
   username: string;
+  display: string;
   pointsTotal: number;
 }
 
@@ -93,11 +94,20 @@ export interface LeaderboardEntry {
  * @param limit maximum number of users to return
  */
 export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
-  // Get the top users sorted by pointsTotal in descending order, limited to the specified number of entries
-  const entries = await UserPointsModel.find({}).sort({ pointsTotal: -1 }).limit(limit).lean();
+  // Get top users sorted by pointsTotal in descending order, limited to the specified number
+  const entries = await UserPointsModel.find({}).sort({ pointsTotal: -1 }).limit(limit);
 
-  return entries.map((entry) => ({
-    username: entry._id,
-    pointsTotal: entry.pointsTotal,
-  }));
+  const leaderboard = await Promise.all(
+    entries.map(async (entry) => {
+      const user = await UserModel.findOne({ username: entry._id }).lean();
+
+      return {
+        username: entry._id,
+        display: user?.display ?? entry._id,
+        pointsTotal: entry.pointsTotal,
+      };
+    }),
+  );
+
+  return leaderboard;
 }

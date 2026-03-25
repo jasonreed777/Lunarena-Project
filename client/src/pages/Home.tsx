@@ -12,7 +12,9 @@ export default function Home() {
   const gameList = useGameList(4);
   const user = useLoginContext().user;
   const navigate = useNavigate();
-  const [leaderboard, setLeaderboard] = useState<{ username: string; pointsTotal: number }[]>([]);
+  const [leaderboard, setLeaderboard] = useState<
+    { username: string; display: string; pointsTotal: number }[]
+  >([]);
 
   // Update the user's online presence to active when they are on the home page
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/points/leaderboard")
       .then((res) => res.json())
-      .then((data: { username: string; pointsTotal: number }[]) => {
+      .then((data: { username: string; display: string; pointsTotal: number }[]) => {
         setLeaderboard(data);
       })
       .catch(() => setLeaderboard([]));
@@ -61,7 +63,7 @@ export default function Home() {
           ) : (
             leaderboard.map((entry, index) => (
               <div key={entry.username}>
-                {index + 1}. {entry.username} — {entry.pointsTotal} points
+                {index + 1}. {entry.display} - {entry.pointsTotal} points
               </div>
             ))
           )}
