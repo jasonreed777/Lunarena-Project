@@ -80,7 +80,7 @@ export interface UserProfileUpdateRequest {
   titleId?: string;
   profileBorderColor?: string;
   onlinePresence?: {
-    status: "active" | "inactive" | "offline";
+    status: "active" | "offline";
     activeGameId?: string;
     lastActive: string;
   };

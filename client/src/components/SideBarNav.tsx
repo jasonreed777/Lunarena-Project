@@ -36,32 +36,40 @@ export default function SideBarNav() {
   const [profileBorderColor, setProfileBorderColor] = useState("#888888");
 
   // Listen for profile updates to update the avatar and profile border color in the sidebar
+  // Important to have it remember upon logging in too
   useEffect(() => {
-    const handleProfileUpdate = () => {
-      getProfileByUsername(user.username).then(async (response) => {
-        if ("error" in response) return;
+    const loadProfile = async () => {
+      const response = await getProfileByUsername(user.username);
+      if ("error" in response) return;
 
-        setProfileBorderColor(response.profileBorderColor ?? "#888888");
-
-        if (response.pfp?.type === "avatar" && response.pfp.avatarId) {
-          setAvatarId(response.pfp.avatarId);
-          setUploadedImage(null);
+      setProfileBorderColor(response.profileBorderColor ?? "#888888");
+      // If they have an avatar set, use that
+      if (response.pfp?.type === "avatar" && response.pfp.avatarId) {
+        setAvatarId(response.pfp.avatarId);
+        setUploadedImage(null);
+        return;
+      }
+      // If they have an uploaded image, use that
+      if (response.pfp?.type === "upload" && response.pfp.uploadId) {
+        const imageResponse = await getUploadedImage(response.pfp.uploadId);
+        if (!("error" in imageResponse)) {
+          setUploadedImage(imageResponse.data);
+          setAvatarId(null);
         }
+        return;
+      }
 
-        if (response.pfp?.type === "upload" && response.pfp.uploadId) {
-          const imageResponse = await getUploadedImage(response.pfp.uploadId);
-          if (!("error" in imageResponse)) {
-            setUploadedImage(imageResponse.data);
-            setAvatarId(null);
-          }
-        }
-      });
+      // If no profile picture exists
+      setAvatarId(null);
+      setUploadedImage(null);
     };
+    // Load profile on component mount to display avatar and profile border color immediately
+    loadProfile();
 
-    window.addEventListener("profile-updated", handleProfileUpdate);
+    window.addEventListener("profile-updated", loadProfile);
 
     return () => {
-      window.removeEventListener("profile-updated", handleProfileUpdate);
+      window.removeEventListener("profile-updated", loadProfile);
     };
   }, [user.username]);
 

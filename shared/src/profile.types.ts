@@ -24,7 +24,7 @@ export const zUserProfileUpdateRequest = z.object({
 
   onlinePresence: z
     .object({
-      status: z.enum(["active", "inactive", "offline"]),
+      status: z.enum(["active", "offline"]),
       activeGameId: z.string().optional(),
       lastActive: z.string(),
     })

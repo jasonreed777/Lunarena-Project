@@ -7,6 +7,7 @@ import { nimGameService } from "../games/nim.ts";
 import { guessGameService } from "../games/guess.ts";
 import { type GameViewUpdates, type UserWithId } from "../types.ts";
 import { GameModel } from "../mongoose-models.ts";
+import { updateProfile } from "./profile.service.ts";
 
 /**
  * The service interface for individual games
@@ -205,6 +206,14 @@ export async function updateGame(
 export async function viewGame(gameId: string, user: UserWithId) {
   const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} viewed an invalid game id`);
+  // Update user presence to active in this game
+  await updateProfile(user.username, {
+    onlinePresence: {
+      status: "active",
+      activeGameId: gameId,
+      lastActive: new Date().toISOString(),
+    },
+  });
   const players = game.players;
   const playerIndex = players.findIndex((userId) => userId === user.userId);
   let view: TaggedGameView | null = null;
