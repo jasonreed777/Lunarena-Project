@@ -133,7 +133,7 @@ export interface UserProfileRecord {
   profileBorderColor: string; // Hex code for the color of the user's profile border
   updatedAt: DateISO; // When profile was last updated
   onlinePresence: {
-    status: "active" | "inactive" | "offline"; // User's current online status
+    status: "active" | "offline"; // User's current online status
     activeGameId?: RecordId; // References a Game record if the user is currently in a game
     lastActive: DateISO; // When the user was last active on the site
   };

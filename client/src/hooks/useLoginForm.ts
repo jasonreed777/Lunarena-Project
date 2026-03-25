@@ -3,6 +3,7 @@ import { loginUser, signupUser } from "../services/userService.ts";
 import { type AuthContext } from "../contexts/LoginContext.ts";
 import { useNavigate } from "react-router-dom";
 import type { ErrorMsg, SafeUserInfo } from "@gamenite/shared";
+import { updateProfile } from "../services/profileService.ts";
 
 /**
  * Custom hook to manage login page logic.
@@ -89,6 +90,13 @@ export default function useLoginForm(setAuth: (auth: AuthContext | null) => void
       setErr(user.error);
     } else {
       setAuth({ user, pass: password, reset: () => setAuth(null) });
+      // Set user as active upon login
+      await updateProfile(user.username, {
+        onlinePresence: {
+          status: "active",
+          lastActive: new Date().toISOString(),
+        },
+      });
       navigate("/");
     }
   };

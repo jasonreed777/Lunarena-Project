@@ -18,11 +18,13 @@ export const zUserProfileUpdateRequest = z.object({
 
   titleId: z.string().optional(),
 
+  avatarId: z.string().optional(),
+
   profileBorderColor: z.string().optional(),
 
   onlinePresence: z
     .object({
-      status: z.enum(["active", "inactive", "offline"]),
+      status: z.enum(["active", "offline"]),
       activeGameId: z.string().optional(),
       lastActive: z.string(),
     })

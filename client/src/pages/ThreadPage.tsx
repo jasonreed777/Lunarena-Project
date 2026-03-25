@@ -4,14 +4,28 @@ import useThreadInfo from "../hooks/useThreadInfo.ts";
 import NewForumComment from "../components/NewForumComment.tsx";
 import useTimeSince from "../hooks/useTimeSince.ts";
 import UserLink from "../components/UserLink.tsx";
+import useLoginContext from "../hooks/useLoginContext.ts";
+import { updateProfile } from "../services/profileService.ts";
+import { useEffect } from "react";
 
 export default function ThreadPage() {
   const formatTimeSince = useTimeSince();
   const { threadId } = useParams();
-
+  const user = useLoginContext().user;
   // non-nullish assertion is okay here given that Thread is only called in a
   // route with `:threadId` on the path
   const { threadInfo, setThread } = useThreadInfo(threadId!);
+
+  // Update the user's online presence to active when they are on the forum page
+  useEffect(() => {
+    updateProfile(user.username, {
+      onlinePresence: {
+        status: "active",
+        activeGameId: undefined,
+        lastActive: new Date().toISOString(),
+      },
+    });
+  }, [user.username]);
 
   return (
     <div className="content">

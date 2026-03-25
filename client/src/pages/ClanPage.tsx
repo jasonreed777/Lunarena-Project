@@ -8,8 +8,10 @@ import { RecentlyPlayed } from "../components/RecentlyPlayed";
 import type { Game, GameInfo } from "@gamenite/shared";
 import type { UserProfileRecord } from "../util/types";
 import { LogoImage } from "../components/LogoImage";
-import React from "react";
+import React, { useEffect } from "react";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { updateProfile } from "../services/profileService";
+import useLoginContext from "../hooks/useLoginContext";
 
 // TODO: This can include more if needed-right now it just references the overall placement of the clan
 type Statistics = {
@@ -63,7 +65,17 @@ const StatList: React.FC<{
  */
 export const ClanPage: React.FC = () => {
   const gameList = useGameList(8) as GameInfo[]; // TODO: This will be extracted from the backend rather than here
-
+  const user = useLoginContext().user;
+  // Update the user's online presence to active when they are on the clans page
+  useEffect(() => {
+    updateProfile(user.username, {
+      onlinePresence: {
+        status: "active",
+        activeGameId: undefined,
+        lastActive: new Date().toISOString(),
+      },
+    });
+  }, [user.username]);
   // TODO: This is just for testing purposes---clan type is not finalized
   const clan: Clan = {
     name: "Clan 307",

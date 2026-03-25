@@ -1,0 +1,100 @@
+.profile-container {
+  min-height: 100vh;
+  background-image: url(../assets/gradients/login_gradient.png);
+  padding: 20px;
+  padding-top: 3rem;
+}
+
+.profile-card {
+  padding: 24px 28px;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-main {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 2fr 3fr;
+  gap: 24px;
+}
+
+.profile-column {
+  padding: 0 20px;
+}
+
+.profile-column:first-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.profile-section {
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar-preview {
+  width: auto;
+  height: 100px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.profile-avatar-preview:hover {
+  transform: scale(105%) rotate(15deg);
+}
+
+.profile-avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media screen and (max-width: 850px) {
+  .profile-main {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-column:first-child {
+    border-right: none;
+    padding-bottom: 10px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.profile-container input[type="color"] {
+  width: 42px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: transparent;
+}
+
+.profile-container input,
+.profile-container textarea,
+.profile-container select {
+  background: rgba(207, 203, 203, 0.08);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+}
+
+.profile-container input::placeholder,
+.profile-container textarea::placeholder {
+  color: rgba(191, 187, 187, 0.65);
+}
+
+.profile-container option {
+  background: #2a1833;
+  color: white;
+}
