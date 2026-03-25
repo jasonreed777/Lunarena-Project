@@ -7,6 +7,8 @@ import { getProfileByUsername, getUploadedImage } from "../services/profileServi
 import { ThemeContext } from "../contexts/ThemeContext";
 import { AVATARS } from "../util/consts";
 import { getGameById } from "../services/gameService";
+import { getUserPoints } from "../services/pointsService.ts";
+import { getUserAchievements } from "../services/achievementService.ts";
 
 interface ViewProfileProps {
   username: string;
@@ -22,6 +24,13 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         user: SafeUserInfo;
         profile: UserProfileRecord;
         uploadedImage: string | null;
+        pointsTotal: number;
+        achievements: {
+          achievementId: string;
+          title: string;
+          description: string;
+          achievedAt: string;
+        }[];
       }
   >({ type: "waiting" });
 
@@ -40,6 +49,9 @@ export default function ViewProfile({ username }: ViewProfileProps) {
 
         const profileResponse = await getProfileByUsername(username);
         if ("error" in profileResponse) return;
+
+        const pointsResponse = await getUserPoints(username);
+        const achievementsResponse = await getUserAchievements(username);
 
         if (profileResponse.onlinePresence?.activeGameId) {
           const gameResponse = await getGameById(profileResponse.onlinePresence.activeGameId);
@@ -67,6 +79,8 @@ export default function ViewProfile({ username }: ViewProfileProps) {
             user: userResponse,
             profile: profileResponse,
             uploadedImage,
+            pointsTotal: pointsResponse,
+            achievements: achievementsResponse,
           });
         }
       } catch (err) {
@@ -92,7 +106,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
       return <div>Loading...</div>;
 
     case "profile": {
-      const { user, profile, uploadedImage } = componentState;
+      const { user, profile, uploadedImage, pointsTotal, achievements } = componentState;
       const status = profile.onlinePresence?.status || "offline";
       const statusLabel = status.toUpperCase();
       const statusColor = status === "active" ? "#22c55e" : "#ef4444";
@@ -124,6 +138,17 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                 <p>Username: {user.username}</p>
                 <p>Account created {timeSince(user.createdAt)}</p>
               </div>
+              <div className="profile-points">
+  <h2>Points Total</h2>
+  <div
+    className="pointsValue"
+    style={{
+      color: profile.profileBorderColor,
+    }}
+  >
+    {pointsTotal}
+  </div>
+</div>
               <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>
                 <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
 
@@ -217,6 +242,21 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                     </div>
                   ) : (
                     <p>No title selected.</p>
+                  )}
+                </div>
+                <div className="spacedSection">
+                  <h3>Achievements</h3>
+                  {achievements.length === 0 ? (
+                    <div>No achievements yet.</div>
+                  ) : (
+                    <div className="list">
+                      {achievements.map((achievement) => (
+                        <div key={achievement.achievementId} className="achievement-card">
+                          <div className="achievement-title">{achievement.title}</div>
+                          <div className="achievement-description">{achievement.description}</div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

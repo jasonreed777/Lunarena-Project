@@ -309,6 +309,6 @@ export interface UserGameStatsRecord {
   username: string;
   winsTotal: number;
   gamesPlayedTotal: number;
-  byGame: Record<string, PerGameTypeStats>;
+  byGame: Map<string, PerGameTypeStats>;
   updatedAt: DateISO;
 }

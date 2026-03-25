@@ -37,6 +37,10 @@ export const nimLogic: GameLogic<NimState, NimView> = {
     }
     return ` took ${took}, leaving ${newState.remaining}`;
   },
+  winnerIndex: (state) => {
+    if (state.remaining !== 0) return undefined;
+    return state.nextPlayer;
+  },
 };
 
 export const nimGameService = new GameService<NimState, NimView>(nimLogic);
