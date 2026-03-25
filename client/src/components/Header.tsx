@@ -55,13 +55,13 @@ export default function Header() {
   return (
     <Container id="header" theme={theme}>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <DefaultIcon src="src/assets/logos/logo_grayscale.svg" />
+        <DefaultIcon src="/assets/logos/logo_grayscale.svg" />
         <Typography.SmallTitle className="title">GameNite!</Typography.SmallTitle>
       </div>
       <Typography.Code>Welcome, {user.display}!</Typography.Code>
       <StyledImg
         id="theme-toggle"
-        src={theme._id === "light" ? "src/assets/icons/moon.svg" : "src/assets/icons/sun.svg"}
+        src={theme._id === "light" ? "/assets/icons/moon.svg" : "/assets/icons/sun.svg"}
         onClick={() => handleThemeToggle()}
         hover
       />
