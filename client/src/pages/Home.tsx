@@ -3,11 +3,26 @@ import ThreadSummaryView from "../components/ThreadSummaryView.tsx";
 import { useNavigate } from "react-router-dom";
 import useGameList from "../hooks/useGameList.ts";
 import GameSummaryView from "../components/GameSummaryView.tsx";
+import { useEffect } from "react";
+import { updateProfile } from "../services/profileService.ts";
+import useLoginContext from "../hooks/useLoginContext.ts";
 
 export default function Home() {
   const threadList = useThreadList(4);
   const gameList = useGameList(4);
+  const user = useLoginContext().user;
   const navigate = useNavigate();
+
+  // Update the user's online presence to active when they are on the home page
+  useEffect(() => {
+    updateProfile(user.username, {
+      onlinePresence: {
+        status: "active",
+        activeGameId: undefined,
+        lastActive: new Date().toISOString(),
+      },
+    });
+  }, [user.username]);
 
   return (
     <div className="content">

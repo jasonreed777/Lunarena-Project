@@ -93,6 +93,9 @@ export default function ViewProfile({ username }: ViewProfileProps) {
 
     case "profile": {
       const { user, profile, uploadedImage } = componentState;
+      const status = profile.onlinePresence?.status || "offline";
+      const statusLabel = status.toUpperCase();
+      const statusColor = status === "active" ? "#22c55e" : "#ef4444";
 
       return (
         <div
@@ -108,11 +111,69 @@ export default function ViewProfile({ username }: ViewProfileProps) {
               boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
             }}
           >
-            <div className="profile-header">
+            <div
+              className="profile-header"
+              style={{
+                borderBottom: "1px solid rgba(255, 255, 255, 0.14)",
+                paddingBottom: "1rem",
+                marginBottom: "1.5rem",
+              }}
+            >
               <div>
                 <h2>Profile</h2>
                 <p>Username: {user.username}</p>
                 <p>Account created {timeSince(user.createdAt)}</p>
+              </div>
+              <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>
+                <h3 style={{ marginBottom: "0.5rem"}}>Online Status</h3>
+
+                {profile.onlinePresence?.activeGameId ? (
+                  <div>
+                    <p
+                      style={{
+                        color: "#22c55e",
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        margin: 0,
+                      }}
+                    >
+                      CURRENTLY PLAYING
+                    </p>
+                    <p
+                      style={{
+                        color: "#c5c022",
+                        fontWeight: 800,
+                        fontSize: "1.1rem",
+                        margin: "0.25rem 0 0 0",
+                      }}
+                    >
+                      {activeGame?.type || "Loading game..."}
+                    </p>
+                    {activeGame?.createdAt && (
+                      <p
+                        style={{
+                          opacity: 0.8,
+                          fontSize: "0.9rem",
+                          color: "#c5c022",
+                          marginTop: "0.35rem",
+                        }}
+                      >
+                        Started {timeSince(activeGame.createdAt)} by {activeGame.createdBy.display}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p
+                    style={{
+                      color: statusColor,
+                      fontWeight: 800,
+                      letterSpacing: "0.08em",
+                      margin: 0,
+                    }}
+                  >
+                    {statusLabel}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -135,23 +196,6 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                   <h3>Bio</h3>
                   <p>{profile.bio || "No bio yet."}</p>
                 </div>
-                <div className="profile-section">
-                  <h3>Status</h3>
-                  {profile.onlinePresence?.activeGameId ? (
-                    <>
-                      <p>Currently playing: {activeGame?.type || "Loading game..."}</p>
-                      {activeGame?.createdAt && (
-                        <p>
-                          Game created {timeSince(activeGame.createdAt)} by{" "}
-                          {activeGame.createdBy.display}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p>{profile.onlinePresence?.status || "offline"}</p>
-                  )}
-                </div>
-
                 <div className="profile-section">
                   <h3>Title</h3>
                   <p>{profile.titleId || "No title selected."}</p>

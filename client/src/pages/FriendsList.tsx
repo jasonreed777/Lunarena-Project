@@ -4,6 +4,9 @@ import { NavLink } from "react-router-dom";
 import useFriendsList from "../hooks/useFriendsList.ts";
 import useFriendRequests from "../hooks/useFriendRequests.ts";
 import useTimeSince from "../hooks/useTimeSince.ts";
+import { useEffect } from "react";
+import { updateProfile } from "../services/profileService.ts";
+import useLoginContext from "../hooks/useLoginContext.ts";
 
 function FriendItem({ friend, since }: FriendInfo) {
   const timeSince = useTimeSince();
@@ -44,6 +47,19 @@ export default function FriendsList() {
   const friends = "message" in friendsData ? [] : friendsData;
   const incoming = "message" in requestsData ? [] : requestsData.incoming;
   const outgoing = "message" in requestsData ? [] : requestsData.outgoing;
+
+  const user = useLoginContext().user;
+
+  // Update the user's online presence to active when they are on the friends page
+  useEffect(() => {
+    updateProfile(user.username, {
+      onlinePresence: {
+        status: "active",
+        activeGameId: undefined,
+        lastActive: new Date().toISOString(),
+      },
+    });
+  }, [user.username]);
 
   return (
     <div className="content">
