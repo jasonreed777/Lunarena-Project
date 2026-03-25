@@ -228,3 +228,87 @@ export interface ClanInviteRecord {
   invitedBy: RecordId | null;
   createdAt: DateISO;
 }
+
+/**
+ * Represents a user's current total points balance.
+ * - `username`: the user these points belong to
+ * - `pointsTotal`: the user's current total points
+ * - `updatedAt`: when the total was last updated
+ */
+export interface UserPointsRecord {
+  username: string;
+  pointsTotal: number;
+  updatedAt: DateISO;
+}
+
+/**
+ * Represents a single point-award event in the ledger.
+ * - `username`: the user receiving the points
+ * - `pointsAdded`: how many points were added
+ * - `reasonType`: category of point award
+ * - `reason`: human-readable explanation for the award
+ * - `refId`: optional reference to the triggering event
+ * - `createdAt`: when the points were awarded
+ */
+export interface PointsLedgerRecord {
+  username: string;
+  pointsAdded: number;
+  reasonType: "win" | "streak" | "achievement";
+  reason: string;
+  refId?: string;
+  createdAt: DateISO;
+}
+
+/**
+ * Represents an achievement definition in the system.
+ * - `id`: unique identifier for the achievement
+ * - `title`: display name of the achievement
+ * - `description`: explanation of how it is earned
+ * - `pointsAwarded`: bonus points granted when earned
+ */
+export interface AchievementRecord {
+  id: string;
+  title: string;
+  description: string;
+  pointsAwarded: number;
+}
+
+/**
+ * Represents a record of a user earning an achievement.
+ * - `id`: unique identifier for this earned-achievement record
+ * - `username`: the user who earned the achievement
+ * - `achievementId`: the achievement earned
+ * - `achievedAt`: when the achievement was earned
+ */
+export interface UserAchievementRecord {
+  id: string;
+  username: string;
+  achievementId: string;
+  achievedAt: DateISO;
+}
+
+/**
+ * Represents a user's stats for a specific game type.
+ * - `wins`: total wins for that game
+ * - `gamesPlayed`: total games played for that game
+ */
+export interface PerGameTypeStats {
+  wins: number;
+  gamesPlayed: number;
+}
+
+/**
+ * Represents a user's overall and per-game stats.
+ * - `username`: the user these stats belong to
+ * - `winsTotal`: total wins across all games
+ * - `gamesPlayedTotal`: total games played across all games
+ * - `byGame`: per-game breakdown of stats
+ * - `updatedAt`: when the stats were last updated
+ */
+export interface UserGameStatsRecord {
+  username: string;
+  winsTotal: number;
+  gamesPlayedTotal: number;
+  byGame: Record<string, PerGameTypeStats>;
+  updatedAt: DateISO;
+}

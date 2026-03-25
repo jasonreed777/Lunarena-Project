@@ -3,7 +3,7 @@ import ThreadSummaryView from "../components/ThreadSummaryView.tsx";
 import { useNavigate } from "react-router-dom";
 import useGameList from "../hooks/useGameList.ts";
 import GameSummaryView from "../components/GameSummaryView.tsx";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { updateProfile } from "../services/profileService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 
@@ -12,6 +12,9 @@ export default function Home() {
   const gameList = useGameList(4);
   const user = useLoginContext().user;
   const navigate = useNavigate();
+  const [leaderboard, setLeaderboard] = useState<
+    { username: string; display: string; pointsTotal: number }[]
+  >([]);
 
   // Update the user's online presence to active when they are on the home page
   useEffect(() => {
@@ -23,6 +26,15 @@ export default function Home() {
       },
     });
   }, [user.username]);
+  // Fetch the points leaderboard when the component mounts
+  useEffect(() => {
+    fetch("/api/points/leaderboard")
+      .then((res) => res.json())
+      .then((data: { username: string; display: string; pointsTotal: number }[]) => {
+        setLeaderboard(data);
+      })
+      .catch(() => setLeaderboard([]));
+  }, []);
 
   return (
     <div className="content">
@@ -41,6 +53,20 @@ export default function Home() {
           <button className="primary narrow" onClick={() => navigate("/game/new")}>
             Create New Game
           </button>
+        </div>
+      </div>
+      <div className="spacedSection">
+        <h2>Top Players</h2>
+        <div className="dottedList">
+          {leaderboard.length === 0 ? (
+            <div>No leaderboard data yet.</div>
+          ) : (
+            leaderboard.map((entry, index) => (
+              <div key={entry.username}>
+                {index + 1}. {entry.display} - {entry.pointsTotal} points
+              </div>
+            ))
+          )}
         </div>
       </div>
       <div className="spacedSection">

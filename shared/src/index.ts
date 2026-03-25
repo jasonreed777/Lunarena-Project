@@ -19,3 +19,7 @@ export * from "./profile.types.ts";
 export * from "./profile-picture.types.ts";
 export * from "./friendship.types.ts";
 export * from "./clan.types.ts";
+export * from "./points.types.ts";
+export * from "./achievement.types.ts";
+export * from "./user-achievement.types.ts";
+export * from "./game-stats.types.ts";
