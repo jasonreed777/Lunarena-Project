@@ -7,6 +7,7 @@ import { app, httpServer } from "./app.ts";
 import * as path from "node:path";
 import express from "express";
 import { resetEverythingToDefaults } from "./initRepository.ts";
+import { initializeAchievements } from "./services/achievement.service.ts";
 
 // Assume that a MONGO_STR environment variable is given (or set in `server/.env`),
 // then use MongoDB to create the repository.
@@ -18,6 +19,8 @@ if (!MONGO_STR) {
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || "GameNite";
 
 await mongoose.connect(MONGO_STR, { dbName: MONGO_DB_NAME });
+// Initialize the achievements collection with all achievement definitions
+await initializeAchievements();
 
 // We only want to initialize the database once, so we check whether
 // we've set the INIT_KEY before. If the INIT_KEY is set, then don't

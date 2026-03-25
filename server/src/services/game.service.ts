@@ -8,6 +8,9 @@ import { guessGameService } from "../games/guess.ts";
 import { type GameViewUpdates, type UserWithId } from "../types.ts";
 import { GameModel } from "../mongoose-models.ts";
 import { updateProfile } from "./profile.service.ts";
+import { awardPoints } from "./points.service.ts";
+import { checkWinAchievements } from "./achievement.service.ts";
+import { recordWin } from "./game-stats.service.ts";
 
 /**
  * The service interface for individual games
@@ -189,6 +192,14 @@ export async function updateGame(
     state: result.state,
     done: game.done || result.done,
   });
+  // If the game just transitioned to done, award points to the winner
+  if (!game.done && result.done) {
+    await awardPoints(user.username, 1, "win", `Won ${game.type} game`, gameId);
+  }
+
+  await recordWin(user.username, game.type);
+
+  await checkWinAchievements(user.username, game.type);
 
   return {
     views: result.views,

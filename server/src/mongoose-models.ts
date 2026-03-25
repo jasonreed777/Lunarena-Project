@@ -13,6 +13,11 @@ import type {
   UserProfileRecord,
   TitleRecord,
   UploadedImageRecord,
+  UserPointsRecord,
+  PointsLedgerRecord,
+  AchievementRecord,
+  UserAchievementRecord,
+  UserGameStatsRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
@@ -200,6 +205,88 @@ export const ClanInviteModel = mongoose.model<ClanInviteRecord & { _id: string }
       status: String,
       invitedBy: String,
       createdAt: String,
+    },
+    opts,
+  ),
+);
+
+// UserPoints: one record per user (_id is a username)
+export const UserPointsModel = mongoose.model<UserPointsRecord & { _id: string }>(
+  "userPoints",
+  new Schema(
+    {
+      _id: String,
+      pointsTotal: Number,
+      updatedAt: String,
+    },
+    opts,
+  ),
+);
+
+// PointsLedger: one record per point-award event (_id = UUID)
+export const PointsLedgerModel = mongoose.model<PointsLedgerRecord & { _id: string }>(
+  "pointsLedger",
+  new Schema(
+    {
+      _id: String,
+      username: String,
+      pointsAdded: Number,
+      reasonType: String,
+      reason: String,
+      refId: String,
+      createdAt: String,
+    },
+    opts,
+  ),
+);
+
+// Achievement: one record per achievement definition (_id = achievement id)
+export const AchievementModel = mongoose.model<AchievementRecord & { _id: string }>(
+  "achievement",
+  new Schema(
+    {
+      _id: String,
+      title: String,
+      description: String,
+      pointsAwarded: Number,
+    },
+    opts,
+  ),
+);
+
+// UserAchievement: one record per earned achievement (_id = UUID)
+export const UserAchievementModel = mongoose.model<UserAchievementRecord & { _id: string }>(
+  "userAchievement",
+  new Schema(
+    {
+      _id: String,
+      username: String,
+      achievementId: String,
+      achievedAt: String,
+    },
+    opts,
+  ),
+);
+
+// To be used insider UserGameStats, to get game stats for each game type
+const PerGameTypeStatsSchema = new Schema(
+  {
+    wins: Number,
+    gamesPlayed: Number,
+  },
+  { _id: false },
+);
+
+// UserGameStats: stores each user's overall and per game type game stats (_id = username)
+export const UserGameStatsModel = mongoose.model<UserGameStatsRecord & { _id: string }>(
+  "userGameStats",
+  new Schema(
+    {
+      _id: String,
+      winsTotal: Number,
+      gamesPlayedTotal: Number,
+      byGame: { type: Map, of: PerGameTypeStatsSchema },
+      updatedAt: String,
     },
     opts,
   ),
