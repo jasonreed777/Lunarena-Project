@@ -125,7 +125,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                 <p>Account created {timeSince(user.createdAt)}</p>
               </div>
               <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>
-                <h3 style={{ marginBottom: "0.5rem"}}>Online Status</h3>
+                <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
 
                 {profile.onlinePresence?.activeGameId ? (
                   <div>
@@ -198,7 +198,26 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                 </div>
                 <div className="profile-section">
                   <h3>Title</h3>
-                  <p>{profile.titleId || "No title selected."}</p>
+                  {profile.titleId ? (
+                    <div
+                      style={{
+                        display: "inline-block",
+                        marginTop: "0.5rem",
+                        padding: "0.6rem 1.5rem",
+                        borderRadius: "999px",
+                        border: `2px solid ${profile.profileBorderColor}`,
+                        background: "rgba(30, 148, 152, 0.84)",
+                        fontWeight: 800,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                      }}
+                    >
+                      {profile.titleId}
+                    </div>
+                  ) : (
+                    <p>No title selected.</p>
+                  )}
                 </div>
               </div>
               <div className="profile-column">

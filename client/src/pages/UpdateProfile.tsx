@@ -97,7 +97,7 @@ export default function UpdateProfile() {
                 placeholder="Tell people a bit about yourself!"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                maxLength={160}
+                maxLength={450}
                 rows={6}
                 style={{
                   width: "100%",
@@ -126,6 +126,25 @@ export default function UpdateProfile() {
                 <option value="The Chosen One">The Chosen One</option>
                 <option value="Chief">Chief</option>
               </select>
+
+              {titleId && (
+                <div
+                  style={{
+                    marginLeft: "3rem",
+                    display: "inline-block",
+                    padding: "0.6rem 1.5rem",
+                    borderRadius: "999px",
+                    border: `2px solid ${profileBorderColor}`,
+                    background: "rgba(30, 148, 152, 0.84)",
+                    fontWeight: 800,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                  }}
+                >
+                  {titleId}
+                </div>
+              )}
             </div>
             <div className="profile-section">
               <h3>Profile Border Color</h3>
