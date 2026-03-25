@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import Header from "../../src/components/Header.tsx";
@@ -11,11 +11,39 @@ vi.mock("react-router-dom", async () => {
   return { ...mod, useNavigate: () => mockedUseNavigate };
 });
 const mockedReset = vi.fn();
+const mockedGetProfileByUsername = vi.fn();
+const mockedGetUploadedImage = vi.fn();
+const mockedUpdateProfile = vi.fn();
+
+vi.mock("../../src/services/profileService.ts", () => ({
+  getProfileByUsername: mockedGetProfileByUsername,
+  getUploadedImage: mockedGetUploadedImage,
+  updateProfile: mockedUpdateProfile,
+}));
 
 describe("Header component", () => {
   beforeEach(() => {
     mockedUseNavigate.mockReset();
     mockedReset.mockReset();
+    mockedGetProfileByUsername.mockReset();
+    mockedGetUploadedImage.mockReset();
+    mockedUpdateProfile.mockReset();
+
+    mockedGetProfileByUsername.mockResolvedValue({
+      username: "username123",
+      bio: "",
+      pfp: { type: "avatar", avatarId: "wizard" },
+      titleId: "",
+      profileBorderColor: "#888888",
+      updatedAt: new Date().toISOString(),
+      onlinePresence: {
+        status: "active",
+        lastActive: new Date().toISOString(),
+      },
+    });
+
+    mockedGetUploadedImage.mockResolvedValue({ error: "no image" });
+    mockedUpdateProfile.mockResolvedValue({ success: true });
   });
 
   it("displays the display name, not the username", () => {
@@ -35,7 +63,7 @@ describe("Header component", () => {
     expect(screen.getByText(/displayname/)).not.toBeNull();
   });
 
-  it("pressing Log Out causes a state reset and navigation", () => {
+  it("pressing Log Out causes a state reset and navigation", async () => {
     render(
       <LoginContext
         value={{
@@ -54,8 +82,11 @@ describe("Header component", () => {
     );
 
     fireEvent.click(screen.getByText(/Log Out/i));
-    expect(mockedReset).toHaveBeenCalledOnce();
-    expect(mockedUseNavigate).toHaveBeenCalledExactlyOnceWith("/login");
+    await waitFor(() => {
+      expect(mockedUpdateProfile).toHaveBeenCalled();
+      expect(mockedReset).toHaveBeenCalledOnce();
+      expect(mockedUseNavigate).toHaveBeenCalledWith("/login");
+    });
   });
 
   it("pressing View Profile navigates to the current user profile", () => {
