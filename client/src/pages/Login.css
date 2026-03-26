@@ -27,13 +27,6 @@ form.login {
   gap: 10px;
 }
 
-/* 
-form.login .intertext {
-  text-align: center;
-  font-size: 0.8rem;
-  color: #888;
-}
-*/
 form.login .labeled-section {
   display: flex;
   flex-direction: row;

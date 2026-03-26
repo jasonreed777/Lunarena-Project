@@ -58,12 +58,19 @@ describe("GET /api/thread/list", () => {
 });
 
 describe("GET /api/thread/:id", () => {
+  it("should return 401 when not authenticated", async () => {
+    response = await supertest(app).get(`/api/thread/${randomUUID().toString()}`);
+    expect(response.status).toBe(401);
+  });
+
   it("should return 404 on a bad id", async () => {
+    await loginAs("user1");
     response = await supertest(app).get(`/api/thread/${randomUUID().toString()}`);
     expect(response.status).toBe(404);
   });
 
   it("should return existing ids", async () => {
+    await loginAs("user1");
     response = await supertest(app).get(`/api/thread/deadbeefdeadbeefdeadbeef`);
     expect(response.status).toBe(200);
     expect(response.body).toStrictEqual({
@@ -112,6 +119,14 @@ describe("POST /api/thread/create", () => {
   });
 });
 
+async function seedComment(): Promise<string> {
+  await loginAs("user2");
+  const r = await supertest(app)
+    .post("/api/thread/deadbeefdeadbeefdeadbeef/comment")
+    .send({ payload: "Test comment" });
+  return r.body.comments[0].commentId as string;
+}
+
 describe("POST /api/thread/:id/comment", () => {
   it("should return 400 on on ill-formed payload", async () => {
     await loginAs("user1");
@@ -148,7 +163,83 @@ describe("POST /api/thread/:id/comment", () => {
         createdAt: expect.anything(),
         text: "FIRST!",
         createdBy: { username: "user2", display: "Sénior Dos", createdAt: expect.anything() },
+        score: 0,
+        userVoted: null,
       },
     ]);
+  });
+});
+
+describe("POST /api/thread/comment/:commentId/vote", () => {
+  it("should return 401 when not authenticated", async () => {
+    const commentId = await seedComment();
+    logout();
+    response = await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "upvote" });
+    expect(response.status).toBe(401);
+  });
+
+  it("should return 404 on a bad comment id", async () => {
+    await loginAs("user1");
+    response = await supertest(app)
+      .post(`/api/thread/comment/${randomUUID()}/vote`)
+      .send({ payload: "upvote" });
+    expect(response.status).toBe(404);
+  });
+
+  it("should return 400 on an invalid vote type", async () => {
+    const commentId = await seedComment();
+    await loginAs("user1");
+    response = await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "sidewaysvote" });
+    expect(response.status).toBe(400);
+  });
+
+  it("should upvote a comment and reflect in thread", async () => {
+    const commentId = await seedComment();
+    await loginAs("user1");
+    response = await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "upvote" });
+    expect(response.status).toBe(200);
+    expect(response.body).toStrictEqual({ success: true });
+
+    response = await supertest(app).get("/api/thread/deadbeefdeadbeefdeadbeef");
+    expect(response.body.comments[0].score).toBe(1);
+    expect(response.body.comments[0].userVoted).toBe("upvote");
+  });
+
+  it("should toggle off an upvote when upvoting again", async () => {
+    const commentId = await seedComment();
+    await loginAs("user1");
+    await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "upvote" });
+    response = await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "upvote" });
+    expect(response.status).toBe(200);
+
+    response = await supertest(app).get("/api/thread/deadbeefdeadbeefdeadbeef");
+    expect(response.body.comments[0].score).toBe(0);
+    expect(response.body.comments[0].userVoted).toBeNull();
+  });
+
+  it("should switch from upvote to downvote", async () => {
+    const commentId = await seedComment();
+    await loginAs("user1");
+    await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "upvote" });
+    response = await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "downvote" });
+    expect(response.status).toBe(200);
+
+    response = await supertest(app).get("/api/thread/deadbeefdeadbeefdeadbeef");
+    expect(response.body.comments[0].score).toBe(-1);
+    expect(response.body.comments[0].userVoted).toBe("downvote");
   });
 });

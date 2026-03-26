@@ -2,3 +2,60 @@ span.opBlue {
   color: oklch(0.55 0.2 260);
   font-weight: 800;
 }
+
+.commentItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.voteControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+}
+
+.voteBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: oklch(0.6 0 0);
+  padding: 0 0.2rem;
+  line-height: 1;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+}
+
+.commentItem:hover .voteBtn {
+  opacity: 1;
+}
+
+.upvoteBtn:hover {
+  color: oklch(0.55 0.2 25);
+}
+
+.downvoteBtn:hover {
+  color: oklch(0.55 0.2 260);
+}
+
+.upvoteBtn.voted {
+  opacity: 1;
+  color: oklch(0.55 0.2 25);
+}
+
+.downvoteBtn.voted {
+  opacity: 1;
+  color: oklch(0.55 0.2 260);
+}
+
+.commentScore {
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 1.5rem;
+  text-align: center;
+}

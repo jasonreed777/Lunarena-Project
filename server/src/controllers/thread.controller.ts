@@ -4,6 +4,7 @@ import {
   getThreadById,
   getThreadSummaries,
 } from "../services/thread.service.ts";
+import { castVote } from "../services/comment.service.ts";
 import { type ThreadInfo, type ThreadSummary, zCreateThreadMessage } from "@gamenite/shared";
 import { type RestAPI } from "../types.ts";
 import { z } from "zod";
@@ -21,7 +22,7 @@ export const getList: RestAPI<ThreadSummary[]> = async (req, res) => {
  * info object.
  */
 export const getById: RestAPI<ThreadInfo, { id: string }> = async (req, res) => {
-  const thread = await getThreadById(req.params.id);
+  const thread = await getThreadById(req.params.id, req.authUser.userId);
   if (!thread) {
     res.status(404).send({ error: "Thread not found" });
     return;
@@ -66,4 +67,27 @@ export const postByIdComment: RestAPI<ThreadInfo, { id: string }> = async (req, 
   }
 
   res.send(thread);
+};
+
+/**
+ * Handle POST requests to `/api/thread/comment/:commentId/vote` to cast or
+ * retract a vote on a comment.
+ */
+export const postCommentVote: RestAPI<{ success: true }, { commentId: string }> = async (
+  req,
+  res,
+) => {
+  const body = z.object({ payload: z.enum(["upvote", "downvote"]) }).safeParse(req.body);
+  if (!body.success) {
+    res.status(400).send({ error: "Poorly-formed request" });
+    return;
+  }
+
+  const result = await castVote(req.authUser.userId, req.params.commentId, body.data.payload);
+  if (!result.success) {
+    res.status(404).send({ error: result.error });
+    return;
+  }
+
+  res.status(200).send({ success: true });
 };

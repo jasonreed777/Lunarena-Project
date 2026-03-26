@@ -93,7 +93,7 @@ export const ClanPage: React.FC = () => {
         pfp: {
           type: "avatar",
           uploadId: undefined,
-          avatarId: "src/assets/avatars/wizard.png", // This will normally reference an ID, but I'm faking it for now for testing
+          avatarId: "/assets/avatars/wizard.png", // This will normally reference an ID, but I'm faking it for now for testing
         },
         updatedAt: new Date(),
         onlinePresence: {
@@ -155,7 +155,7 @@ export const ClanPage: React.FC = () => {
       },
     ],
     color: "#D193ED",
-    icon: "src/assets/avatars/gorilla.png",
+    icon: "/assets/avatars/gorilla.png",
   };
   const clan2: Clan = {
     name: "2GoodAtNim",
@@ -166,7 +166,7 @@ export const ClanPage: React.FC = () => {
     },
     members: [],
     color: "#49DBD2",
-    icon: "src/assets/avatars/dragon.png",
+    icon: "/assets/avatars/dragon.png",
   };
   const clan3: Clan = {
     name: "Great Group",
@@ -177,7 +177,7 @@ export const ClanPage: React.FC = () => {
     },
     members: [],
     color: "#FF7A14",
-    icon: "src/assets/avatars/tiger.png",
+    icon: "/assets/avatars/tiger.png",
   };
 
   const { theme } = React.useContext(ThemeContext);
@@ -238,7 +238,7 @@ export const ClanPage: React.FC = () => {
             <Divider color={theme.text} style={{ marginBottom: 20 }} />
             <div className="sponsor-list">
               {clan.sponsors?.map((sponsor) => (
-                <img src="src/assets/avatars/knight.png" />
+                <img src="/assets/avatars/knight.png" />
               ))}
             </div>
           </div>

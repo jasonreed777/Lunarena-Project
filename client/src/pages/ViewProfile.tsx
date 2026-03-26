@@ -102,10 +102,36 @@ export default function ViewProfile({ username }: ViewProfileProps) {
   const { theme } = React.useContext(ThemeContext);
   switch (componentState.type) {
     case "error":
-      return <div style={{ color: "#f00" }}>{componentState.msg}</div>;
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+            padding: "20px",
+            paddingTop: "3rem",
+            backgroundColor: theme.primary,
+            color: theme.text,
+          }}
+        >
+          <div style={{ color: "#f00" }}>{componentState.msg}</div>
+        </div>
+      );
 
     case "waiting":
-      return <div>Loading...</div>;
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+            padding: "20px",
+            paddingTop: "3rem",
+            backgroundColor: theme.primary,
+            color: theme.text,
+          }}
+        >
+          <div>Loading...</div>
+        </div>
+      );
 
     case "profile": {
       const { user, profile, uploadedImage, pointsTotal, streak, achievements } = componentState;
@@ -115,9 +141,19 @@ export default function ViewProfile({ username }: ViewProfileProps) {
 
       return (
         <div
-          className="content profile-container"
-          style={{ backgroundColor: theme.primary, color: theme.text }}
+          className="profile-container"
+          style={{
+            minHeight: "100vh",
+            backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+            padding: "20px",
+            paddingTop: "3rem",
+            backgroundColor: theme.primary,
+            color: theme.text,
+          }}
         >
+          <Typography.PageTitle>Profile</Typography.PageTitle>
+          <Divider color={theme.text} />
+
           <div
             className="profile-card"
             style={{
@@ -136,8 +172,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
               }}
             >
               <div>
-                <h2>Profile</h2>
-                <p>Username: {user.username}</p>
+                <Typography.Subtitle>@{user.username}</Typography.Subtitle>
                 <p>Account created {timeSince(user.createdAt)}</p>
               </div>
               <div className="profile-points">
@@ -213,6 +248,10 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                   </p>
                 )}
               </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+              <FriendActionButtons targetUsername={username} />
             </div>
 
             <div className="profile-main">

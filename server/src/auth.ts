@@ -25,7 +25,11 @@ export function createAuth(mongoDB: Db, passwordOptions?: PasswordOptions) {
     // localhost:8000 is needed because Vite's proxy rewrites the WebSocket Origin
     // header to the backend's own URL (rewriteWsOrigin: true in vite.config.mjs),
     // and better-auth validates Origin against trustedOrigins in getSession.
-    trustedOrigins: ["http://localhost:4530", "http://localhost:8000"],
+    trustedOrigins: [
+      "http://localhost:4530",
+      "http://localhost:8000",
+      "https://spring26-project-group-307.onrender.com",
+    ],
     database: mongodbAdapter(mongoDB),
     allowDuplicateEmails: true,
     emailAndPassword: {
