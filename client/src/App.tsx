@@ -23,6 +23,7 @@ import NewThread from "./pages/NewThread.tsx";
 import TimeContextKeeper from "./components/UpdatingTimeContext.tsx";
 import { ClanPage } from "./pages/ClanPage.tsx";
 import { THEME_KEY, ThemeContext } from "./contexts/ThemeContext.ts";
+import { MessagePage } from "./pages/MessagePage.tsx";
 
 /** If `true`, all incoming socket messages will be logged */
 const DEBUG_SOCKETS = false;
@@ -112,6 +113,7 @@ export default function App() {
               <Route path="/forum/post/:threadId" element={<ThreadPage />} />
               <Route path="/games" element={<GameList />} />
               <Route path="/friends" element={<FriendsList />} />
+              <Route path="/messages" element={<MessagePage />} />
               <Route path="/game/new" element={<NewGame />} />
               <Route path="/game/:gameId" element={<Game />} />
               <Route path="/clan" element={<ClanPage />} />

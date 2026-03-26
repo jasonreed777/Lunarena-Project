@@ -1,0 +1,46 @@
+div.message-page-container {
+  min-height: 100vh;
+  background-image: url(../assets/gradients/messages_gradient.png);
+  padding: 20px;
+  padding-top: 3rem;
+}
+
+.messages-body-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.messages-container {
+  flex: 1;
+  padding-top: 1rem;
+}
+
+.friend-list {
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: 20px;
+}
+
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 1rem;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.selected {
+    cursor: default;
+    pointer-events: none;
+}
+
+.friend-info:hover {
+  transform: scale(105%);
+}
