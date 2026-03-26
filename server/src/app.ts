@@ -12,6 +12,7 @@ import * as user from "./controllers/user.controller.ts";
 import * as thread from "./controllers/thread.controller.ts";
 import * as profile from "./controllers/profile.controller.ts";
 import * as points from "./controllers/points.controller.ts";
+import * as achievements from "./controllers/achievement.controller.ts";
 import { type GameServer } from "./types.ts";
 import { requireAuth } from "./middleware/auth.middleware.ts";
 import { UserModel } from "./mongoose-models.ts";
@@ -76,6 +77,14 @@ app.use(
         .get("/:username", profile.getByUsername),
     )
     .use("/points", Router().get("/leaderboard", points.getLeaderboard))
+    .use(
+      "/points",
+      Router()
+        .get("/leaderboard", points.getLeaderboard)
+        .get("/streak/:username", points.getStreakByUsername)
+        .get("/:username", points.getPointsByUsername),
+    )
+    .use("/achievements", Router().get("/:username", achievements.getAchievementsByUsername))
     .use(
       "/friends",
       Router()

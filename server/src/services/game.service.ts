@@ -193,13 +193,14 @@ export async function updateGame(
     done: game.done || result.done,
   });
   // If the game just transitioned to done, award points to the winner
-  if (!game.done && result.done) {
-    await awardPoints(user.username, 1, "win", `Won ${game.type} game`, gameId);
+  if (!game.done && result.done && result.winnerIndex !== undefined) {
+    const winnerUserId = players[result.winnerIndex];
+    const winner = await populateSafeUserInfo(winnerUserId);
+
+    await awardPoints(winner.username, 1, "win", `Won ${game.type} game`, gameId);
+    await recordWin(winner.username, game.type);
+    await checkWinAchievements(winner.username, game.type);
   }
-
-  await recordWin(user.username, game.type);
-
-  await checkWinAchievements(user.username, game.type);
 
   return {
     views: result.views,

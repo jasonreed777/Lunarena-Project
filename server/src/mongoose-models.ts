@@ -19,7 +19,6 @@ import type {
   AchievementRecord,
   UserAchievementRecord,
   UserGameStatsRecord,
-  CommentVoteRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
@@ -230,6 +229,8 @@ export const UserPointsModel = mongoose.model<UserPointsRecord & { _id: string }
       _id: String,
       pointsTotal: Number,
       updatedAt: String,
+      currentStreak: Number,
+      lastStreakReceivedDate: String,
     },
     opts,
   ),
