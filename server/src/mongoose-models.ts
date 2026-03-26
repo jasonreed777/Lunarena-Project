@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { randomUUID } from "node:crypto";
 import type {
   ChatRecord,
   ClanInviteRecord,
@@ -161,7 +162,7 @@ export const FriendshipModel = mongoose.model<FriendshipRecord & { _id: string }
   "friendship",
   new Schema(
     {
-      _id: String,
+      _id: { type: String, default: () => randomUUID() },
       senderId: String,
       receiverId: String,
       status: String,
