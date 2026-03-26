@@ -218,6 +218,8 @@ export const UserPointsModel = mongoose.model<UserPointsRecord & { _id: string }
       _id: String,
       pointsTotal: Number,
       updatedAt: String,
+      currentStreak: Number,
+      lastStreakReceivedDate: String,
     },
     opts,
   ),

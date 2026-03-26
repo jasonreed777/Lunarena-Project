@@ -7,7 +7,7 @@ import { getProfileByUsername, getUploadedImage } from "../services/profileServi
 import { ThemeContext } from "../contexts/ThemeContext";
 import { AVATARS } from "../util/consts";
 import { getGameById } from "../services/gameService";
-import { getUserPoints } from "../services/pointsService.ts";
+import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 import { getUserAchievements } from "../services/achievementService.ts";
 
 interface ViewProfileProps {
@@ -25,6 +25,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         profile: UserProfileRecord;
         uploadedImage: string | null;
         pointsTotal: number;
+        streak: number;
         achievements: {
           achievementId: string;
           title: string;
@@ -52,7 +53,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
 
         const pointsResponse = await getUserPoints(username);
         const achievementsResponse = await getUserAchievements(username);
-
+        const streakResponse = await getUserStreak(username);
         if (profileResponse.onlinePresence?.activeGameId) {
           const gameResponse = await getGameById(profileResponse.onlinePresence.activeGameId);
           if (!("error" in gameResponse)) {
@@ -80,6 +81,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
             profile: profileResponse,
             uploadedImage,
             pointsTotal: pointsResponse,
+            streak: streakResponse,
             achievements: achievementsResponse,
           });
         }
@@ -90,7 +92,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
       }
     }
 
-    loadProfile();
+    void loadProfile();
 
     return () => {
       cancel = true;
@@ -106,7 +108,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
       return <div>Loading...</div>;
 
     case "profile": {
-      const { user, profile, uploadedImage, pointsTotal, achievements } = componentState;
+      const { user, profile, uploadedImage, pointsTotal, streak, achievements } = componentState;
       const status = profile.onlinePresence?.status || "offline";
       const statusLabel = status.toUpperCase();
       const statusColor = status === "active" ? "#22c55e" : "#ef4444";
@@ -147,6 +149,17 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                   }}
                 >
                   {pointsTotal}
+                </div>
+              </div>
+              <div className="profile-streak">
+                <h2>Login Streak</h2>
+                <div
+                  className="pointsValue"
+                  style={{
+                    color: profile.profileBorderColor,
+                  }}
+                >
+                  {streak}
                 </div>
               </div>
               <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>

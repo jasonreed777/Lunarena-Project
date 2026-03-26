@@ -239,6 +239,8 @@ export interface UserPointsRecord {
   username: string;
   pointsTotal: number;
   updatedAt: DateISO;
+  currentStreak: number;
+  lastStreakReceivedDate: DateISO;
 }
 
 /**

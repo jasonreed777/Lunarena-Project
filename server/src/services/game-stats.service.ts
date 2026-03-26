@@ -8,10 +8,10 @@ import { UserGameStatsModel } from "../mongoose-models.ts";
  */
 export async function recordWin(username: string, gameType: string) {
   const now = new Date().toISOString();
-  let stats = await UserGameStatsModel.findById(username);
+  const stats = await UserGameStatsModel.findById(username);
 
   if (!stats) {
-    stats = await UserGameStatsModel.create({
+    await UserGameStatsModel.create({
       _id: username,
       winsTotal: 1,
       gamesPlayedTotal: 1,

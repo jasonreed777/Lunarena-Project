@@ -3,6 +3,7 @@ import { getUserByUsername } from "./auth.service.ts";
 import { UserProfileModel, UploadedImageModel } from "../mongoose-models.ts";
 import { type UserProfileRecord, type UploadedImageRecord } from "../models.ts";
 import type { UserProfileImageUploadRequest } from "@gamenite/shared";
+import { getOrUpdateStreak } from "./points.service.ts";
 
 /**
  * Retrieves a single profile from the database
@@ -113,6 +114,11 @@ export async function updateProfile(
   }
 
   profile.updatedAt = new Date().toISOString();
+
+  if (profile.onlinePresence.status === "active") {
+    // When a user comes online, update their streak
+    await getOrUpdateStreak(profile.username);
+  }
 
   await UserProfileModel.findByIdAndUpdate(user.userId, { $set: profile }, { upsert: true });
   return profile;
