@@ -22,10 +22,23 @@ import type {
 
 const opts = { versionKey: false } as const;
 
+// UserProfile: _id is the userId (UUID)
+const PfpSchema = new Schema({ type: String, uploadId: String, avatarId: String }, { _id: false });
+
 // User: _id is a UUID
 export const UserModel = mongoose.model<UserRecord & { _id: string }>(
   "user",
-  new Schema({ _id: String, username: String, display: String, createdAt: String }, opts),
+  new Schema(
+    {
+      _id: String,
+      username: String,
+      display: String,
+      createdAt: String,
+      pfp: PfpSchema,
+      profileBorderColor: String,
+    },
+    opts,
+  ),
 );
 
 // Chat: _id is a UUID
@@ -101,8 +114,6 @@ export const GameModel = mongoose.model<GameRecord & { _id: string }>(
   ),
 );
 
-// UserProfile: _id is the userId (UUID)
-const PfpSchema = new Schema({ type: String, uploadId: String, avatarId: String }, { _id: false });
 const OnlinePresenceSchema = new Schema(
   { status: String, activeGameId: String, lastActive: String },
   { _id: false },

@@ -104,11 +104,19 @@ export interface ThreadRecord {
  * - `password`: user's password
  * - `display`: A display name
  * - `createdAt`: when this user registered
+ * - `pfp`: The user's profile picture. Can either be uploaded or an avatar.
+ * - `profileBorderColor`: The user's preferred color for their profile.
  */
 export interface UserRecord {
   username: string; // References Auth records
   display: string;
   createdAt: DateISO;
+  pfp: {
+    type: "upload" | "avatar";
+    uploadId?: string; // References an uploaded image, if type is "upload"
+    avatarId?: string; // Avatar identifier, if type is "avatar"
+  };
+  profileBorderColor: string;
 }
 
 /**
