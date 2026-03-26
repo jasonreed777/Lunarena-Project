@@ -214,9 +214,7 @@ describe("POST /api/thread/comment/:commentId/vote", () => {
   it("should toggle off an upvote when upvoting again", async () => {
     const commentId = await seedComment();
     await loginAs("user1");
-    await supertest(app)
-      .post(`/api/thread/comment/${commentId}/vote`)
-      .send({ payload: "upvote" });
+    await supertest(app).post(`/api/thread/comment/${commentId}/vote`).send({ payload: "upvote" });
     response = await supertest(app)
       .post(`/api/thread/comment/${commentId}/vote`)
       .send({ payload: "upvote" });
@@ -230,9 +228,7 @@ describe("POST /api/thread/comment/:commentId/vote", () => {
   it("should switch from upvote to downvote", async () => {
     const commentId = await seedComment();
     await loginAs("user1");
-    await supertest(app)
-      .post(`/api/thread/comment/${commentId}/vote`)
-      .send({ payload: "upvote" });
+    await supertest(app).post(`/api/thread/comment/${commentId}/vote`).send({ payload: "upvote" });
     response = await supertest(app)
       .post(`/api/thread/comment/${commentId}/vote`)
       .send({ payload: "downvote" });

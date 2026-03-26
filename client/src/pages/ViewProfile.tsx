@@ -9,6 +9,9 @@ import { AVATARS } from "../util/consts";
 import { getGameById } from "../services/gameService";
 import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 import { getUserAchievements } from "../services/achievementService.ts";
+import { FriendActionButtons } from "../components/FriendActionButtons.tsx";
+import { Divider } from "../components/Divider.tsx";
+import * as Typography from "../libs/Typography";
 
 interface ViewProfileProps {
   username: string;
