@@ -15,6 +15,8 @@ export interface CommentInfo {
   createdBy: SafeUserInfo;
   createdAt: Date;
   editedAt?: Date;
+  score: number;
+  userVoted: VoteType | null;
 }
 
 /*** TYPES USED IN THE COMMENT API ***/
@@ -27,3 +29,5 @@ export const zNewCommentRequest = z.object({
   chatId: z.string(),
   text: z.string(),
 });
+
+export type VoteType = "upvote" | "downvote";
