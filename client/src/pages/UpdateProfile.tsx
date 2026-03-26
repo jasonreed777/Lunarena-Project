@@ -6,7 +6,7 @@ import { AVATARS } from "../util/consts.ts";
 import "./ProfilePage.css";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { getUserAchievements } from "../services/achievementService.ts";
-import { getUserPoints } from "../services/pointsService.ts";
+import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 
 // Infer achievement item type from getUserAchievements return type
 type AchievementItem = Awaited<ReturnType<typeof getUserAchievements>>[number];
@@ -16,6 +16,7 @@ export default function UpdateProfile() {
   const timeSince = useTimeSince();
   const [pointsTotal, setPointsTotal] = useState<number>(0);
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [streak, setStreak] = useState<number>(0);
   const [showPass, setShowPass] = useState(false);
   const {
     display,
@@ -48,21 +49,30 @@ export default function UpdateProfile() {
     let cancel = false;
 
     async function loadProfileExtras() {
-      try {
-        const [userPoints, userAchievements] = await Promise.all([
-          getUserPoints(user.username),
-          getUserAchievements(user.username),
-        ]);
+      const [pointsResult, achievementsResult, streakResult] = await Promise.allSettled([
+        getUserPoints(user.username),
+        getUserAchievements(user.username),
+        getUserStreak(user.username),
+      ]);
 
-        if (!cancel) {
-          setPointsTotal(userPoints);
-          setAchievements(userAchievements);
-        }
-      } catch {
-        if (!cancel) {
-          setPointsTotal(0);
-          setAchievements([]);
-        }
+      if (cancel) return;
+
+      if (pointsResult.status === "fulfilled") {
+        setPointsTotal(pointsResult.value);
+      } else {
+        setPointsTotal(0);
+      }
+
+      if (achievementsResult.status === "fulfilled") {
+        setAchievements(achievementsResult.value);
+      } else {
+        setAchievements([]);
+      }
+
+      if (streakResult.status === "fulfilled") {
+        setStreak(streakResult.value);
+      } else {
+        setStreak(0);
       }
     }
 
@@ -93,6 +103,17 @@ export default function UpdateProfile() {
             <h2>Profile</h2>
             <p>Username: {user.username}</p>
             <p>Account created {timeSince(user.createdAt)}</p>
+          </div>
+          <div className="profile-streak">
+            <h2>Login Streak</h2>
+            <div
+              className="pointsValue"
+              style={{
+                color: profileBorderColor,
+              }}
+            >
+              {streak}
+            </div>
           </div>
           <div className="profile-points">
             <h2>Points Total</h2>
@@ -181,9 +202,10 @@ export default function UpdateProfile() {
                     display: "inline-block",
                     padding: "0.6rem 1.5rem",
                     borderRadius: "999px",
+                    width: "fit-content",
                     border: `2px solid ${profileBorderColor}`,
                     background: "rgba(30, 148, 152, 0.84)",
-                    fontWeight: 800,
+                    fontWeight: 700,
                     letterSpacing: "0.5px",
                     textTransform: "uppercase",
                     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",

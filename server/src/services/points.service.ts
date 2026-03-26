@@ -134,28 +134,42 @@ export async function getLeaderboard(limit = 10): Promise<LeaderboardEntry[]> {
  */
 export async function getOrUpdateStreak(username: string): Promise<number> {
   const points = await getOrCreatePointRecord(username);
-  let streak = points.currentStreak;
-  const lastStreakDate = new Date(Date.parse(points.lastStreakReceivedDate));
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  yesterday.setHours(0, 0, 0, 0);
+  let streak = points.currentStreak ?? 0;
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  // If the last streak update time was before today
-  if (lastStreakDate <= today) {
-    // If the last streak update time was after midnight yesterday
-    if (lastStreakDate >= yesterday) {
-      streak += 1;
-    } else {
-      // Reset streak
-      streak = 1;
-    }
 
-    points.currentStreak = streak;
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const lastStreakDate = points.lastStreakReceivedDate
+    ? new Date(points.lastStreakReceivedDate)
+    : null;
+
+  if (!lastStreakDate || Number.isNaN(lastStreakDate.getTime())) {
+    points.currentStreak = 1;
     points.lastStreakReceivedDate = new Date().toISOString();
     await points.save();
-    // Award a streak amount of points up to day 5
-    await awardPoints(username, streak > 5 ? 5 : streak, "streak", `Day ${streak} streak`);
+    await awardPoints(username, 1, "streak", "Day 1 streak");
+    return 1;
   }
+
+  lastStreakDate.setHours(0, 0, 0, 0);
+
+  if (lastStreakDate.getTime() === today.getTime()) {
+    return streak;
+  }
+
+  if (lastStreakDate.getTime() === yesterday.getTime()) {
+    streak += 1;
+  } else {
+    streak = 1;
+  }
+
+  points.currentStreak = streak;
+  points.lastStreakReceivedDate = new Date().toISOString();
+  await points.save();
+  await awardPoints(username, streak > 5 ? 5 : streak, "streak", `Day ${streak} streak`);
+
   return streak;
 }
