@@ -1,14 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useLoginContext from "../hooks/useLoginContext";
 import useTimeSince from "../hooks/useTimeSince";
 import useEditProfileForm from "../hooks/useEditProfileForm";
 import { AVATARS } from "../util/consts.ts";
 import "./ProfilePage.css";
 import { ThemeContext } from "../contexts/ThemeContext";
+import { getUserAchievements } from "../services/achievementService.ts";
+import { getUserPoints } from "../services/pointsService.ts";
+
+// Infer achievement item type from getUserAchievements return type
+type AchievementItem = Awaited<ReturnType<typeof getUserAchievements>>[number];
 
 export default function UpdateProfile() {
   const { user } = useLoginContext();
   const timeSince = useTimeSince();
+  const [pointsTotal, setPointsTotal] = useState<number>(0);
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [showPass, setShowPass] = useState(false);
   const {
     display,
@@ -37,6 +44,35 @@ export default function UpdateProfile() {
 
   const { theme } = React.useContext(ThemeContext);
 
+  useEffect(() => {
+    let cancel = false;
+
+    async function loadProfileExtras() {
+      try {
+        const [userPoints, userAchievements] = await Promise.all([
+          getUserPoints(user.username),
+          getUserAchievements(user.username),
+        ]);
+
+        if (!cancel) {
+          setPointsTotal(userPoints);
+          setAchievements(userAchievements);
+        }
+      } catch {
+        if (!cancel) {
+          setPointsTotal(0);
+          setAchievements([]);
+        }
+      }
+    }
+
+    void loadProfileExtras();
+
+    return () => {
+      cancel = true;
+    };
+  }, [user.username]);
+
   return (
     <form
       className="content profile-container"
@@ -57,6 +93,17 @@ export default function UpdateProfile() {
             <h2>Profile</h2>
             <p>Username: {user.username}</p>
             <p>Account created {timeSince(user.createdAt)}</p>
+          </div>
+          <div className="profile-points">
+            <h2>Points Total</h2>
+            <div
+              className="pointsValue"
+              style={{
+                color: profileBorderColor,
+              }}
+            >
+              {pointsTotal}
+            </div>
           </div>
         </div>
         <div className="profile-main">
@@ -212,6 +259,21 @@ export default function UpdateProfile() {
                   }}
                 />
               </div>
+            </div>
+            <div className="spacedSection">
+              <h3>Achievements</h3>
+              {achievements.length === 0 ? (
+                <div>No achievements yet.</div>
+              ) : (
+                <div className="list">
+                  {achievements.map((achievement) => (
+                    <div key={achievement.achievementId} className="achievement-card">
+                      <div className="achievement-title">{achievement.title}</div>
+                      <div className="achievement-description">{achievement.description}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="profile-column">

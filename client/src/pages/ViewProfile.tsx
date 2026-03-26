@@ -139,16 +139,16 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                 <p>Account created {timeSince(user.createdAt)}</p>
               </div>
               <div className="profile-points">
-  <h2>Points Total</h2>
-  <div
-    className="pointsValue"
-    style={{
-      color: profile.profileBorderColor,
-    }}
-  >
-    {pointsTotal}
-  </div>
-</div>
+                <h2>Points Total</h2>
+                <div
+                  className="pointsValue"
+                  style={{
+                    color: profile.profileBorderColor,
+                  }}
+                >
+                  {pointsTotal}
+                </div>
+              </div>
               <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>
                 <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
 
