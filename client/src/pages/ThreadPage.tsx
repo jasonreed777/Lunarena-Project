@@ -6,7 +6,9 @@ import useTimeSince from "../hooks/useTimeSince.ts";
 import UserLink from "../components/UserLink.tsx";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { updateProfile } from "../services/profileService.ts";
+import { voteOnComment } from "../services/threadService.ts";
 import { useEffect } from "react";
+import type { VoteType } from "@gamenite/shared";
 
 export default function ThreadPage() {
   const formatTimeSince = useTimeSince();
@@ -27,6 +29,37 @@ export default function ThreadPage() {
     });
   }, [user.username]);
 
+  async function handleVote(
+    commentId: string,
+    voteType: VoteType,
+    currentVote: VoteType | null,
+    currentScore: number,
+  ) {
+    if ("message" in threadInfo) return;
+
+    const toggling = currentVote === voteType;
+    const newVote = toggling ? null : voteType;
+
+    let scoreDelta: number;
+    if (toggling) {
+      scoreDelta = voteType === "upvote" ? -1 : 1;
+    } else if (currentVote) {
+      scoreDelta = voteType === "upvote" ? 2 : -2;
+    } else {
+      scoreDelta = voteType === "upvote" ? 1 : -1;
+    }
+
+    const updateComments = (score: number, userVoted: VoteType | null) =>
+      threadInfo.comments.map((c) => (c.commentId === commentId ? { ...c, score, userVoted } : c));
+    // Optimistically set the new score, revert if the update fails
+    setThread({ ...threadInfo, comments: updateComments(currentScore + scoreDelta, newVote) });
+
+    const result = await voteOnComment(commentId, voteType);
+    if ("error" in result) {
+      setThread({ ...threadInfo, comments: updateComments(currentScore, currentVote) });
+    }
+  }
+
   return (
     <div className="content">
       {"message" in threadInfo ? (
@@ -40,21 +73,40 @@ export default function ThreadPage() {
             {formatTimeSince(threadInfo.createdAt)}
           </div>
           <div className="dottedList" role="list">
-            {threadInfo.comments.map(({ commentId, text, createdBy, createdAt, editedAt }) => (
-              <div className="dottedListItem" role="listitem" key={commentId}>
-                <div>
-                  <div>{text}</div>
-                  <div className="smallAndGray">
-                    Reply by <UserLink user={createdBy} />
-                    {createdBy.username === threadInfo.createdBy.username && (
-                      <span className="opBlue"> OP</span>
-                    )}{" "}
-                    {formatTimeSince(createdAt)}
-                    {editedAt && ` (last edited ${formatTimeSince(editedAt)})`}
+            {threadInfo.comments.map(
+              ({ commentId, text, createdBy, createdAt, editedAt, score, userVoted }) => (
+                <div className="dottedListItem commentItem" role="listitem" key={commentId}>
+                  <div className="voteControls">
+                    <button
+                      className={`voteBtn upvoteBtn${userVoted === "upvote" ? " voted" : ""}`}
+                      onClick={() => handleVote(commentId, "upvote", userVoted, score)}
+                      aria-label="Upvote"
+                    >
+                      ▲
+                    </button>
+                    <span className="commentScore">{score}</span>
+                    <button
+                      className={`voteBtn downvoteBtn${userVoted === "downvote" ? " voted" : ""}`}
+                      onClick={() => handleVote(commentId, "downvote", userVoted, score)}
+                      aria-label="Downvote"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                  <div>
+                    <div>{text}</div>
+                    <div className="smallAndGray">
+                      Reply by <UserLink user={createdBy} />
+                      {createdBy.username === threadInfo.createdBy.username && (
+                        <span className="opBlue"> OP</span>
+                      )}{" "}
+                      {formatTimeSince(createdAt)}
+                      {editedAt && ` (last edited ${formatTimeSince(editedAt)})`}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
           <NewForumComment
             firstPost={threadInfo.comments.length === 0}

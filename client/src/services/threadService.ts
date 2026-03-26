@@ -1,6 +1,12 @@
 import type { APIResponse } from "../util/types.ts";
 import { api, exceptionToErrorMsg } from "./api.ts";
-import type { CreateThreadMessage, ErrorMsg, ThreadInfo, ThreadSummary } from "@gamenite/shared";
+import type {
+  CreateThreadMessage,
+  ErrorMsg,
+  ThreadInfo,
+  ThreadSummary,
+  VoteType,
+} from "@gamenite/shared";
 
 const THREAD_API_URL = `/api/thread`;
 
@@ -36,6 +42,24 @@ export const addCommentToThread = async (id: string, payload: string): APIRespon
     const res = await api.post<ThreadInfo | ErrorMsg>(`${THREAD_API_URL}/${id}/comment`, {
       payload,
     });
+    return res.data;
+  } catch (error) {
+    return exceptionToErrorMsg(error);
+  }
+};
+
+/**
+ * Sends a POST request to vote on a comment
+ */
+export const voteOnComment = async (
+  commentId: string,
+  payload: VoteType,
+): APIResponse<{ success: true }> => {
+  try {
+    const res = await api.post<{ success: true } | ErrorMsg>(
+      `${THREAD_API_URL}/comment/${commentId}/vote`,
+      { payload },
+    );
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);
