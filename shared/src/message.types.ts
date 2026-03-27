@@ -18,7 +18,7 @@ export interface MessageInfo {
 /*** TYPES USED IN THE MESSAGE API ***/
 
 /**
- * Relevant information for creating a new message
+ * Relevant information for creating a new message, sent from client to server
  */
 export type NewMessagePayload = z.infer<typeof zNewMessageRequest>;
 export const zNewMessageRequest = z.object({

@@ -1,16 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { getUserByUsername } from "./services/auth.service.ts";
 import {
-  ChatModel,
+  GameChatModel,
   CommentModel,
   FriendshipModel,
   GameModel,
-  MessageModel,
+  GameChatMessageModel,
   ThreadModel,
   UserModel,
 } from "./mongoose-models.ts";
 import type { FriendshipRecord, GameRecord, ThreadRecord } from "./models.ts";
-import { createChat } from "./services/chat.service.ts";
+import { createChat } from "./services/game-chat.service.ts";
 import { createUser, updateUser } from "./services/user.service.ts";
 
 /** Reset stored games with example data. */
@@ -168,11 +168,11 @@ async function resetStoredFriendships() {
 }
 
 export async function resetEverythingToDefaults() {
-  await ChatModel.deleteMany({});
+  await GameChatModel.deleteMany({});
   await CommentModel.deleteMany({});
   await FriendshipModel.deleteMany({});
   await GameModel.deleteMany({});
-  await MessageModel.deleteMany({});
+  await GameChatMessageModel.deleteMany({});
   await ThreadModel.deleteMany({});
   await UserModel.deleteMany({});
 

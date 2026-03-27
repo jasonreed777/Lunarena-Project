@@ -1,14 +1,14 @@
 import mongoose, { Schema } from "mongoose";
 import { randomUUID } from "node:crypto";
 import type {
-  ChatRecord,
+  GameChatRecord,
   ClanInviteRecord,
   ClanMemberRecord,
   ClanRecord,
   CommentRecord,
   FriendshipRecord,
   GameRecord,
-  MessageRecord,
+  GameChatMessageRecord,
   ThreadRecord,
   UserRecord,
   UserProfileRecord,
@@ -19,15 +19,30 @@ import type {
   AchievementRecord,
   UserAchievementRecord,
   UserGameStatsRecord,
+  DMChatRecord,
+  DMChatMessageRecord,
   CommentVoteRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
 
+// UserProfile: _id is the userId (UUID)
+const PfpSchema = new Schema({ type: String, uploadId: String, avatarId: String }, { _id: false });
+
 // User: _id is a UUID
 export const UserModel = mongoose.model<UserRecord & { _id: string }>(
   "user",
-  new Schema({ _id: String, username: String, display: String, createdAt: String }, opts),
+  new Schema(
+    {
+      _id: String,
+      username: String,
+      display: String,
+      createdAt: String,
+      pfp: PfpSchema,
+      profileBorderColor: String,
+    },
+    opts,
+  ),
 );
 
 // Chat: _id is a UUID
@@ -35,7 +50,7 @@ const MoveLogEntrySchema = new Schema(
   { moveDescription: String, userId: String, createdAt: String },
   { _id: false },
 );
-export const ChatModel = mongoose.model<ChatRecord & { _id: string }>(
+export const GameChatModel = mongoose.model<GameChatRecord & { _id: string }>(
   "chat",
   new Schema(
     {
@@ -74,9 +89,25 @@ export const CommentVoteModel = mongoose.model<CommentVoteRecord>(
 );
 
 // Message: _id is a UUID
-export const MessageModel = mongoose.model<MessageRecord & { _id: string }>(
+export const GameChatMessageModel = mongoose.model<GameChatMessageRecord & { _id: string }>(
   "message",
   new Schema({ _id: String, text: String, createdBy: String, createdAt: String }, opts),
+);
+
+export const DMChatModel = mongoose.model<DMChatRecord>(
+  "DMChat",
+  new Schema({ participants: [String], createdAt: Date, lastMessageAt: Date }, opts).index({
+    participants: 1,
+    lastMessageAt: -1,
+  }),
+);
+
+export const DMChatMessageModel = mongoose.model<DMChatMessageRecord>(
+  "DMChatMessage",
+  new Schema({ sender: String, timestamp: Date, chat: String, text: String }, opts).index({
+    chat: 1,
+    timestamp: -1,
+  }),
 );
 
 // Thread: _id is a UUID
@@ -113,8 +144,6 @@ export const GameModel = mongoose.model<GameRecord & { _id: string }>(
   ),
 );
 
-// UserProfile: _id is the userId (UUID)
-const PfpSchema = new Schema({ type: String, uploadId: String, avatarId: String }, { _id: false });
 const OnlinePresenceSchema = new Schema(
   { status: String, activeGameId: String, lastActive: String },
   { _id: false },

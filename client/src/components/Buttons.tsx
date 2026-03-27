@@ -22,3 +22,24 @@ export const TransluscentButton = styled.button<{ color: string; text?: string }
     border-bottom: 3px solid ${({ color }) => color};
   }
 `;
+
+export const FilledButton = styled.button<{ color: string; text?: string }>`
+  width: 100%;
+  color: ${({ text }) => text ?? "white"};
+  background-color: rgb(
+    ${({ color }) => `${hexToRGB(color).r}, ${hexToRGB(color).g}, ${hexToRGB(color).b}`}
+  );
+  border: 3px solid ${({ color }) => color};
+  border-bottom: 5px solid ${({ color }) => color};
+  border-radius: 8px;
+  padding: 5px;
+  font-family: "filson-pro", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 16px;
+  transition: all 0.1s;
+
+  :hover {
+    border-bottom: 3px solid ${({ color }) => color};
+  }
+`;

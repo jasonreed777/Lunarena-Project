@@ -1,3 +1,5 @@
+import { TransluscentButton as Button } from "./Buttons";
+import { StyledTextArea } from "./Input";
 import "./MessageCreation.css";
 import { type SubmitEvent, type KeyboardEvent, useState } from "react";
 
@@ -24,13 +26,16 @@ export default function MessageCreation({ handleMessageCreation }: MessageCreati
 
   return (
     <form data-testid="message-creation-form" className="messageCreation" onSubmit={handleSubmit}>
-      <textarea
+      <StyledTextArea
         placeholder="Send a message to chat"
         value={text}
         onKeyDown={handleKeyDown}
         onChange={(e) => setText(e.target.value)}
-      ></textarea>
-      <button className="visuallyHidden">Submit</button>
+        color={"#298432"}
+      ></StyledTextArea>
+      <Button className="visuallyHidden" color="#298432">
+        Submit
+      </Button>
     </form>
   );
 }

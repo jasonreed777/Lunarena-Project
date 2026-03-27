@@ -15,6 +15,8 @@ export async function populateSafeUserInfo(userId: string): Promise<SafeUserInfo
     username: doc.username,
     display: doc.display,
     createdAt: new Date(doc.createdAt),
+    pfp: doc.pfp,
+    profileBorderColor: doc.profileBorderColor || "#8d8d8d",
   };
 }
 

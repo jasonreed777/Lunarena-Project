@@ -54,7 +54,17 @@ describe("Header component", () => {
     render(
       <LoginContext
         value={{
-          user: { username: "username", display: "displayname", createdAt: new Date("01-02-2025") },
+          user: {
+            username: "username",
+            display: "displayname",
+            createdAt: new Date("01-02-2025"),
+            pfp: {
+              type: "avatar",
+              uploadId: undefined,
+              avatarId: undefined,
+            },
+            profileBorderColor: "#ffffff",
+          },
           pass: "pwd",
           socket: {} as GameSocket,
           reset: mockedReset,
@@ -75,6 +85,12 @@ describe("Header component", () => {
             username: "username123",
             display: "displayname",
             createdAt: new Date("01-02-2025"),
+            pfp: {
+              type: "upload",
+              uploadId: undefined,
+              avatarId: undefined,
+            },
+            profileBorderColor: "#df12a3",
           },
           pass: "pwd",
           socket: {} as GameSocket,
@@ -101,6 +117,12 @@ describe("Header component", () => {
             username: "username123",
             display: "displayname",
             createdAt: new Date("01-02-2025"),
+            pfp: {
+              type: "avatar",
+              uploadId: undefined,
+              avatarId: undefined,
+            },
+            profileBorderColor: "#61dea2",
           },
           pass: "pwd",
           socket: {} as GameSocket,

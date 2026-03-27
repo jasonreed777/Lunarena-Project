@@ -1,3 +1,4 @@
+import type { SafeUserInfo } from "@gamenite/shared";
 import type { RGBColor } from "./types";
 
 /**
@@ -46,4 +47,12 @@ export const darkenColor = (color: RGBColor): RGBColor => {
     g: Math.max(color.g - amount, 0),
     b: Math.max(color.b - amount, 0),
   };
+};
+
+/**
+ * Returns the correct profile picture based on the type (avatar or uploaded image).
+ */
+export const getProfilePicture = (user: SafeUserInfo) => {
+  const { pfp } = user;
+  return pfp?.type === "avatar" ? pfp?.avatarId : pfp?.uploadId;
 };

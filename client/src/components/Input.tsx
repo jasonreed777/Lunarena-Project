@@ -3,8 +3,27 @@ import * as Typography from "../libs/Typography";
 import styled from "@emotion/styled";
 import { hexToRGB } from "../util/utils";
 
-// TODO: This will look slightly different with dark/light mode in the future
 export const StyledInput = styled.input<{ color: string }>`
+  width: 100%;
+  color: white;
+  background-color: rgba(
+    ${({ color }) => `${hexToRGB(color).r}, ${hexToRGB(color).g}, ${hexToRGB(color).b}`},
+    0.2
+  );
+  border: 3px solid ${({ color }) => color};
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: "filson-pro", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 16px;
+
+  ::placeholder {
+    color: #dedede;
+  }
+`;
+
+export const StyledTextArea = styled.textarea<{ color: string }>`
   width: 100%;
   color: white;
   background-color: rgba(

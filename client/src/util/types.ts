@@ -121,3 +121,17 @@ export const Colors: Record<Theme, ColorTheme> = {
  * Represents a color with red, green, and blue values
  */
 export type RGBColor = { r: number; g: number; b: number };
+
+/**
+ * Various sizes of avatars/profile pictures.
+ */
+export type AvatarSize = "small" | "medium" | "large";
+
+/**
+ * Maps each avatar size to a pixel corresponding to the width/height of the image
+ */
+export const AvatarSizeToPixelMap: Record<AvatarSize, number> = {
+  small: 30,
+  medium: 50,
+  large: 100,
+};

@@ -116,3 +116,19 @@ export const RecentlyPlayedText = styled.p`
   font-size: 16px;
   opacity: 0.75;
 `;
+
+export const LargeParagraph = styled.p<{ color?: string }>`
+  font-family: "fira-sans", "avenir", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 20px;
+  color: ${({ color }) => color ?? "white"};
+`;
+
+export const Paragraph = styled.p<{ color?: string }>`
+  font-family: "fira-sans", "avenir", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+  font-size: 14px;
+  color: ${({ color }) => color ?? "white"};
+`;

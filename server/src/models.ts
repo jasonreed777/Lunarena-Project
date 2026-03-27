@@ -15,12 +15,12 @@ export type RecordId = string;
 export type DateISO = string;
 
 /**
- * Represents a chat document in the database.
+ * Represents a game chat document in the database.
  * - `messages`: the ordered list of messages in the chat
  * - `moveLog`: the ordered list of move log entries for this chat
  * - `createdAt`: when the chat was created
  */
-export interface ChatRecord {
+export interface GameChatRecord {
   messages: RecordId[]; // References Message models
   moveLog: MoveLogEntry[];
   createdAt: DateISO;
@@ -79,15 +79,39 @@ export interface GameRecord {
 }
 
 /**
- * Represents a message in the database.
+ * Represents a chat message in the database.
  * - `text`: message contents
  * - `createdBy`: username of message sender
  * - `createdAt`: when the message was sent
  */
-export interface MessageRecord {
+export interface GameChatMessageRecord {
   text: string;
   createdBy: RecordId; // References User records
   createdAt: DateISO;
+}
+
+/**
+ * Represents a direct message chat in the database.
+ * - `participants`: participants in the conversation (could be more than 2 in the future)
+ * - `createdAt`: when the conversation started
+ */
+export interface DMChatRecord {
+  participants: RecordId[]; // References User records
+  createdAt: Date;
+  lastMessageAt: Date;
+}
+
+/**
+ * Represents an individual direct message in the database.
+ * - `sender`: who sent the message
+ * - `timestamp`: when the message was sent
+ * - `chat`: chat that the message belongs to
+ */
+export interface DMChatMessageRecord {
+  sender: RecordId;
+  timestamp: Date;
+  chat: RecordId;
+  text: string;
 }
 
 /**
@@ -111,11 +135,19 @@ export interface ThreadRecord {
  * - `password`: user's password
  * - `display`: A display name
  * - `createdAt`: when this user registered
+ * - `pfp`: The user's profile picture. Can either be uploaded or an avatar.
+ * - `profileBorderColor`: The user's preferred color for their profile.
  */
 export interface UserRecord {
   username: string; // References Auth records
   display: string;
   createdAt: DateISO;
+  pfp: {
+    type: "upload" | "avatar";
+    uploadId?: string; // References an uploaded image, if type is "upload"
+    avatarId?: string; // Avatar identifier, if type is "avatar"
+  };
+  profileBorderColor: string;
 }
 
 /**

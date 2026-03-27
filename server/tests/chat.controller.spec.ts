@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameServer, GameServerSocket } from "../src/types.ts";
 import { logSocketError } from "../src/controllers/socket.controller.ts";
-import { socketJoin } from "../src/controllers/chat.controller.ts";
-import { createChat } from "../src/services/chat.service.ts";
+import { socketJoin } from "../src/controllers/game-chat.controller.ts";
+import { createChat } from "../src/services/game-chat.service.ts";
 import { populateSafeUserInfo } from "../src/services/user.service.ts";
 import { getUserByUsername } from "../src/services/auth.service.ts";
 
