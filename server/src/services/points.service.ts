@@ -52,6 +52,31 @@ export async function getUserPoints(username: string): Promise<number> {
 }
 
 /**
+ * Retrives the daily points of a user.
+ * @param username username to look up
+ * @returns an array of points mapped to the date they were added
+ */
+export async function getUserDailyPoints(
+  username: string,
+): Promise<{ points: number; date: Date }[]> {
+  const entries = await PointsLedgerModel.find({ username }).lean();
+
+  const pointsByDay = new Map<string, number>();
+
+  for (const entry of entries) {
+    const day = new Date(entry.createdAt);
+    day.setHours(0, 0, 0, 0);
+    const key = day.toISOString();
+    pointsByDay.set(key, (pointsByDay.get(key) ?? 0) + entry.pointsAdded);
+  }
+
+  return Array.from(pointsByDay.entries()).map(([key, points]) => ({
+    date: new Date(key),
+    points,
+  }));
+}
+
+/**
  * Retrieves the points record for a user, creating it if it doesn't exist
  * @param username username to look up
  * @returns the points record

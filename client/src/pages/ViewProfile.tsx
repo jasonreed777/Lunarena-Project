@@ -12,6 +12,7 @@ import { getUserAchievements } from "../services/achievementService.ts";
 import { FriendActionButtons } from "../components/FriendActionButtons.tsx";
 import * as Typography from "../libs/Typography";
 import { Divider } from "../components/Divider.tsx";
+import { ActivityGraph } from "../components/ActivityGraph.tsx";
 
 interface ViewProfileProps {
   username: string;
@@ -200,7 +201,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                   {streak}
                 </div>
               </div>
-              <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>
+              <div style={{ textAlign: "center", minWidth: "260px" }}>
                 <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
 
                 {profile.onlinePresence?.activeGameId ? (
@@ -250,6 +251,13 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                     {statusLabel}
                   </p>
                 )}
+              </div>
+              <div style={{ minWidth: 0, flex: "1 1 0", overflow: "hidden" }}>
+                <ActivityGraph
+                  theme={theme}
+                  color={profile.profileBorderColor}
+                  username={user.username}
+                />
               </div>
             </div>
 

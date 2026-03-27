@@ -135,3 +135,11 @@ export const AvatarSizeToPixelMap: Record<AvatarSize, number> = {
   medium: 50,
   large: 100,
 };
+
+/**
+ * Type for the daily points of the activity graph.
+ */
+export type DailyPoints = {
+  points: number;
+  date: Date;
+};
