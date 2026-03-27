@@ -136,3 +136,19 @@ export type TransferOwnershipPayload = z.infer<typeof zTransferOwnershipPayload>
 export const zTransferOwnershipPayload = z.object({
   newOwnerUsername: z.string(),
 });
+
+/**
+ * A single entry in the clan member points leaderboard
+ */
+export interface ClanMemberPointsEntry {
+  username: string;
+  display: string;
+  role: ClanRole;
+  pointsTotal: number;
+  pfp: {
+    type: "upload" | "avatar";
+    uploadId?: string;
+    avatarId?: string;
+  };
+  profileBorderColor: string;
+}

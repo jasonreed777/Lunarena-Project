@@ -90,31 +90,41 @@ export default function FriendsList() {
   const [colorsLoaded, setColorsLoaded] = useState(false);
 
   // Collect all unique usernames across friends + requests, fetch their profiles
+  const hasUsers = friends.length > 0 || incoming.length > 0 || outgoing.length > 0;
+
+  // When there are no users, treat colors as loaded
+  if (!hasUsers && !colorsLoaded) {
+    setColorsLoaded(true);
+  }
+
   useEffect(() => {
     const usernames = new Set<string>();
     friends.forEach((f) => usernames.add(f.friend.username));
     incoming.forEach((r) => usernames.add(r.user.username));
     outgoing.forEach((r) => usernames.add(r.user.username));
 
-    if (usernames.size === 0) {
-      setColorsLoaded(true);
-      return;
-    }
+    if (usernames.size === 0) return;
 
     let cancelled = false;
-    setColorsLoaded(false);
-    Promise.all(
-      [...usernames].map(async (uname) => {
-        const profile = await getProfileByUsername(uname);
-        if ("error" in profile) return [uname, DEFAULT_PILL_COLOR] as const;
-        return [uname, profile.profileBorderColor || DEFAULT_PILL_COLOR] as const;
-      }),
-    ).then((entries) => {
-      if (!cancelled) {
-        setColorMap(Object.fromEntries(entries));
-        setColorsLoaded(true);
-      }
-    });
+    Promise.resolve()
+      .then(() => {
+        if (!cancelled) setColorsLoaded(false);
+      })
+      .then(() =>
+        Promise.all(
+          [...usernames].map(async (uname) => {
+            const profile = await getProfileByUsername(uname);
+            if ("error" in profile) return [uname, DEFAULT_PILL_COLOR] as const;
+            return [uname, profile.profileBorderColor || DEFAULT_PILL_COLOR] as const;
+          }),
+        ),
+      )
+      .then((entries) => {
+        if (!cancelled) {
+          setColorMap(Object.fromEntries(entries));
+          setColorsLoaded(true);
+        }
+      });
     return () => {
       cancelled = true;
     };

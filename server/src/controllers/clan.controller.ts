@@ -2,6 +2,7 @@ import {
   type ClanInfo,
   type ClanDetailInfo,
   type ClanMemberInfo,
+  type ClanMemberPointsEntry,
   type UserClanInfo,
   type ClanInviteInfo,
   zCreateClanPayload,
@@ -204,6 +205,36 @@ export const postUpdateRole: RestAPI<ClanMemberInfo, { id: string }> = async (re
     body.data.payload.username,
     body.data.payload.role,
   );
+  res.send(result);
+};
+
+/**
+ * POST /api/clans/invites/:inviteId/cancel - Cancel a pending invite (admin/owner)
+ */
+export const postCancelInvite: RestAPI<{ success: true }, { inviteId: string }> = async (
+  req,
+  res,
+) => {
+  const result = await clanService.cancelInvite(req.authUser, req.params.inviteId);
+  if (result === null) {
+    res.status(404).send({ error: "Invite not found" });
+    return;
+  }
+  res.send(result);
+};
+
+/**
+ * GET /api/clans/:id/leaderboard - Get clan member points leaderboard
+ */
+export const getLeaderboard: RestAPI<ClanMemberPointsEntry[], { id: string }> = async (
+  req,
+  res,
+) => {
+  const result = await clanService.getClanMemberLeaderboard(req.params.id);
+  if (result === null) {
+    res.status(404).send({ error: "Clan not found" });
+    return;
+  }
   res.send(result);
 };
 
