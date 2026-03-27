@@ -13,5 +13,5 @@ const StyledImage = styled.img`
  * @returns logo image
  */
 export const LogoImage = () => {
-  return <StyledImage src="src/assets/logos/logo_multicolor.svg" alt="logo_img" />;
+  return <StyledImage src="/assets/logos/logo_multicolor.svg" alt="logo_img" />;
 };

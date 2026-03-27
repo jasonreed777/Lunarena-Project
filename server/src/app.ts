@@ -57,8 +57,9 @@ app.use(
         .Router()
         .post("/create", requireAuth, thread.postCreate)
         .get("/list", thread.getList)
-        .get("/:id", thread.getById)
-        .post("/:id/comment", requireAuth, thread.postByIdComment),
+        .get("/:id", requireAuth, thread.getById)
+        .post("/:id/comment", requireAuth, thread.postByIdComment)
+        .post("/comment/:commentId/vote", requireAuth, thread.postCommentVote),
     )
     .use(
       "/user",
@@ -75,6 +76,7 @@ app.use(
         .post("/:username", requireAuth, profile.postByUsername)
         .get("/:username", profile.getByUsername),
     )
+    .use("/points", Router().get("/leaderboard", points.getLeaderboard))
     .use(
       "/points",
       Router()
