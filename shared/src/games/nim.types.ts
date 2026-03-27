@@ -7,6 +7,7 @@ import { z, ZodNumber } from "zod";
 export interface NimState {
   remaining: number;
   nextPlayer: number;
+  forfeited?: boolean;
 }
 
 /**
@@ -20,7 +21,7 @@ export type NimView = NimState;
 
 /**
  * A move in Nim is an integer between 1 and 3, representing how many tokens
- * you take. The move is only valid if it is your turn.
+ * you take. The move is only valid if it is your turn. 0 is a forfeit.
  */
 export type NimMove = z.infer<typeof zNimMove>;
-export const zNimMove: ZodNumber = z.int().gte(1).lte(3);
+export const zNimMove: ZodNumber = z.int().gte(0).lte(3);

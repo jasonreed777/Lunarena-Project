@@ -11,9 +11,24 @@ describe(`Nim's update() logic`, () => {
   it("Should reject a poorly-typed move", () => {
     expect(nimLogic.update({ remaining: 4, nextPlayer: 0 }, null, 0)).toBeNull();
   });
-  it("Should reject moves that are out of the range 1 to 3", () => {
-    expect(nimLogic.update({ remaining: 4, nextPlayer: 0 }, 0, 0)).toBeNull();
+  it("Should reject moves that are out of the range 0 to 3", () => {
+    expect(nimLogic.update({ remaining: 4, nextPlayer: 0 }, -1, 0)).toBeNull();
     expect(nimLogic.update({ remaining: 4, nextPlayer: 0 }, 4, 0)).toBeNull();
+  });
+  it("Should allow a forfeit (move 0), ending the game with the other player winning", () => {
+    expect(nimLogic.update({ remaining: 10, nextPlayer: 0 }, 0, 0)).toStrictEqual({
+      remaining: 0,
+      nextPlayer: 1,
+      forfeited: true,
+    });
+    expect(nimLogic.update({ remaining: 10, nextPlayer: 1 }, 0, 1)).toStrictEqual({
+      remaining: 0,
+      nextPlayer: 0,
+      forfeited: true,
+    });
+  });
+  it("Should reject a forfeit from the wrong player", () => {
+    expect(nimLogic.update({ remaining: 10, nextPlayer: 1 }, 0, 0)).toBeNull();
   });
   it("Should reject moves that take more pieces than are still remaining", () => {
     expect(nimLogic.update({ remaining: 2, nextPlayer: 0 }, 3, 0)).toBeNull();
