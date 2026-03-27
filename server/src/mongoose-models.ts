@@ -19,6 +19,7 @@ import type {
   AchievementRecord,
   UserAchievementRecord,
   UserGameStatsRecord,
+  CommentVoteRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
