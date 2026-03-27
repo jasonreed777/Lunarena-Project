@@ -6,7 +6,6 @@ import { THEME_KEY, ThemeContext } from "../contexts/ThemeContext.ts";
 import * as Typography from "../libs/Typography.tsx";
 import styled from "@emotion/styled";
 import { Colors, type ColorTheme } from "../util/types.ts";
-import { TransluscentButton as Button } from "./Buttons.tsx";
 import { DefaultIcon } from "./StyledSVG.tsx";
 import {
   getProfileByUsername,
@@ -14,6 +13,9 @@ import {
   updateProfile,
 } from "../services/profileService.ts";
 import { AVATARS } from "../util/consts.ts";
+import { Avatar } from "./Avatar.tsx";
+import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
+import { getUserAchievements } from "../services/achievementService.ts";
 
 /**
  * Container which houses all elements.
@@ -24,13 +26,17 @@ const Container = styled.div<{ theme: ColorTheme }>`
   height: 3rem;
   gap: 15px;
   padding-inline: 1rem;
-  grid-template-columns: 1fr repeat(5, max-content);
+  grid-template-columns: 1fr 1fr repeat(5, max-content);
   width: 100%;
   grid-area: header;
   background-color: ${({ theme }) => theme.navBar};
   color: ${({ theme }) => theme.text};
 `;
-const StyledImg = styled.img<{ hover?: boolean }>`
+
+/**
+ * Theme Toggle
+ */
+const ThemeToggle = styled.img<{ hover?: boolean }>`
   width: auto;
   height: 24px;
   transition: all 0.2s;
@@ -38,6 +44,21 @@ const StyledImg = styled.img<{ hover?: boolean }>`
   :hover {
     transform: ${({ hover }) => (hover ? "scale(110%)" : undefined)};
   }
+`;
+
+/**
+ * Container for the statistics in the header.
+ */
+const HeaderStatsContainer = styled.div`
+  display: flex;
+  gap: 15px;
+  align-items: center;
+`;
+
+const HeaderStat = styled.div`
+  display: flex;
+  gap: 4px;
+  align-items: center;
 `;
 
 /**
@@ -50,6 +71,24 @@ export default function Header() {
   const [avatarId, setAvatarId] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [profileBorderColor, setProfileBorderColor] = useState("#888888");
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [stats, setStats] = useState<{
+    points: number;
+    streak: number;
+    achievementCount: number;
+  }>();
+
+  /**
+   * Retrives user statistics
+   */
+  const getProfileStatistics = React.useCallback(async () => {
+    const points = await getUserPoints(user.username);
+    const streak = await getUserStreak(user.username);
+    const achievementCount = (await getUserAchievements(user.username)).length;
+
+    setStats({ points, streak, achievementCount });
+  }, [user.username]);
+
   // Listen for profile updates to update the avatar and profile border color in the header
   // Important to have it remember upon logging in too
   useEffect(() => {
@@ -58,6 +97,10 @@ export default function Header() {
       if ("error" in response) return;
 
       setProfileBorderColor(response.profileBorderColor ?? "#888888");
+
+      // Get profile statistics
+      await getProfileStatistics();
+
       // If they have an avatar set, use that
       if (response.pfp?.type === "avatar" && response.pfp.avatarId) {
         setAvatarId(response.pfp.avatarId);
@@ -86,7 +129,7 @@ export default function Header() {
     return () => {
       window.removeEventListener("profile-updated", loadProfile);
     };
-  }, [user.username]);
+  }, [getProfileStatistics, user.username]);
 
   const { theme, setTheme } = React.useContext(ThemeContext);
 
@@ -105,55 +148,87 @@ export default function Header() {
         <DefaultIcon src="/assets/logos/logo_grayscale.svg" />
         <Typography.SmallTitle className="title">GameNite!</Typography.SmallTitle>
       </div>
-      <div
-        style={{
-          width: "40px",
-          height: "40px",
-          borderRadius: "35%",
-          border: `3px solid ${profileBorderColor}`,
-          overflow: "hidden",
-          marginTop: "3px",
-        }}
-      >
-        {uploadedImage ? (
-          <img src={uploadedImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        ) : avatarId ? (
-          <img
-            src={AVATARS.find((a) => a.avatarId === avatarId)?.imageUrl}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : null}
-      </div>
+      {stats && (
+        <HeaderStatsContainer>
+          {stats.points !== undefined && (
+            <HeaderStat>
+              <DefaultIcon src="/assets/icons/points.svg" hover={false} />
+              <Typography.HeaderStats style={{ color: theme.text }}>
+                {`${stats.points === 1 ? `1 Point` : `${stats.points} Points`}`}
+              </Typography.HeaderStats>
+            </HeaderStat>
+          )}
+          {stats.streak !== undefined && (
+            <>
+              <Typography.Subtitle>•</Typography.Subtitle>
+              <HeaderStat>
+                <DefaultIcon src="/assets/icons/streak.svg" hover={false} />
+                <Typography.HeaderStats style={{ color: theme.text }}>
+                  {stats.streak} Day Streak
+                </Typography.HeaderStats>
+              </HeaderStat>
+            </>
+          )}
+          {stats.achievementCount !== undefined && stats.achievementCount !== 0 && (
+            <>
+              <Typography.Subtitle>•</Typography.Subtitle>
+              <HeaderStat>
+                <DefaultIcon src="/assets/icons/achievements.svg" hover={false} />
+                <Typography.HeaderStats style={{ color: theme.text }}>
+                  {`${stats.achievementCount === 1 ? `1 Achievement` : `${stats.achievementCount} Achievements`}`}
+                </Typography.HeaderStats>
+              </HeaderStat>
+            </>
+          )}
+        </HeaderStatsContainer>
+      )}
       <Typography.Code>Welcome, {user.display}!</Typography.Code>
-      <StyledImg
+      <ThemeToggle
         id="theme-toggle"
         src={theme._id === "light" ? "/assets/icons/moon.svg" : "/assets/icons/sun.svg"}
         onClick={() => handleThemeToggle()}
         hover
       />
-      <Button
-        color={theme.navButton}
-        text={theme.text}
-        onClick={async () => {
-          await updateProfile(user.username, {
-            onlinePresence: {
-              status: "offline",
-              lastActive: new Date().toISOString(),
-            },
-          });
-          reset();
-          navigate("/login");
-        }}
-      >
-        Log Out
-      </Button>
-      <Button
-        color={theme.navButton}
-        text={theme.text}
-        onClick={() => navigate(`/profile/${user.username}`)}
-      >
-        View Profile
-      </Button>
+      <div style={{ position: "relative" }}>
+        <DefaultIcon
+          src="/assets/icons/settings.svg"
+          hover={false}
+          className="settings-icon"
+          onClick={() => setShowDropdown(!showDropdown)}
+        />
+        <div
+          style={{
+            display: showDropdown ? "block" : "none",
+            backgroundColor: theme.navBar,
+            borderTop: "none",
+          }}
+          className="menu-container"
+        >
+          <div
+            onClick={async () => {
+              await updateProfile(user.username, {
+                onlinePresence: {
+                  status: "offline",
+                  lastActive: new Date().toISOString(),
+                },
+              });
+              reset();
+              navigate("/login");
+            }}
+          >
+            <Typography.Code>Log Out</Typography.Code>
+          </div>
+        </div>
+      </div>
+      {(uploadedImage || avatarId) && (
+        <Avatar
+          src={uploadedImage ?? AVATARS.find((a) => a.avatarId === avatarId)?.imageUrl}
+          onClick={() => navigate(`/profile/${user.username}`)}
+          border={{ color: profileBorderColor }}
+          size="small"
+          hover
+        />
+      )}
     </Container>
   );
 }

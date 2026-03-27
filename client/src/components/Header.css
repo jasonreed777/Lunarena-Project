@@ -2,3 +2,33 @@
   font-size: 1.5rem;
   font-weight: 800;
 }
+
+svg.settings-icon {
+  transition: transform 0.2s;
+  cursor: pointer;
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+
+  &:hover {
+    transform: rotate(-60deg);
+  }
+}
+
+.menu-container {
+  position: absolute;
+  top: 33px;
+  right: 0;
+  border-radius: 0 0 12px 12px;
+  border-top: none;
+  padding: 12px;
+  cursor: pointer;
+  width: fit-content;
+
+  :hover {
+    text-decoration: underline;
+  }
+}
+
+p {
+  text-wrap: nowrap;
+}
