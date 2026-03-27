@@ -6,12 +6,14 @@ type FriendRequestsData = { incoming: FriendRequestInfo[]; outgoing: FriendReque
 /**
  * Custom hook to get pending friend requests (incoming and outgoing).
  */
-export default function useFriendRequests(): { message: string } | FriendRequestsData {
+export default function useFriendRequests(
+  refetchKey?: number,
+): { message: string } | FriendRequestsData {
   const [requests, setRequests] = useState<FriendRequestsData | ErrorMsg | null>(null);
 
   useEffect(() => {
     friendRequests().then(setRequests);
-  }, []);
+  }, [refetchKey]);
 
   if (!requests) return { message: "Loading..." };
   if ("error" in requests) return { message: `Error: ${requests.error}` };

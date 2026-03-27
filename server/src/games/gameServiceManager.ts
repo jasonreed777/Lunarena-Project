@@ -52,6 +52,7 @@ export interface GameServicer {
     views: GameViewUpdates;
     done: boolean;
     moveDescription: string;
+    winnerIndex?: number;
   };
 }
 
@@ -92,11 +93,15 @@ export class GameService<State, View> implements GameServicer {
   update(state: any, move: unknown, playerIndex: number, players: string[]) {
     const newState = this._logic.update(state, move, playerIndex);
     if (!newState) return null;
+    // Check is game is done
+    const done = this._logic.isDone(newState);
+
     return {
       state: newState,
       views: this._makePlayerViews(players, newState),
-      done: this._logic.isDone(newState),
+      done,
       moveDescription: this._logic.describeMove(state, newState, move, playerIndex),
+      winnerIndex: done ? this._logic.winnerIndex?.(newState, players.length) : undefined,
     };
   }
 

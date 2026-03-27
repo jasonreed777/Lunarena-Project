@@ -8,11 +8,10 @@ import { UserGameStatsModel } from "../mongoose-models.ts";
  */
 export async function recordWin(username: string, gameType: string) {
   const now = new Date().toISOString();
-  // If the user has no existing stats record, create one with 1 win and 1 game played. Otherwise, update their existing record.
-  let stats = await UserGameStatsModel.findById(username);
+  const stats = await UserGameStatsModel.findById(username);
 
   if (!stats) {
-    stats = await UserGameStatsModel.create({
+    await UserGameStatsModel.create({
       _id: username,
       winsTotal: 1,
       gamesPlayedTotal: 1,
@@ -27,20 +26,14 @@ export async function recordWin(username: string, gameType: string) {
     return;
   }
 
-  // overall stats
   stats.winsTotal += 1;
   stats.gamesPlayedTotal += 1;
 
-  // per game stats
-  if (!stats.byGame[gameType]) {
-    stats.byGame[gameType] = { wins: 0, gamesPlayed: 0 };
-  }
-
-  const gameStats = stats.byGame[gameType];
+  const gameStats = stats.byGame.get(gameType) ?? { wins: 0, gamesPlayed: 0 };
   gameStats.wins += 1;
   gameStats.gamesPlayed += 1;
+  stats.byGame.set(gameType, gameStats);
 
   stats.updatedAt = now;
-
   await stats.save();
 }

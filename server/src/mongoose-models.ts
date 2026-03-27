@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { randomUUID } from "node:crypto";
 import type {
   GameChatRecord,
   ClanInviteRecord,
@@ -20,6 +21,7 @@ import type {
   UserGameStatsRecord,
   DMChatRecord,
   DMChatMessageRecord,
+  CommentVoteRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
@@ -71,9 +73,19 @@ export const CommentModel = mongoose.model<CommentRecord & { _id: string }>(
       createdBy: String,
       createdAt: String,
       editedAt: String,
+      score: Number,
     },
     opts,
   ),
+);
+
+export const CommentVoteModel = mongoose.model<CommentVoteRecord>(
+  "commentVote",
+  new Schema({
+    commentId: String,
+    userId: String,
+    type: String,
+  }).index({ commentId: 1, userId: 1 }),
 );
 
 // Message: _id is a UUID
@@ -179,7 +191,7 @@ export const FriendshipModel = mongoose.model<FriendshipRecord & { _id: string }
   "friendship",
   new Schema(
     {
-      _id: String,
+      _id: { type: String, default: () => randomUUID() },
       senderId: String,
       receiverId: String,
       status: String,
@@ -247,6 +259,8 @@ export const UserPointsModel = mongoose.model<UserPointsRecord & { _id: string }
       _id: String,
       pointsTotal: Number,
       updatedAt: String,
+      currentStreak: Number,
+      lastStreakReceivedDate: String,
     },
     opts,
   ),

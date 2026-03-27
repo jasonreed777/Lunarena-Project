@@ -1,4 +1,4 @@
-import type { ErrorMsg, FriendInfo, FriendRequestInfo } from "@gamenite/shared";
+import type { ErrorMsg, FriendInfo, FriendRequestInfo, FriendshipInfo } from "@gamenite/shared";
 import { api, exceptionToErrorMsg } from "./api.ts";
 import type { APIResponse } from "../util/types.ts";
 
@@ -31,6 +31,52 @@ export const friendRequests = async (): APIResponse<{
     >(`${FRIENDS_API_URL}/requests`, {
       payload: {},
     });
+    return res.data;
+  } catch (error) {
+    return exceptionToErrorMsg(error);
+  }
+};
+
+/**
+ * Sends a friend request to the given user
+ */
+export const sendFriendRequest = async (receiverUsername: string): APIResponse<FriendshipInfo> => {
+  try {
+    const res = await api.post<FriendshipInfo | ErrorMsg>(`${FRIENDS_API_URL}/request`, {
+      payload: { receiverUsername },
+    });
+    return res.data;
+  } catch (error) {
+    return exceptionToErrorMsg(error);
+  }
+};
+
+/**
+ * Responds to a pending friend request (accept, reject, or block)
+ */
+export const respondToFriendRequest = async (
+  friendshipId: string,
+  action: "accept" | "reject" | "block",
+): APIResponse<FriendshipInfo> => {
+  try {
+    const res = await api.post<FriendshipInfo | ErrorMsg>(
+      `${FRIENDS_API_URL}/${friendshipId}/respond`,
+      { payload: { action } },
+    );
+    return res.data;
+  } catch (error) {
+    return exceptionToErrorMsg(error);
+  }
+};
+
+/**
+ * Removes a friend or cancels a pending friend request
+ */
+export const removeFriend = async (friendshipId: string): APIResponse<{ success: true }> => {
+  try {
+    const res = await api.delete<{ success: true } | ErrorMsg>(
+      `${FRIENDS_API_URL}/${friendshipId}`,
+    );
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);

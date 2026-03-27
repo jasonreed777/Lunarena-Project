@@ -9,9 +9,13 @@ import { ThreadModel } from "../mongoose-models.ts";
  * Expand a stored thread
  *
  * @param threadId - Valid thread id
+ * @param requestingUserId -
  * @returns the expanded thread info object
  */
-async function populateThreadInfo(threadId: string): Promise<ThreadInfo> {
+async function populateThreadInfo(
+  threadId: string,
+  requestingUserId?: string,
+): Promise<ThreadInfo> {
   const doc = await ThreadModel.findById(threadId).lean();
   if (!doc) throw new Error(`Failed to find thread ${threadId}`);
   return {
@@ -20,7 +24,9 @@ async function populateThreadInfo(threadId: string): Promise<ThreadInfo> {
     text: doc.text,
     createdBy: await populateSafeUserInfo(doc.createdBy),
     createdAt: new Date(doc.createdAt),
-    comments: await Promise.all(doc.comments.map(populateCommentInfo)),
+    comments: await Promise.all(
+      doc.comments.map((commentId) => populateCommentInfo(commentId, requestingUserId)),
+    ),
   };
 }
 
@@ -71,12 +77,16 @@ export async function createThread(
  * Retrieves a single thread from the database
  *
  * @param possibleThreadId - Ostensible thread ID
+ * @param requestingUserId - The user triggering the request
  * @returns the thread, or null if no thread with that ID exists
  */
-export async function getThreadById(possibleThreadId: string): Promise<ThreadInfo | null> {
+export async function getThreadById(
+  possibleThreadId: string,
+  requestingUserId?: string,
+): Promise<ThreadInfo | null> {
   const exists = await ThreadModel.exists({ _id: possibleThreadId });
   if (!exists) return null;
-  return populateThreadInfo(possibleThreadId);
+  return populateThreadInfo(possibleThreadId, requestingUserId);
 }
 
 /**

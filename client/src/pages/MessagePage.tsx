@@ -13,7 +13,6 @@ import { friendsList } from "../services/friendshipService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import useSocketsForDM from "../hooks/useSocketsForDM.ts";
 
-
 /**
  * A direct messaging page with messages from friends.
  * @returns direct messaging page
@@ -76,7 +75,7 @@ export const MessagePage: React.FC = () => {
   ];
 
   /**
-   * Fires when the user selects a friend from the list
+   * Fires when the user selects a chat from the list
    */
   const handleSelectChat = (chat: DMChatOverview) => {
     setSelected(chat);

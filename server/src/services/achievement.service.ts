@@ -156,17 +156,39 @@ export async function checkWinAchievements(username: string, gameType: string) {
   if (!stats) return;
 
   const totalWins = stats.winsTotal;
-  const gameWins = stats.byGame[gameType]?.wins ?? 0;
-  // Check overall win milestones
+  const gameWins = stats.byGame.get(gameType)?.wins ?? 0;
+
   if (OVERALL_WIN_MILESTONE_VALUES.includes(totalWins)) {
     const overallAchievementId = totalWins === 1 ? "first-win" : `${totalWins}-wins`;
-    // Award the overall win achievement
     await awardAchievement(username, overallAchievementId);
   }
-  // Check game-specific win milestones
+
   if (GAME_WIN_MILESTONE_VALUES.includes(gameWins)) {
     const gameAchievementId = `${gameType}-${gameWins}-wins`;
-    // Award the game-specific win achievement
     await awardAchievement(username, gameAchievementId);
   }
+}
+
+/**
+ * Gets all achievements earned by a user, along with their titles and descriptions
+ * @param username username to get achievements for
+ * @returns array of earned achievements for the user
+ */
+export async function getUserAchievements(username: string) {
+  const userAchievements = await UserAchievementModel.find({ username }).lean();
+
+  const achievements = await Promise.all(
+    userAchievements.map(async (userAchievement) => {
+      const achievement = await AchievementModel.findById(userAchievement.achievementId).lean();
+
+      return {
+        achievementId: userAchievement.achievementId,
+        title: achievement?.title ?? userAchievement.achievementId,
+        description: achievement?.description ?? "",
+        achievedAt: userAchievement.achievedAt,
+      };
+    }),
+  );
+
+  return achievements;
 }

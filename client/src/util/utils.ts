@@ -33,16 +33,20 @@ export const capitalizeText = (text: string): string => {
 };
 
 /**
- * Darkens an RGB color by 50 each.
+ * Darkens an RGB color for light-mode contrast. Uses perceived luminance to
+ * determine how much to darken — very light colors (like white) are darkened
+ * aggressively so they remain visible against light backgrounds.
  * @param color the color to darken
- * @returns darked color as an object with R, G, and B values
+ * @returns darkened color as an object with R, G, and B values
  */
 export const darkenColor = (color: RGBColor): RGBColor => {
-  const newColor = (color: number) => {
-    return Math.max(color - 50, 0);
+  const luminance = 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
+  const amount = luminance > 200 ? 150 : luminance > 160 ? 100 : 50;
+  return {
+    r: Math.max(color.r - amount, 0),
+    g: Math.max(color.g - amount, 0),
+    b: Math.max(color.b - amount, 0),
   };
-
-  return { r: newColor(color.r), g: newColor(color.g), b: newColor(color.b) };
 };
 
 /**

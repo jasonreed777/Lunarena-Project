@@ -1,4 +1,4 @@
-import type { GameKey } from "@gamenite/shared";
+import type { GameKey, VoteType } from "@gamenite/shared";
 
 /**
  * Record identifiers used to look up keys in a database. This type
@@ -50,6 +50,13 @@ export interface CommentRecord {
   createdBy: RecordId; // References User records
   createdAt: DateISO;
   editedAt?: DateISO;
+  score: number;
+}
+
+export interface CommentVoteRecord {
+  commentId: RecordId;
+  userId: RecordId;
+  type: VoteType;
 }
 
 /**
@@ -271,6 +278,8 @@ export interface UserPointsRecord {
   username: string;
   pointsTotal: number;
   updatedAt: DateISO;
+  currentStreak: number;
+  lastStreakReceivedDate: DateISO;
 }
 
 /**
@@ -341,6 +350,6 @@ export interface UserGameStatsRecord {
   username: string;
   winsTotal: number;
   gamesPlayedTotal: number;
-  byGame: Record<string, PerGameTypeStats>;
+  byGame: Map<string, PerGameTypeStats>;
   updatedAt: DateISO;
 }

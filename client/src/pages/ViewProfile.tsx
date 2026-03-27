@@ -7,6 +7,11 @@ import { getProfileByUsername, getUploadedImage } from "../services/profileServi
 import { ThemeContext } from "../contexts/ThemeContext";
 import { AVATARS } from "../util/consts";
 import { getGameById } from "../services/gameService";
+import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
+import { getUserAchievements } from "../services/achievementService.ts";
+import { FriendActionButtons } from "../components/FriendActionButtons.tsx";
+import { Divider } from "../components/Divider.tsx";
+import * as Typography from "../libs/Typography";
 
 interface ViewProfileProps {
   username: string;
@@ -22,6 +27,14 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         user: SafeUserInfo;
         profile: UserProfileRecord;
         uploadedImage: string | null;
+        pointsTotal: number;
+        streak: number;
+        achievements: {
+          achievementId: string;
+          title: string;
+          description: string;
+          achievedAt: string;
+        }[];
       }
   >({ type: "waiting" });
 
@@ -41,6 +54,9 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         const profileResponse = await getProfileByUsername(username);
         if ("error" in profileResponse) return;
 
+        const pointsResponse = await getUserPoints(username);
+        const achievementsResponse = await getUserAchievements(username);
+        const streakResponse = await getUserStreak(username);
         if (profileResponse.onlinePresence?.activeGameId) {
           const gameResponse = await getGameById(profileResponse.onlinePresence.activeGameId);
           if (!("error" in gameResponse)) {
@@ -67,6 +83,9 @@ export default function ViewProfile({ username }: ViewProfileProps) {
             user: userResponse,
             profile: profileResponse,
             uploadedImage,
+            pointsTotal: pointsResponse,
+            streak: streakResponse,
+            achievements: achievementsResponse,
           });
         }
       } catch (err) {
@@ -76,7 +95,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
       }
     }
 
-    loadProfile();
+    void loadProfile();
 
     return () => {
       cancel = true;
@@ -86,22 +105,58 @@ export default function ViewProfile({ username }: ViewProfileProps) {
   const { theme } = React.useContext(ThemeContext);
   switch (componentState.type) {
     case "error":
-      return <div style={{ color: "#f00" }}>{componentState.msg}</div>;
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+            padding: "20px",
+            paddingTop: "3rem",
+            backgroundColor: theme.primary,
+            color: theme.text,
+          }}
+        >
+          <div style={{ color: "#f00" }}>{componentState.msg}</div>
+        </div>
+      );
 
     case "waiting":
-      return <div>Loading...</div>;
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+            padding: "20px",
+            paddingTop: "3rem",
+            backgroundColor: theme.primary,
+            color: theme.text,
+          }}
+        >
+          <div>Loading...</div>
+        </div>
+      );
 
     case "profile": {
-      const { user, profile, uploadedImage } = componentState;
+      const { user, profile, uploadedImage, pointsTotal, streak, achievements } = componentState;
       const status = profile.onlinePresence?.status || "offline";
       const statusLabel = status.toUpperCase();
       const statusColor = status === "active" ? "#22c55e" : "#ef4444";
 
       return (
         <div
-          className="content profile-container"
-          style={{ backgroundColor: theme.primary, color: theme.text }}
+          className="profile-container"
+          style={{
+            minHeight: "100vh",
+            backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+            padding: "20px",
+            paddingTop: "3rem",
+            backgroundColor: theme.primary,
+            color: theme.text,
+          }}
         >
+          <Typography.PageTitle>Profile</Typography.PageTitle>
+          <Divider color={theme.text} />
+
           <div
             className="profile-card"
             style={{
@@ -120,9 +175,30 @@ export default function ViewProfile({ username }: ViewProfileProps) {
               }}
             >
               <div>
-                <h2>Profile</h2>
-                <p>Username: {user.username}</p>
+                <Typography.Subtitle>@{user.username}</Typography.Subtitle>
                 <p>Account created {timeSince(user.createdAt)}</p>
+              </div>
+              <div className="profile-points">
+                <h2>Points Total</h2>
+                <div
+                  className="pointsValue"
+                  style={{
+                    color: profile.profileBorderColor,
+                  }}
+                >
+                  {pointsTotal}
+                </div>
+              </div>
+              <div className="profile-streak">
+                <h2>Login Streak</h2>
+                <div
+                  className="pointsValue"
+                  style={{
+                    color: profile.profileBorderColor,
+                  }}
+                >
+                  {streak}
+                </div>
               </div>
               <div style={{ textAlign: "center", minWidth: "260px", marginRight: "23rem" }}>
                 <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
@@ -177,6 +253,10 @@ export default function ViewProfile({ username }: ViewProfileProps) {
               </div>
             </div>
 
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
+              <FriendActionButtons targetUsername={username} />
+            </div>
+
             <div className="profile-main">
               <div className="profile-column">
                 <div className="profile-section">
@@ -217,6 +297,21 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                     </div>
                   ) : (
                     <p>No title selected.</p>
+                  )}
+                </div>
+                <div className="spacedSection">
+                  <h3>Achievements</h3>
+                  {achievements.length === 0 ? (
+                    <div>No achievements yet.</div>
+                  ) : (
+                    <div className="list">
+                      {achievements.map((achievement) => (
+                        <div key={achievement.achievementId} className="achievement-card">
+                          <div className="achievement-title">{achievement.title}</div>
+                          <div className="achievement-description">{achievement.description}</div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

@@ -31,4 +31,5 @@ export interface GameLogic<GameState, GameView> {
     movePayload: unknown,
     playerIndex: number,
   ) => string;
+  winnerIndex?: (state: GameState, playerCount: number) => number | undefined;
 }
