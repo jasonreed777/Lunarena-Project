@@ -35,10 +35,20 @@ test.describe("The game of Nim", () => {
     await expect(page1.getByRole("button", { name: "Take one" })).toBeEnabled();
     await expect(page1.getByRole("button", { name: "Take two" })).toBeEnabled();
     await expect(page1.getByRole("button", { name: "Take three" })).toBeEnabled();
+    await expect(page1.getByRole("button", { name: "Forfeit" })).toBeEnabled();
 
     await expect(page2.getByRole("button", { name: "Take one" })).toBeDisabled();
     await expect(page2.getByRole("button", { name: "Take two" })).toBeDisabled();
     await expect(page2.getByRole("button", { name: "Take three" })).toBeDisabled();
+    await expect(page2.getByRole("button", { name: "Forfeit" })).toBeDisabled();
+  });
+
+  test("supports player 1 forfeiting, making player 2 the winner", async () => {
+    await page1.getByRole("button", { name: "Forfeit" }).click();
+
+    await expect(
+      page2.getByText(`The game is over: ${username1} forfeited. You win!`),
+    ).toBeVisible();
   });
 
   test("supports a playthrough with player 2 winning", async () => {

@@ -20,6 +20,10 @@ export const nimLogic: GameLogic<NimState, NimView> = {
     const move = zNimMove.safeParse(payload);
     if (playerIndex !== nextPlayer) return null;
     if (move.error) return null;
+    if (move.data === 0) {
+      // Forfeit: current player loses, other player wins
+      return { remaining: 0, nextPlayer: nextPlayer === 0 ? 1 : 0, forfeited: true };
+    }
     if (move.data > remaining) return null;
     return {
       remaining: remaining - move.data,
@@ -31,6 +35,9 @@ export const nimLogic: GameLogic<NimState, NimView> = {
   tagView: (view) => ({ type: "nim", view }),
   describeMove: (_prevState, newState, payload) => {
     const move = zNimMove.parse(payload);
+    if (move === 0) {
+      return " forfeited the game";
+    }
     const took = tokenWord(move);
     if (newState.remaining === 0) {
       return ` took ${took} and lost the game`;

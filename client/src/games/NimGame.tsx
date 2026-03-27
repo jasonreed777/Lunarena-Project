@@ -37,10 +37,18 @@ export default function NimGame({
         There are {view.remaining} object{view.remaining !== 1 && "s"} left in the pile.
       </div>
       {view.remaining > 0 && <div>Currently it is {playerPoss(view.nextPlayer)} turn</div>}
-      {view.remaining === 0 && (
+      {view.remaining === 0 && !view.forfeited && (
         <div>
           The game is over: {playerDisplay(view.nextPlayer)} won by forcing{" "}
           {playerDisplay(1 - view.nextPlayer)} to take the last object.
+        </div>
+      )}
+      {view.remaining === 0 && view.forfeited && (
+        <div>
+          The game is over: {playerDisplay(1 - view.nextPlayer)} forfeited.{" "}
+          {view.nextPlayer === userPlayerIndex
+            ? "You win!"
+            : `${players[view.nextPlayer].display} wins!`}
         </div>
       )}
       {userPlayerIndex >= 0 && (
@@ -65,6 +73,9 @@ export default function NimGame({
             onClick={() => makeMove(3)}
           >
             Take three
+          </button>
+          <button disabled={disabled} className="secondary narrow" onClick={() => makeMove(0)}>
+            Forfeit
           </button>
         </div>
       )}
