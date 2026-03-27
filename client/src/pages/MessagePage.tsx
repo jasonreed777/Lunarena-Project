@@ -7,6 +7,7 @@ import { Divider } from "../components/Divider";
 import MessageList from "../components/MessageList";
 import { getProfilePicture } from "../util/utils";
 import { Avatar } from "../components/Avatar";
+import { ChatBox } from "../components/ChatBox";
 
 const DUMMY_FRIENDS: FriendInfo[] = [
   {
@@ -123,16 +124,18 @@ const DUMMY_MESSAGES: MessageInfo[] = [
 ];
 
 /**
- *
- * @returns
+ * A direct messaging page with messages from friends.
+ * @returns direct messaging page
  */
 export const MessagePage: React.FC = () => {
   const [friendList, setFriendList] = React.useState<FriendInfo[]>(DUMMY_FRIENDS /* [] */);
   const [selected, setSelected] = React.useState<FriendInfo>();
   const [messages, setMessages] = React.useState<MessageInfo[]>(DUMMY_MESSAGES /* [] */);
+  const [curMessage, setCurMessage] = React.useState<string>("");
   const { theme } = React.useContext(ThemeContext);
 
   React.useEffect(() => {
+    // TODO: Implementation
     if (friendList.length > 0) {
       setSelected(friendList[0]);
     }
@@ -143,6 +146,15 @@ export const MessagePage: React.FC = () => {
    */
   const handleSelectFriend = (friend: FriendInfo) => {
     setSelected(friend);
+    // TODO: Implementation
+  };
+
+  /**
+   * Handles the user sending a message
+   */
+  const handleSendMessage = () => {
+    console.log("message sent");
+    // TODO: Implementation
   };
 
   return (
@@ -183,8 +195,19 @@ export const MessagePage: React.FC = () => {
           <Divider vertical color="#7A797A" />
         </div>
         <div className="messages-container">
-          <Typography.Subtitle>Messages</Typography.Subtitle>
-          <MessageList messages={messages} />
+          <div>
+            <Typography.Subtitle>Messages</Typography.Subtitle>
+          </div>
+          <div style={{ position: "absolute", bottom: 0, width: "100%" }}>
+            <MessageList messages={messages} />
+            <ChatBox
+              sendTo={selected?.friend.display || selected?.friend.username || ""}
+              theme={theme}
+              onClick={handleSendMessage}
+              message={curMessage}
+              setMessage={setCurMessage}
+            />
+          </div>
         </div>
       </div>
     </div>

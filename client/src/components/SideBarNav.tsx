@@ -92,7 +92,10 @@ export default function SideBarNav() {
         <Typography.NavBar>Clan</Typography.NavBar>
       </NavLink>
       <NavLink to="/forum" className={navClass}>
-        <Typography.NavBar> Forum</Typography.NavBar>
+        <Typography.NavBar>Forum</Typography.NavBar>
+      </NavLink>
+      <NavLink to="/messages" className={navClass}>
+        <Typography.NavBar>Messages</Typography.NavBar>
       </NavLink>
       <NavLink to="/friends" className={navClass}>
         <Typography.NavBar>Friends</Typography.NavBar>

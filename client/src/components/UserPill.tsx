@@ -3,6 +3,7 @@ import * as Typography from "../libs/Typography";
 import { darkenColor, hexToRGB } from "../util/utils";
 import type { RGBColor, Theme, UserProfileRecord } from "../util/types";
 import React from "react";
+import { Avatar } from "./Avatar";
 
 export type ClanRole = "admin" | "mod" | "member";
 
@@ -37,12 +38,6 @@ const Left = styled.div`
   align-items: center;
 `;
 
-const ProfilePicture = styled.img`
-  width: auto;
-  height: 90%;
-  border-radius: 50%;
-`;
-
 /**
  * Represents a small pill with user info. This includes the user's profile picture, name, and role
  * @param user the User to display
@@ -69,7 +64,7 @@ export const UserPill: React.FC<{ user: UserProfileRecord; themeId: Theme }> = (
   return (
     <Container customColor={color} themeId={themeId}>
       <Left>
-        <ProfilePicture src={user.pfp.type === "upload" ? user.pfp.uploadId : user.pfp.avatarId} />
+        <Avatar src={user.pfp.type === "upload" ? user.pfp.uploadId : user.pfp.avatarId} />
         <Typography.ProfileText>{user.titleId || user.username}</Typography.ProfileText>
       </Left>
       <Typography.Code style={{ float: "right" }}>{/* user.role */ "admin"}</Typography.Code>

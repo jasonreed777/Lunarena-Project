@@ -14,8 +14,10 @@ div.message-page-container {
 }
 
 .messages-container {
+  height: calc(100vh - (100px + 150px));
   flex: 1;
   padding-top: 1rem;
+  position: relative;
 }
 
 .friend-list {
