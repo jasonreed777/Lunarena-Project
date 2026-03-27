@@ -4,11 +4,12 @@ import type { ColorTheme, DailyPoints } from "../util/types";
 import React from "react";
 import { Divider } from "./Divider";
 import { getUserDailyPoints } from "../services/pointsService";
+import Tooltip from "./Tooltip";
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  overflow-x: scroll;
+  overflow-x: visible;
   gap: 20px;
   min-width: 200px;
 `;
@@ -31,6 +32,7 @@ const PointDisplay = styled.div<{ color: string; opacity?: number }>`
   background-color: ${({ color }) => color};
   opacity: ${({ opacity }) => opacity ?? "1"};
   border-radius: 2px;
+  cursor: pointer;
 `;
 
 /**
@@ -42,6 +44,7 @@ export const ActivityGraph: React.FC<{ theme: ColorTheme; color: string; usernam
   username,
 }) => {
   const [dailyPoints, setDailyPoints] = React.useState<DailyPoints[]>([]);
+  const [tooltipIndex, setTooltipIndex] = React.useState<number>(-1);
 
   /**
    * Retrieves the maximum points in a user's streak.
@@ -56,8 +59,9 @@ export const ActivityGraph: React.FC<{ theme: ColorTheme; color: string; usernam
    * @param dailyPoints
    * @returns
    */
-  const sortDates = (dailyPoints: DailyPoints[]) =>
-    [...dailyPoints].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const sortDates = (dailyPoints: DailyPoints[]) => {
+    return [...dailyPoints].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
 
   /**
    * Calculates the opacity of each activity block compared to the maximum number of points.
@@ -84,11 +88,27 @@ export const ActivityGraph: React.FC<{ theme: ColorTheme; color: string; usernam
     <Container>
       <div>
         <Typography.Subtitle>Activity Graph</Typography.Subtitle>
-        <Divider />
+        <Divider color={theme.text} />
       </div>
       <PointsContainer theme={theme}>
         {dailyPoints.map((daily, index) => (
-          <PointDisplay color={color} opacity={calculateOpacity(daily.points)} key={index} />
+          <div style={{ position: "relative" }}>
+            <PointDisplay
+              color={color}
+              opacity={calculateOpacity(daily.points)}
+              key={index}
+              onMouseEnter={() => setTooltipIndex(index)}
+              onMouseLeave={() => setTooltipIndex(-1)}
+            />
+            <Tooltip
+              text={`${
+                daily.points === 1
+                  ? "1 Point"
+                  : `${daily.points === 0 ? "No" : daily.points} Points`
+              } on ${new Date(daily.date).toLocaleString("en-US", { month: "long", day: "numeric" })}`}
+              visible={tooltipIndex === index}
+            />
+          </div>
         ))}
       </PointsContainer>
     </Container>
