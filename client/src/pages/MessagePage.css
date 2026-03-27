@@ -39,8 +39,8 @@ div.message-page-container {
 }
 
 .selected {
-    cursor: default;
-    pointer-events: none;
+  cursor: default;
+  pointer-events: none;
 }
 
 .friend-info:hover {
