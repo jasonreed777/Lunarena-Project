@@ -9,9 +9,13 @@ export const StyledSVG = styled.svg<{ hover?: boolean }>`
   flex-shrink: 0;
   transition: all 0.2s;
   cursor: ${({ hover }) => (hover ? `pointer` : `default`)};
-  :hover {
-    transform: ${({ hover }) => (hover ? `scale(110%)` : undefined)};
-  }
+  ${({ hover }) =>
+    hover &&
+    `
+    :hover {
+      transform: scale(110%);
+    }
+  `}
 `;
 
 /**

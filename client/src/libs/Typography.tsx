@@ -109,6 +109,9 @@ export const LargeStat = styled.p`
   font-size: 26px;
 `;
 
+/**
+ * Recently played game text.
+ */
 export const RecentlyPlayedText = styled.p`
   font-family: "fira-sans", "avenir", sans-serif;
   font-weight: 500;
@@ -131,4 +134,14 @@ export const Paragraph = styled.p<{ color?: string }>`
   font-style: normal;
   font-size: 14px;
   color: ${({ color }) => color ?? "white"};
+`;
+
+/**
+ * Streaks and points in the header.
+ */
+export const HeaderStats = styled.p`
+  font-family: "avenir", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 16px;
 `;
