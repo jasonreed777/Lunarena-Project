@@ -3,6 +3,7 @@ import {
   type ClanInfo,
   type ClanDetailInfo,
   type ClanMemberInfo,
+  type ClanMemberPointsEntry,
   type UserClanInfo,
   type ClanInviteInfo,
   type ClanRole,
@@ -11,7 +12,21 @@ import {
 } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
-import { ClanModel, ClanMemberModel, ClanInviteModel, UserModel } from "../mongoose-models.ts";
+import type {
+  ClanRecord,
+  ClanMemberRecord,
+  UserRecord,
+  UserPointsRecord,
+  UserProfileRecord,
+} from "../models.ts";
+import {
+  ClanModel,
+  ClanMemberModel,
+  ClanInviteModel,
+  UserModel,
+  UserPointsModel,
+  UserProfileModel,
+} from "../mongoose-models.ts";
 
 /**
  * Helper: Convert a clan document to ClanInfo
@@ -520,6 +535,29 @@ export async function respondToInvite(
 }
 
 /**
+ * Cancel/withdraw a pending invite (admin/owner only)
+ */
+export async function cancelInvite(
+  actor: UserWithId,
+  inviteId: string,
+): Promise<{ success: true } | { error: string } | null> {
+  const invite = await ClanInviteModel.findById(inviteId).lean();
+  if (!invite) return null;
+
+  if (invite.status !== "pending") {
+    return { error: "This invite has already been processed" };
+  }
+
+  const membership = await getMembership(actor.userId, invite.clanId);
+  if (!membership || membership.role === "member") {
+    return { error: "Not authorized" };
+  }
+
+  await ClanInviteModel.findByIdAndUpdate(inviteId, { status: "rejected" });
+  return { success: true };
+}
+
+/**
  * Get pending invites/requests for a clan (admin/owner only)
  */
 export async function getClanInvites(
@@ -671,4 +709,43 @@ export async function transferOwnership(
   await ClanMemberModel.findByIdAndUpdate(newOwnerMembership._id, { role: "owner" });
 
   return { success: true };
+}
+
+/**
+ * Get clan member points leaderboard — each member's points, sorted descending
+ */
+export async function getClanMemberLeaderboard(
+  clanId: string,
+): Promise<ClanMemberPointsEntry[] | null> {
+  const clan = await ClanModel.findById(clanId).lean<(ClanRecord & { _id: string }) | null>();
+  if (!clan) return null;
+
+  const memberDocs = await ClanMemberModel.find({ clanId }).lean<
+    (ClanMemberRecord & { _id: string })[]
+  >();
+
+  const entries: ClanMemberPointsEntry[] = await Promise.all(
+    memberDocs.map(async (m): Promise<ClanMemberPointsEntry> => {
+      const user = await UserModel.findById(m.userId).lean<(UserRecord & { _id: string }) | null>();
+      const username = user?.username ?? m.userId;
+      const pointsRecord = await UserPointsModel.findById(username).lean<
+        (UserPointsRecord & { _id: string }) | null
+      >();
+      const profile = await UserProfileModel.findOne({ username }).lean<
+        (UserProfileRecord & { _id: string }) | null
+      >();
+
+      return {
+        username,
+        display: user?.display ?? username,
+        role: m.role as ClanRole,
+        pointsTotal: pointsRecord?.pointsTotal ?? 0,
+        pfp: profile?.pfp ?? { type: "avatar", avatarId: "wizard" },
+        profileBorderColor: profile?.profileBorderColor ?? "#888888",
+      };
+    }),
+  );
+
+  entries.sort((a, b) => b.pointsTotal - a.pointsTotal);
+  return entries;
 }

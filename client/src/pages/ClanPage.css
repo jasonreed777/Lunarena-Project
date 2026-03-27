@@ -8,7 +8,7 @@ div.clan-container {
 .clan-info {
   display: grid;
   width: 100%;
-  grid-template-columns: 2fr 3fr 1fr;
+  grid-template-columns: 2fr 3fr 2fr;
 }
 
 .member-list {
@@ -16,7 +16,6 @@ div.clan-container {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  /* width: 80%; */
 }
 
 .stats {
@@ -62,4 +61,90 @@ div.clan-container {
 }
 .icon-lg:hover {
   transform: scale(105%) rotate(15deg);
+}
+
+.manage-clan-section {
+  margin-top: 30px;
+}
+
+.manage-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.manage-dialog {
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 550px;
+  width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.manage-dialog-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  line-height: 1;
+}
+
+.manage-dialog-close:hover {
+  opacity: 1;
+}
+
+.manage-subsection {
+  margin-bottom: 25px;
+  max-width: 100%;
+}
+
+.leaderboard-entry {
+  width: 100%;
+}
+
+.leaderboard-pill {
+  width: 100%;
+  height: 50px;
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 3px solid;
+  border-radius: 100px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.leaderboard-pill:hover {
+  transform: scale(1.03);
+}
+
+.leaderboard-pill-left {
+  height: 100%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.leaderboard-pill-pfp {
+  width: auto;
+  height: 90%;
+  border-radius: 50%;
 }
