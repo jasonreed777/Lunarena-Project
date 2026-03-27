@@ -50,5 +50,5 @@ export const darkenColor = (color: RGBColor): RGBColor => {
  */
 export const getProfilePicture = (user: SafeUserInfo) => {
   const { pfp } = user;
-  return pfp.type === "avatar" ? pfp.avatarId : pfp.uploadId;
+  return pfp?.type === "avatar" ? pfp?.avatarId : pfp?.uploadId;
 };

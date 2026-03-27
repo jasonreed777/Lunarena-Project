@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { type GameChatInfo, type ChatMoveLogPayload, type MessageInfo } from "@gamenite/shared";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
-import type { MoveLogEntry, RecordId } from "../records.ts";
+import type { MoveLogEntry, RecordId } from "../models.ts";
 import { GameChatMessageModel, GameChatModel } from "../mongoose-models.ts";
 
 /**

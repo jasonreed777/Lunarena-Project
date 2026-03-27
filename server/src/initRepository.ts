@@ -9,7 +9,7 @@ import {
   ThreadModel,
   UserModel,
 } from "./mongoose-models.ts";
-import type { FriendshipRecord, GameRecord, ThreadRecord } from "./records.ts";
+import type { FriendshipRecord, GameRecord, ThreadRecord } from "./models.ts";
 import { createChat } from "./services/game-chat.service.ts";
 import { createUser, updateUser } from "./services/user.service.ts";
 

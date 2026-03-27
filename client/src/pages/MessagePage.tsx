@@ -1,4 +1,4 @@
-import { type MessageInfo, type FriendInfo } from "@gamenite/shared";
+import { type MessageInfo, type DMChatOverview, type SafeUserInfo } from "@gamenite/shared";
 import React from "react";
 import * as Typography from "../libs/Typography";
 import { ThemeContext } from "../contexts/ThemeContext";
@@ -8,153 +8,85 @@ import MessageList from "../components/MessageList";
 import { getProfilePicture } from "../util/utils";
 import { Avatar } from "../components/Avatar";
 import { ChatBox } from "../components/ChatBox";
+import { chatCreate, getChatList, getChatMessages } from "../services/dmService.ts";
+import { friendsList } from "../services/friendshipService.ts";
+import useLoginContext from "../hooks/useLoginContext.ts";
+import useSocketsForDM from "../hooks/useSocketsForDM.ts";
 
-const DUMMY_FRIENDS: FriendInfo[] = [
-  {
-    friendshipId: "1",
-    friend: {
-      username: "jayatal",
-      display: "Jay Atal",
-      createdAt: new Date(),
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/gamer.png",
-      },
-      profileBorderColor: "#9469ca",
-    },
-    since: new Date(204248204),
-  },
-  {
-    friendshipId: "2",
-    friend: {
-      username: "jasonreed",
-      display: "Jason Reed",
-      createdAt: new Date(),
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/animal.png",
-      },
-      profileBorderColor: "#f1c811",
-    },
-    since: new Date(204248204),
-  },
-  {
-    friendshipId: "3",
-    friend: {
-      username: "tuckergwertzman",
-      display: "Tucker Gwertzman",
-      createdAt: new Date(),
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/soccer player.png",
-      },
-      profileBorderColor: "#f72d2d",
-    },
-    since: new Date(204248204),
-  },
-  {
-    friendshipId: "4",
-    friend: {
-      username: "charliemiller",
-      display: "Charlie Miller",
-      createdAt: new Date(),
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/dog.png",
-      },
-      profileBorderColor: "#5cd7ed",
-    },
-    since: new Date(204248204),
-  },
-];
-
-const DUMMY_MESSAGES: MessageInfo[] = [
-  {
-    messageId: "1",
-    text: "LOL",
-    createdBy: {
-      username: "jayatal",
-      display: "Jay Atal",
-      createdAt: new Date(),
-      profileBorderColor: "#9469ca",
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/gamer.png",
-      },
-    },
-    createdAt: new Date(1000000),
-  },
-  {
-    messageId: "2",
-    text: "ain't no way you just beat me at nim",
-    createdBy: {
-      username: "jasonreed",
-      display: "Jason Reed",
-      createdAt: new Date(),
-      profileBorderColor: "#f1c811",
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/animal.png",
-      },
-    },
-    createdAt: new Date(2000000),
-  },
-  {
-    messageId: "3",
-    text: "gamenite is epic",
-    createdBy: {
-      username: "jayatal",
-      display: "Jay Atal",
-      createdAt: new Date(),
-      profileBorderColor: "#9469ca",
-      pfp: {
-        type: "avatar",
-        uploadId: undefined,
-        avatarId: "/assets/avatars/gamer.png",
-      },
-    },
-    createdAt: new Date(3000000),
-  },
-];
 
 /**
  * A direct messaging page with messages from friends.
  * @returns direct messaging page
  */
 export const MessagePage: React.FC = () => {
-  const [friendList, setFriendList] = React.useState<FriendInfo[]>(DUMMY_FRIENDS /* [] */);
-  const [selected, setSelected] = React.useState<FriendInfo>();
-  const [messages, setMessages] = React.useState<MessageInfo[]>(DUMMY_MESSAGES /* [] */);
+  const [chatList, setChatList] = React.useState<DMChatOverview[]>([]);
+  const [selected, setSelected] = React.useState<DMChatOverview>();
+  const [fetchedMessages, setFetchedMessages] = React.useState<MessageInfo[]>([]);
   const [curMessage, setCurMessage] = React.useState<string>("");
   const { theme } = React.useContext(ThemeContext);
+  const { user } = useLoginContext();
+
+  const { messages: socketMessages, handleMessageCreation } = useSocketsForDM();
 
   React.useEffect(() => {
-    // TODO: Implementation
-    if (friendList.length > 0) {
-      setSelected(friendList[0]);
-    }
-  }, [friendList]);
+    // IIFE to handle getting and creating chats for friends
+    (async () => {
+      const [chats, friends] = await Promise.all([getChatList(), friendsList()]);
+      if ("error" in chats || "error" in friends) {
+        return;
+      }
+      setChatList((existing) => [...existing, ...chats]);
+      // Make sure there is a chat created for every friend. If there isn't, send an add chat request
+      const promises = [];
+      for (const friend of friends) {
+        if (
+          !chats.some((chat) =>
+            chat.participants.some(
+              (participant) => participant.username === friend.friend.username,
+            ),
+          )
+        ) {
+          promises.push(chatCreate([friend.friend.username]));
+        }
+      }
+      if (promises.length > 0) {
+        await Promise.all(promises);
+        const chatsUpdated = await getChatList();
+        if (!("error" in chatsUpdated)) {
+          setChatList(chatsUpdated);
+        }
+      }
+    })();
+  }, []);
+
+  // Load messages when a chat is selected
+  React.useEffect(() => {
+    if (!selected) return;
+    getChatMessages({ chatId: selected.chatId, pageIndex: 0, pageSize: 50 }).then((res) => {
+      if (!("error" in res)) setFetchedMessages([...res].reverse());
+    });
+  }, [selected]);
+
+  // Merge historical + socket messages for the selected chat
+  const socketSelected = selected ? (socketMessages[selected.chatId] ?? []) : [];
+  // Make sure socket messages aren't double counted with fetched messages
+  const allMessages: MessageInfo[] = [
+    ...fetchedMessages,
+    ...socketSelected.filter((sm) => !fetchedMessages.some((fm) => fm.messageId === sm.messageId)),
+  ];
 
   /**
    * Fires when the user selects a friend from the list
    */
-  const handleSelectFriend = (friend: FriendInfo) => {
-    setSelected(friend);
-    // TODO: Implementation
+  const handleSelectChat = (chat: DMChatOverview) => {
+    setSelected(chat);
   };
 
   /**
    * Handles the user sending a message
    */
-  const handleSendMessage = () => {
-    console.log("message sent");
-    // TODO: Implementation
+  const handleSendMessage = (message: string) => {
+    if (selected) handleMessageCreation(selected?.chatId, message);
   };
 
   return (
@@ -167,9 +99,13 @@ export const MessagePage: React.FC = () => {
       <div className="messages-body-container">
         <div className="friend-list">
           <Typography.Subtitle>Friends</Typography.Subtitle>
-          {friendList.map((friendInfo) => {
-            const color = friendInfo.friend.profileBorderColor;
-            const isSelected = selected?.friend.username === friendInfo.friend.username;
+          {chatList.map((chatInfo) => {
+            const otherUser = getOtherParticipant(user, chatInfo);
+            if (!otherUser) {
+              return "invalid chat, only self present";
+            }
+            const color = otherUser.profileBorderColor;
+            const isSelected = selected?.chatId === chatInfo.chatId;
             return (
               <div
                 className={`friend-info ${isSelected && "selected"}`}
@@ -177,15 +113,11 @@ export const MessagePage: React.FC = () => {
                   color,
                   borderLeft: `4px solid ${isSelected ? color || "white" : "transparent"}`,
                 }}
-                onClick={() => handleSelectFriend(friendInfo)}
+                onClick={() => handleSelectChat(chatInfo)}
               >
-                <Avatar
-                  src={getProfilePicture(friendInfo.friend)}
-                  size="small"
-                  border={{ color: color }}
-                />
+                <Avatar src={getProfilePicture(otherUser)} size="small" border={{ color: color }} />
                 <Typography.ProfileText>
-                  {friendInfo.friend.display || friendInfo.friend.username}
+                  {otherUser.display || otherUser.username}
                 </Typography.ProfileText>
               </div>
             );
@@ -199,9 +131,13 @@ export const MessagePage: React.FC = () => {
             <Typography.Subtitle>Messages</Typography.Subtitle>
           </div>
           <div style={{ position: "absolute", bottom: 0, width: "100%" }}>
-            <MessageList messages={messages} />
+            <MessageList messages={allMessages} />
             <ChatBox
-              sendTo={selected?.friend.display || selected?.friend.username || ""}
+              sendTo={
+                getOtherParticipant(user, selected)?.display ||
+                getOtherParticipant(user, selected)?.username ||
+                ""
+              }
               theme={theme}
               onClick={handleSendMessage}
               message={curMessage}
@@ -213,3 +149,11 @@ export const MessagePage: React.FC = () => {
     </div>
   );
 };
+
+// Retrieves the first other participant from the chat (not the user)
+function getOtherParticipant(user: SafeUserInfo, chat?: DMChatOverview): SafeUserInfo | undefined {
+  if (chat) {
+    return chat.participants.find((participant) => participant.username !== user.username);
+  }
+  return;
+}

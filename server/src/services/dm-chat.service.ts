@@ -1,4 +1,4 @@
-import type { RecordId } from "../records.ts";
+import type { RecordId } from "../models.ts";
 import { DMChatMessageModel, DMChatModel } from "../mongoose-models.ts";
 
 /**

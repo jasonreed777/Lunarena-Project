@@ -14,12 +14,12 @@ const Container = styled.div`
 export const ChatBox: React.FC<{
   sendTo: string;
   theme: ColorTheme;
-  onClick: (event: React.MouseEvent<HTMLElement>) => void;
+  onClick: (message: string) => void;
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
 }> = ({ sendTo, theme, onClick, message, setMessage }) => {
   return (
-    <Container onClick={onClick}>
+    <Container>
       <StyledTextArea
         color="#298432"
         placeholder={`Send a message to ${sendTo}`}
@@ -27,7 +27,7 @@ export const ChatBox: React.FC<{
         value={message}
         onChange={(event) => setMessage(event.target.value)}
       />
-      <FilledButton color={theme.navButton} style={{ width: 100 }}>
+      <FilledButton color={theme.navButton} style={{ width: 100 }} onClick={() => onClick(message)}>
         <Code style={{ color: theme.text }}>Send</Code>
       </FilledButton>
     </Container>

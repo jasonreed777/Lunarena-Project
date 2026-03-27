@@ -36,10 +36,8 @@ export const socketSendMessage: SocketAPI = (socket, io) => async (body) => {
       createdAt: messageDoc.timestamp,
     };
     for (const participant of chat.participants) {
-      // Don't send a message to self
-      if (participant !== messageDoc.sender) {
-        io.to(participant).emit("dmNewMessage", { chatId, message });
-      }
+      // Do send messages back to the sender, so they can update their own chat
+      io.to(participant).emit("dmNewMessage", { chatId, message });
     }
   } catch (err) {
     logSocketError(socket, err);
@@ -123,7 +121,7 @@ export const getChatPaginated: RestAPI<MessageInfo[]> = async (req, res) => {
 
 export const getChatList: RestAPI<DMChatOverview[]> = async (req, res) => {
   const chats = await getChats(req.authUser.userId);
-  const cleanedChats = await Promise.all(
+  const cleanedChats: DMChatOverview[] = await Promise.all(
     chats.map(async (chat) => ({
       chatId: chat._id.toString(),
       participants: await Promise.all(
