@@ -10,7 +10,7 @@ import {
   updateGame,
   viewGame,
 } from "../services/game.service.ts";
-import { addMoveLogToChat } from "../services/chat.service.ts";
+import { addMoveLogToChat } from "../services/game-chat.service.ts";
 import { z } from "zod";
 import { logSocketError } from "./socket.controller.ts";
 

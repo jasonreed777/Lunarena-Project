@@ -1,17 +1,6 @@
 import { type SafeUserInfo } from "./user.types.ts";
 import { type MessageInfo } from "./message.types.ts";
-
-/**
- * Represents a chat document in the database.
- * - `chatId`: database key
- * - `messages`: the ordered list of messages in the chat
- * - `createdAt`: when the chat was created
- */
-export interface DatabaseChat {
-  chatId: string;
-  messages: string[];
-  createdAt: Date;
-}
+import { z } from "zod";
 
 /**
  * Represents a game move log entry as exposed to the client
@@ -32,7 +21,7 @@ export interface MoveLogInfo {
  * - `moveLog`: the ordered list of game move descriptions in the chat
  * - `createdAt`: when the chat was created
  */
-export interface ChatInfo {
+export interface GameChatInfo {
   chatId: string;
   messages: MessageInfo[];
   moveLog: MoveLogInfo[];
@@ -79,3 +68,21 @@ export interface ChatMoveLogPayload {
   user: SafeUserInfo;
   createdAt: Date;
 }
+
+// Request to create a new DM. Array of usernames
+export type CreateDMRequest = z.infer<typeof zCreateDMRequest>;
+export const zCreateDMRequest = z.array(z.string());
+
+export type DMPaginatedRequest = z.infer<typeof zDMPaginatedRequest>;
+export const zDMPaginatedRequest = z.object({
+  chatId: z.string(),
+  pageIndex: z.number().nonnegative(),
+  pageSize: z.number().gt(0),
+});
+
+export type DMChatOverview = {
+  chatId: string;
+  participants: SafeUserInfo[];
+  createdAt: Date;
+  lastMessageAt: Date;
+};
