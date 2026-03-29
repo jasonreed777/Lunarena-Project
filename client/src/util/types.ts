@@ -142,6 +142,9 @@ export const AvatarSizeToPixelMap: Record<AvatarSize, number> = {
 export type DailyPoints = {
   points: number;
   date: Date;
+};
+
+/**
  * Leaderboard props used for various leaderboards in GameNite.
  */
 export type LeaderboardProps = { username: string; display: string; pointsTotal: number }[];

@@ -50,7 +50,7 @@ export default function Home() {
           <div>
             <Typography.Subtitle>Leaderboard</Typography.Subtitle>
             <Divider color={theme.text} style={{ marginBottom: "20px" }} />
-            <div className="left-item">
+            <div className="left-item" style={{ borderRight: `1px solid ${theme.secondaryText}` }}>
               <Leaderboard leaderboard={leaderboard.slice(0, 3)} theme={theme} />
             </div>
           </div>
