@@ -1,4 +1,4 @@
-import { TransluscentButton as Button } from "./Buttons";
+import { TranslucentButton as Button } from "./Buttons";
 import { StyledTextArea } from "./Input";
 import "./MessageCreation.css";
 import { type SubmitEvent, type KeyboardEvent, useState } from "react";

@@ -7,7 +7,7 @@ import { Divider } from "../components/Divider";
 import { FriendPill } from "../components/FriendPill";
 import { EmptyState } from "../components/EmptyState";
 import { InputWithLabel } from "../components/Input";
-import { TransluscentButton } from "../components/Buttons";
+import { TranslucentButton as Button } from "../components/Buttons";
 import { RecentlyPlayed } from "../components/RecentlyPlayed";
 import {
   JoinClanButton,
@@ -404,9 +404,9 @@ export const ClanPage: React.FC = () => {
               Transfer ownership before leaving the clan.
             </Typography.SmallText>
           ) : (
-            <TransluscentButton color="#ef4444" onClick={handleLeave}>
+            <Button color="#ef4444" onClick={handleLeave}>
               Leave Clan
-            </TransluscentButton>
+            </Button>
           )}
           {leaveError && (
             <Typography.SmallText style={{ color: "#ff6b6b", margin: 0, marginTop: 8 }}>
@@ -456,9 +456,9 @@ export const ClanPage: React.FC = () => {
                         onChange={(e) => setInviteUsername(e.target.value)}
                         placeholder="Enter username to invite"
                       />
-                      <TransluscentButton color={theme.secondary} onClick={handleInviteUser}>
+                      <Button color={theme.secondary} onClick={handleInviteUser}>
                         Send Invite
-                      </TransluscentButton>
+                      </Button>
                       {inviteSuccess && (
                         <Typography.SmallText style={{ color: "#22c55e", margin: 0 }}>
                           {inviteSuccess}
@@ -576,9 +576,9 @@ export const ClanPage: React.FC = () => {
                           {editError}
                         </Typography.SmallText>
                       )}
-                      <TransluscentButton color={theme.secondary} onClick={handleUpdateClan}>
+                      <Button color={theme.secondary} onClick={handleUpdateClan}>
                         Save Changes
-                      </TransluscentButton>
+                      </Button>
                     </div>
                   </div>
 
@@ -597,9 +597,9 @@ export const ClanPage: React.FC = () => {
                           onChange={(e) => setTransferUsername(e.target.value)}
                           placeholder="Enter new owner's username"
                         />
-                        <TransluscentButton color="#ef4444" onClick={handleTransfer}>
+                        <Button color="#ef4444" onClick={handleTransfer}>
                           Transfer Ownership
-                        </TransluscentButton>
+                        </Button>
                         {transferError && (
                           <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
                             {transferError}
@@ -737,9 +737,9 @@ export const ClanPage: React.FC = () => {
                   {createError}
                 </Typography.SmallText>
               )}
-              <TransluscentButton color={theme.secondary} onClick={handleCreate}>
+              <Button color={theme.secondary} onClick={handleCreate}>
                 Create Clan
-              </TransluscentButton>
+              </Button>
             </div>
           )}
         </div>
