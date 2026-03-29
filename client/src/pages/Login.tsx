@@ -6,7 +6,7 @@ import { InputWithLabel } from "../components/Input.tsx";
 import { LogoImage } from "../components/LogoImage.tsx";
 import * as Typography from "../libs/Typography.tsx";
 import { Divider } from "../components/Divider.tsx";
-import { TransluscentButton } from "../components/Buttons.tsx";
+import { TranslucentButton as Button } from "../components/Buttons.tsx";
 
 interface LoginProps {
   setAuth: (s: AuthContext | null) => void;
@@ -75,11 +75,11 @@ export default function Login({ setAuth }: LoginProps) {
         <Divider />
         <div>
           <div className="form-btns">
-            <TransluscentButton type="submit" color="#43B9C6">
+            <Button type="submit" color="#43B9C6">
               {mode === "signup" ? "Sign Up" : "Log In"}
-            </TransluscentButton>
+            </Button>
             <Typography.SmallText className="intertext">or</Typography.SmallText>
-            <TransluscentButton
+            <Button
               onClick={(e) => {
                 e.preventDefault();
                 toggleMode();
@@ -87,7 +87,7 @@ export default function Login({ setAuth }: LoginProps) {
               color="#DE1212"
             >
               {mode === "signup" ? "Use Existing Account" : "Create New Account"}
-            </TransluscentButton>
+            </Button>
           </div>
           {err && (
             <Typography.Code className="error-message centered" style={{ paddingTop: 10 }}>

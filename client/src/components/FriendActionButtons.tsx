@@ -68,7 +68,7 @@ interface FriendActionButtonsProps {
 /**
  * Renders the appropriate friend action buttons (Add, Accept/Reject, Remove, etc.)
  * based on the current friendship status with the target user.
- * Follows the TransluscentButton visual pattern from the component library.
+ * Follows the TranslucentButton visual pattern from the component library.
  */
 export const FriendActionButtons: React.FC<FriendActionButtonsProps> = ({
   targetUsername,

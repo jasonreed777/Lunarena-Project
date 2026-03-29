@@ -12,7 +12,7 @@ import * as Typography from "../libs/Typography.tsx";
 import { Divider } from "../components/Divider.tsx";
 import type { LeaderboardProps } from "../util/types.ts";
 import { Leaderboard } from "../components/Leaderboard.tsx";
-import { TransluscentButton as Button } from "../components/Buttons.tsx";
+import { TranslucentButton as Button } from "../components/Buttons.tsx";
 
 export default function Home() {
   const { theme } = React.useContext(ThemeContext);
@@ -55,17 +55,14 @@ export default function Home() {
             </div>
           </div>
           <div>
-            <Typography.Subtitle>Quick Start a Game</Typography.Subtitle>
+            <Typography.Subtitle>Quick Links</Typography.Subtitle>
             <Divider color={theme.text} />
-            <div style={{ display: "flex", gap: "10px", padding: "20px" }}>
-              <Button color="#34a95f" text={theme.text}>
-                Nim
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "20px" }}>
+              <Button color="#e39344" text={theme.text} onClick={() => navigate("/forum/post/new")}>
+                Create New Post
               </Button>
-              <Button color="#36c2d2" text={theme.text}>
-                Number Guesser
-              </Button>
-              <Button color="#364bd2" text={theme.text}>
-                Minesweeper
+              <Button color="#36c2d2" text={theme.text} onClick={() => navigate("/game/new")}>
+                Start Game
               </Button>
             </div>
           </div>
@@ -84,7 +81,7 @@ export default function Home() {
                   gameInfo={{ ...game }}
                   key={game.gameId.toString()}
                   theme={theme}
-                  index={index + 1}
+                  index={index}
                 />
               ))}
             </div>
@@ -94,40 +91,23 @@ export default function Home() {
           <div>
             <Typography.Subtitle>Recent Forum Posts</Typography.Subtitle>
             <Divider color={theme.text} style={{ marginBottom: "20px" }} />
-            {"message" in threadList ? (
-              <Typography.LargeParagraph>{threadList.message}</Typography.LargeParagraph>
-            ) : (
-              <div id="thread-list" role="list">
-                {threadList.map((thread) => (
-                  <ThreadSummaryView
-                    thread={{ ...thread }}
-                    theme={theme}
-                    key={thread.threadId.toString()}
-                  />
-                ))}
-              </div>
-            )}
           </div>
+          {"message" in threadList ? (
+            <Typography.LargeParagraph>{threadList.message}</Typography.LargeParagraph>
+          ) : (
+            <div id="thread-list" role="list">
+              {threadList.map((thread, index) => (
+                <ThreadSummaryView
+                  thread={{ ...thread }}
+                  theme={theme}
+                  index={index}
+                  key={thread.threadId.toString()}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      {/* 
-      <div className="spacedSection">
-        <h2>Recent forum posts</h2>
-        {"message" in threadList ? (
-          <div>{threadList.message}</div>
-        ) : (
-          <div id="threadList" role="list" className="dottedList">
-            {threadList.map((thread) => (
-              <ThreadSummaryView {...thread} key={thread.threadId.toString()} />
-            ))}
-          </div>
-        )}
-        <div>
-          <button className="primary narrow" onClick={() => navigate("/forum/post/new")}>
-            Create New Post
-          </button>
-        </div>
-      </div> */}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import styled from "@emotion/styled";
 import { hexToRGB } from "../util/utils";
 
-export const TransluscentButton = styled.button<{ color: string; text?: string }>`
+export const TranslucentButton = styled.button<{ color: string; text?: string }>`
   width: 100%;
   color: ${({ text }) => text ?? "white"};
   background-color: rgba(
@@ -9,9 +9,10 @@ export const TransluscentButton = styled.button<{ color: string; text?: string }
     0.2
   );
   border: 3px solid ${({ color }) => color};
-  border-bottom: 5px solid ${({ color }) => color};
+  border-bottom-width: 5px;
   border-radius: 8px;
   padding: 5px;
+  margin-bottom: 0;
   font-family: "filson-pro", sans-serif;
   font-weight: 700;
   font-style: normal;
@@ -19,7 +20,8 @@ export const TransluscentButton = styled.button<{ color: string; text?: string }
   transition: all 0.1s;
 
   :hover {
-    border-bottom: 3px solid ${({ color }) => color};
+    border-bottom-width: 3px;
+    margin-bottom: 2px;
   }
 `;
 

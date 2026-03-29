@@ -23,6 +23,15 @@ const Column = styled.div`
   gap: 20px;
 `;
 
+const StyledLink = styled.div`
+  text-decoration: none;
+  transition: all 0.2s;
+
+  :hover {
+    text-decoration: underline;
+  }
+`;
+
 /**
  * Summarizes information for a single game as part of a list of games
  */
@@ -38,13 +47,15 @@ const GameSummaryView: React.FC<{ gameInfo: GameInfo; theme: ColorTheme; index: 
   return (
     <Container role="listitem" style={{ color: theme.text }}>
       <Column>
-        <Typography.LargeStat>{index}</Typography.LargeStat>
-        <Typography.Code
-          onClick={() => navigate(`/game/${gameInfo.gameId}`)}
-          style={{ cursor: "pointer" }}
-        >
-          {gameName.charAt(0).toUpperCase() + gameName.slice(1)}
-        </Typography.Code>
+        <Typography.LargeStat>{index + 1}</Typography.LargeStat>
+        <StyledLink>
+          <Typography.Code
+            onClick={() => navigate(`/game/${gameInfo.gameId}`)}
+            style={{ cursor: "pointer" }}
+          >
+            {gameName.charAt(0).toUpperCase() + gameName.slice(1)}
+          </Typography.Code>
+        </StyledLink>
         <Divider color={theme.secondaryText} />
       </Column>
       <Column>
