@@ -7,6 +7,7 @@ import "./ProfilePage.css";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { getUserAchievements } from "../services/achievementService.ts";
 import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
+import { ActivityGraph } from "../components/ActivityGraph.tsx";
 
 // Infer achievement item type from getUserAchievements return type
 type AchievementItem = Awaited<ReturnType<typeof getUserAchievements>>[number];
@@ -416,6 +417,7 @@ export default function UpdateProfile() {
             <div className="smallAndGray">
               After updating your display name or password, you will be logged out
             </div>
+            <ActivityGraph theme={theme} color={profileBorderColor} username={user.username} />
           </div>
         </div>
       </div>

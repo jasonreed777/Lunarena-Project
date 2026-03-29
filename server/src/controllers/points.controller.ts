@@ -3,6 +3,7 @@ import {
   getUserPoints,
   getLeaderboard as getLeaderboardService,
   getOrUpdateStreak,
+  getUserDailyPoints,
 } from "../services/points.service.ts";
 
 /**
@@ -39,6 +40,24 @@ export async function getPointsByUsername(req: Request, res: Response): Promise<
     res.status(500).send({
       error: `failed to fetch user points: ${String(err)}`,
     });
+  }
+}
+
+export async function getDailyPointsByUsername(req: Request, res: Response): Promise<void> {
+  try {
+    // validate username param
+    const username = req.params.username;
+
+    if (typeof username !== "string") {
+      res.status(400).send({ error: "invalid username" });
+      return;
+    }
+
+    const points = await getUserDailyPoints(username);
+
+    res.status(200).send(points);
+  } catch (err) {
+    res.status(500).send({ error: `failed to fetch user points: ${String(err)}` });
   }
 }
 

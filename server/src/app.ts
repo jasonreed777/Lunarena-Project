@@ -90,7 +90,8 @@ app.use(
       Router()
         .get("/leaderboard", points.getLeaderboard)
         .get("/streak/:username", points.getStreakByUsername)
-        .get("/:username", points.getPointsByUsername),
+        .get("/:username", points.getPointsByUsername)
+        .get("/daily/:username", points.getDailyPointsByUsername),
     )
     .use("/achievements", Router().get("/:username", achievements.getAchievementsByUsername))
     .use(
