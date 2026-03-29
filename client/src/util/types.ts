@@ -142,4 +142,15 @@ export const AvatarSizeToPixelMap: Record<AvatarSize, number> = {
 export type DailyPoints = {
   points: number;
   date: Date;
+ * Leaderboard props used for various leaderboards in GameNite.
+ */
+export type LeaderboardProps = { username: string; display: string; pointsTotal: number }[];
+
+/**
+ * Maps a color to the top three trophy spots (gold, silver, bronze)
+ */
+export const TrophyColorMap: Record<number, string> = {
+  0: "#fdb913",
+  1: "#767f81",
+  2: "#c78543",
 };

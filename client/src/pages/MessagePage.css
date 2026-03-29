@@ -1,6 +1,9 @@
 div.message-page-container {
   min-height: 100vh;
   background-image: url(../assets/gradients/messages_gradient.png);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
   padding: 20px;
   padding-top: 3rem;
 }
