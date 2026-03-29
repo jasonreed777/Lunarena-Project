@@ -1,0 +1,42 @@
+
+div.home-container {
+  min-height: 100vh;
+  background-image: url(../assets/gradients/home_gradient.png);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  padding: 20px;
+  padding-top: 3rem;
+}
+
+.top-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.left-item {
+    border-right: 1px solid #c1c1c1;
+    padding-right: 20px;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.content {
+    padding: 0 20px;
+}
+
+.game-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.thread-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
