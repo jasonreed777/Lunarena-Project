@@ -32,6 +32,7 @@ export const DefaultIcon: React.FC<{
   hover?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  color?: string;
 }> = ({
   src,
   width,
@@ -42,13 +43,14 @@ export const DefaultIcon: React.FC<{
   hover = true,
   className,
   style,
+  color,
 }) => {
   const { theme } = React.useContext(ThemeContext);
 
   return (
     <StyledSVG
       className={className}
-      color={theme.text}
+      color={color ?? theme.text}
       width={width ?? 24}
       height={height ?? 24}
       onMouseEnter={onMouseEnter}
