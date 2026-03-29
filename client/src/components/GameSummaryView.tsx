@@ -1,36 +1,75 @@
-import "./GameSummaryView.css";
 import type { GameInfo } from "@gamenite/shared";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { gameNames } from "../util/consts.ts";
 import useTimeSince from "../hooks/useTimeSince.ts";
 import UserLink from "./UserLink.tsx";
+import styled from "@emotion/styled";
+import type { ColorTheme } from "../util/types.ts";
+import * as Typography from "../libs/Typography.tsx";
+import { Divider } from "./Divider.tsx";
+
+const Container = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  align-items: center;
+  gap: 20px;
+  text-wrap: nowrap;
+`;
+
+const Column = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+`;
 
 /**
  * Summarizes information for a single game as part of a list of games
  */
-export default function GameSummaryView({
-  gameId,
-  status,
-  type,
-  players,
-  createdAt,
-  createdBy,
-}: GameInfo) {
+const GameSummaryView: React.FC<{ gameInfo: GameInfo; theme: ColorTheme; index: number }> = ({
+  gameInfo,
+  theme,
+  index,
+}) => {
   const timeSince = useTimeSince();
   const navigate = useNavigate();
-  const numPlayers = players.length;
+  const numPlayers = gameInfo.players.length;
+  const gameName = gameNames[gameInfo.type];
   return (
-    <div className="gameSummary" role="listitem">
-      <div className="stats" onClick={() => navigate(`/game/${gameId}`)}>
-        {status}
-        {status !== "done" && `, ${numPlayers} player${numPlayers === 1 ? "" : "s"}`}
-      </div>
-      <NavLink to={`/game/${gameId}`} className="mid">
-        A game of {gameNames[type]}
-      </NavLink>
-      <div className="lastActivity">
-        <UserLink user={createdBy} capitalize /> created {timeSince(createdAt)}
-      </div>
-    </div>
+    <Container role="listitem" style={{ color: theme.text }}>
+      <Column>
+        <Typography.LargeStat>{index}</Typography.LargeStat>
+        <Typography.Code
+          onClick={() => navigate(`/game/${gameInfo.gameId}`)}
+          style={{ cursor: "pointer" }}
+        >
+          {gameName.charAt(0).toUpperCase() + gameName.slice(1)}
+        </Typography.Code>
+        <Divider color={theme.secondaryText} />
+      </Column>
+      <Column>
+        <Typography.SubtitleSmall
+          style={{ color: theme.secondaryText, textWrap: "nowrap" }}
+          onClick={() => navigate(`/game/${gameInfo.gameId}`)}
+        >
+          {gameInfo.status}
+          {gameInfo.status !== "done" && `, ${numPlayers} player${numPlayers === 1 ? "" : "s"}`}
+        </Typography.SubtitleSmall>
+        <Divider color={theme.secondaryText} />
+        <Typography.ProfileText
+          style={{
+            overflow: "visible",
+            textWrap: "nowrap",
+            whiteSpace: "nowrap",
+            display: "flex",
+            gap: "4px",
+          }}
+        >
+          <UserLink user={gameInfo.createdBy} capitalize /> created {timeSince(gameInfo.createdAt)}
+        </Typography.ProfileText>
+      </Column>
+    </Container>
   );
-}
+};
+
+export default GameSummaryView;
