@@ -5,6 +5,9 @@ import { useContext, useEffect } from "react";
 import { updateProfile } from "../services/profileService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { ThemeContext } from "../contexts/ThemeContext.ts";
+import "./GameList.css";
+import { TranslucentButton as Button } from "../components/Buttons.tsx";
+import { PageTitle } from "../libs/Typography.tsx";
 
 export default function GameList() {
   const gameList = useGameList();
@@ -24,19 +27,27 @@ export default function GameList() {
   }, [user.username]);
 
   return (
-    <div className="content">
+    <div
+      className="game-list-container"
+      style={{ backgroundColor: theme.primary, color: theme.text }}
+    >
       <div className="spacedSection">
-        <h2>All games</h2>
+        <PageTitle>All Games</PageTitle>
         <div>
-          <button className="primary narrow" onClick={() => navigate("/game/new")}>
+          <Button
+            onClick={() => navigate("/game/new")}
+            color="#e05a35"
+            text={theme.text}
+            style={{ width: "fit-content" }}
+          >
             Create New Game
-          </button>
+          </Button>
         </div>
         <>
           {"message" in gameList ? (
             gameList.message
           ) : (
-            <div className="dottedList">
+            <div>
               {gameList.map((game, index) => (
                 <GameSummaryView
                   gameInfo={{ ...game }}
