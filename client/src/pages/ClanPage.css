@@ -1,5 +1,5 @@
 div.clan-container {
-  min-height: 100vh;
+  min-height: var(--content-vh);
   background-image: url(../assets/gradients/clan_gradient.png);
   background-repeat: no-repeat;
   background-attachment: fixed;
