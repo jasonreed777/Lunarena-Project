@@ -5,9 +5,23 @@ import { useContext, useEffect } from "react";
 import { updateProfile } from "../services/profileService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { ThemeContext } from "../contexts/ThemeContext.ts";
-import "./GameList.css";
 import { TranslucentButton as Button } from "../components/Buttons.tsx";
 import { PageTitle } from "../libs/Typography.tsx";
+import styled from "@emotion/styled";
+
+const Container = styled.div`
+  min-height: var(--content-vh);
+  background-image: url(../assets/gradients/games_gradient.png);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  padding: 20px;
+  padding-top: 3rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
 
 export default function GameList() {
   const gameList = useGameList();
@@ -27,39 +41,34 @@ export default function GameList() {
   }, [user.username]);
 
   return (
-    <div
-      className="game-list-container"
-      style={{ backgroundColor: theme.primary, color: theme.text }}
-    >
-      <div className="spacedSection">
-        <PageTitle>All Games</PageTitle>
-        <div>
-          <Button
-            onClick={() => navigate("/game/new")}
-            color="#e05a35"
-            text={theme.text}
-            style={{ width: "fit-content" }}
-          >
-            Create New Game
-          </Button>
-        </div>
-        <>
-          {"message" in gameList ? (
-            gameList.message
-          ) : (
-            <div>
-              {gameList.map((game, index) => (
-                <GameSummaryView
-                  gameInfo={{ ...game }}
-                  key={game.gameId.toString()}
-                  theme={theme}
-                  index={index}
-                />
-              ))}
-            </div>
-          )}
-        </>
+    <Container style={{ backgroundColor: theme.primary, color: theme.text }}>
+      <PageTitle>All Games</PageTitle>
+      <div>
+        <Button
+          onClick={() => navigate("/game/new")}
+          color="#e05a35"
+          text={theme.text}
+          style={{ width: "fit-content" }}
+        >
+          Create New Game
+        </Button>
       </div>
-    </div>
+      <>
+        {"message" in gameList ? (
+          gameList.message
+        ) : (
+          <div>
+            {gameList.map((game, index) => (
+              <GameSummaryView
+                gameInfo={{ ...game }}
+                key={game.gameId.toString()}
+                theme={theme}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    </Container>
   );
 }

@@ -1,9 +1,0 @@
-div.game-list-container {
-  min-height: var(--content-vh);
-  background-image: url(../assets/gradients/games_gradient.png);
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-position: center;
-  padding: 20px;
-  padding-top: 3rem;
-}
