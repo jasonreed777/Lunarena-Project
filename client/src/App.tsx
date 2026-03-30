@@ -24,6 +24,7 @@ import TimeContextKeeper from "./components/UpdatingTimeContext.tsx";
 import { ClanPage } from "./pages/ClanPage.tsx";
 import { THEME_KEY, ThemeContext } from "./contexts/ThemeContext.ts";
 import { MessagePage } from "./pages/MessagePage.tsx";
+import NotFoundPage from "./pages/404Page.tsx";
 
 /** If `true`, all incoming socket messages will be logged */
 const DEBUG_SOCKETS = false;
@@ -46,9 +47,13 @@ if (typeof window !== "undefined") {
   }
 }
 
+/**
+ * DIsplays the 404 Page with a pathname.
+ * @returns 404: Not Found page
+ */
 function NoSuchRoute() {
   const { pathname } = useLocation();
-  return `No page found for route '${pathname}'`;
+  return <NotFoundPage pathname={pathname} />;
 }
 
 export default function App() {
