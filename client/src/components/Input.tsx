@@ -59,11 +59,14 @@ export const InputWithLabel: React.FC<{
 }> = ({ color, label, type, value, onChange, placeholder }) => {
   return (
     <div>
-      {label && <Typography.SubtitleSmall>{label}</Typography.SubtitleSmall>}
+      <label htmlFor={label}>
+        <Typography.SubtitleSmall>{label}</Typography.SubtitleSmall>
+      </label>
       <StyledInput
         color={/^#[0-9a-f]{3,6}$/i.test(color) ? color : "#ffffff"}
         type={type}
         value={value}
+        id={label}
         onChange={onChange}
         placeholder={placeholder}
       ></StyledInput>
