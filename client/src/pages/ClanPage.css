@@ -1,3 +1,7 @@
+p {
+  text-wrap: wrap;
+}
+
 div.clan-container {
   min-height: var(--content-vh);
   background-image: url(../assets/gradients/clan_gradient.png);
@@ -13,9 +17,8 @@ div.clan-container {
 .clan-info {
   display: grid;
   width: 100%;
-  max-width: calc(100vw - 170px);
   overflow: hidden;
-  grid-template-columns: 2fr 3fr 2fr;
+  grid-template-columns: 2fr 3fr 1fr;
 }
 
 .member-list {
@@ -23,6 +26,17 @@ div.clan-container {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+
+.leaderboard-container {
+  padding-bottom: 20px;
+}
+.leaderboard {
+  width: 50%;
+}
+
+.actions {
+  padding: 0 0 0 20px;
 }
 
 .stats {
