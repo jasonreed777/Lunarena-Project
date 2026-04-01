@@ -306,12 +306,6 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                     <p>No title selected.</p>
                   )}
                 </div>
-                <div className="profile-section">
-                  <h3>Overall Stats</h3>
-                  <p>Wins: {profile.stats.overall.wins}</p>
-                  <p>Games Played: {profile.stats.overall.gamesPlayed}</p>
-                  <p>Losses: {profile.stats.overall.losses}</p>
-                </div>
                 <div className="spacedSection">
                   <h3>Achievements</h3>
                   {achievements.length === 0 ? (
@@ -360,6 +354,45 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                         border: `5px solid ${profile.profileBorderColor}`,
                       }}
                     />
+                  </div>
+                </div>
+                <div style={{ marginTop: "2rem" }}>
+                  <div className="profile-section">
+                    <h3>Overall Stats</h3>
+                    <div className="list">
+                      <div className="achievement-card">
+                        <div className="achievement-title">Overall Stats</div>
+                        <div className="achievement-description">
+                          <div>Wins: {profile.stats.overall.wins}</div>
+                          <div>Games Played: {profile.stats.overall.gamesPlayed}</div>
+                          <div>Losses: {profile.stats.overall.losses}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="profile-section">
+                    <h3>Per-Game Stats</h3>
+                    {Object.keys(profile.stats.byGame).length === 0 ? (
+                      <p>No game stats yet.</p>
+                    ) : (
+                      <div className="list">
+                        {Object.entries(profile.stats.byGame).map(([gameType, stats]) => (
+                          <div key={gameType} className="achievement-card">
+                            <div className="achievement-title">
+                              {gameType === "guess"
+                                ? "Number Guesser"
+                                : gameType.charAt(0).toUpperCase() + gameType.slice(1)}
+                            </div>
+                            <div className="achievement-description">
+                              <div>Wins: {stats.wins}</div>
+                              <div>Games Played: {stats.gamesPlayed}</div>
+                              <div>Losses: {stats.losses}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
