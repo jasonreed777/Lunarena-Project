@@ -45,7 +45,7 @@ export const Leaderboard: React.FC<{ leaderboard: LeaderboardProps; theme: Color
             {row.display || row.username}
           </Typography.ProfileText>
           <Divider color={theme.secondaryText} />
-          <Typography.Code>
+          <Typography.Code style={{ textWrap: "nowrap" }}>
             {row.pointsTotal === 1 ? "1 Point" : `${row.pointsTotal} Points`}
           </Typography.Code>
         </Row>

@@ -1,16 +1,18 @@
 import "./Game.css";
 import { useParams } from "react-router-dom";
 import { getGameById } from "../services/gameService.ts";
-import { useEffect, useState } from "react";
+import React from "react";
 import type { GameInfo } from "@gamenite/shared";
 import ChatPanel from "../components/ChatPanel.tsx";
 import GamePanel from "../components/GamePanel.tsx";
+import { ThemeContext } from "../contexts/ThemeContext.ts";
 
 export default function Game() {
   const { gameId } = useParams();
-  const [game, setGame] = useState<GameInfo | null>(null);
+  const [game, setGame] = React.useState<GameInfo | null>(null);
+  const { theme } = React.useContext(ThemeContext);
 
-  useEffect(() => {
+  React.useEffect(() => {
     let ignore = false;
     (async () => {
       // non-nullish assertion is ok here given that Game is only called in a
@@ -27,7 +29,10 @@ export default function Game() {
   return (
     game && (
       <>
-        <div className="gameContainer">
+        <div
+          className="game-container"
+          style={{ backgroundColor: theme.primary, color: theme.text }}
+        >
           <GamePanel {...game} />
           <ChatPanel chatId={game.chat} />
         </div>

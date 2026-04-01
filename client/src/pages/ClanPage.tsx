@@ -32,8 +32,8 @@ import {
   updateClan,
   transferOwnership,
 } from "../services/clanService";
-import { updateProfile, getUploadedImage } from "../services/profileService";
-import { AVATARS } from "../util/consts";
+import { updateProfile } from "../services/profileService";
+import { Leaderboard } from "../components/Leaderboard";
 
 // Keep this type export so ClanPill.tsx (which imports it) doesn't break.
 type Statistics = {
@@ -49,38 +49,6 @@ export type Clan = {
   color: string;
   sponsors?: string[];
   icon: string;
-};
-
-/** Resolves a pfp object to an image src, matching how Header/ViewProfile do it. */
-const LeaderboardPfp: React.FC<{
-  pfp: { type: "upload" | "avatar"; uploadId?: string; avatarId?: string };
-  alt: string;
-  borderColor: string;
-}> = ({ pfp, alt, borderColor }) => {
-  const [uploadSrc, setUploadSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (pfp.type === "upload" && pfp.uploadId) {
-      getUploadedImage(pfp.uploadId).then((res) => {
-        if (!("error" in res)) setUploadSrc(res.data);
-      });
-    }
-  }, [pfp.type, pfp.uploadId]);
-
-  const src =
-    pfp.type === "upload"
-      ? uploadSrc
-      : (AVATARS.find((a) => a.avatarId === pfp.avatarId)?.imageUrl ?? AVATARS[0].imageUrl);
-
-  if (!src) return null;
-  return (
-    <img
-      className="leaderboard-pill-pfp"
-      src={src}
-      alt={alt}
-      style={{ border: `3px solid ${borderColor}` }}
-    />
-  );
 };
 
 export const ClanPage: React.FC = () => {
@@ -279,6 +247,21 @@ export const ClanPage: React.FC = () => {
           {clan.memberCount} members · {clan.isPublic ? "Public" : "Private"} · Your role: {role}
         </Typography.SmallText>
 
+        {/* Points Leaderboard */}
+        <div className="leaderboard-container">
+          <Typography.Subtitle>Leaderboard</Typography.Subtitle>
+          <Divider color={theme.text} style={{ marginBottom: 20 }} />
+          <div className="leaderboard">
+            {"message" in clanLeaderboard ? (
+              <EmptyState message={clanLeaderboard.message} themeId={theme._id} />
+            ) : clanLeaderboard.length === 0 ? (
+              <EmptyState message="No points earned yet" themeId={theme._id} />
+            ) : (
+              <Leaderboard leaderboard={clanLeaderboard} theme={theme} />
+            )}
+          </div>
+        </div>
+
         <div className="clan-info">
           {/* Members */}
           <div className="members">
@@ -357,71 +340,33 @@ export const ClanPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Points Leaderboard */}
-          <div className="leaderboard">
-            <Typography.Subtitle>Leaderboard</Typography.Subtitle>
+          {/* Clan Actions */}
+          <div className="actions-container">
+            <Typography.Subtitle>Actions</Typography.Subtitle>
             <Divider color={theme.text} style={{ marginBottom: 20 }} />
-            <div className="member-list clan-info-column">
-              {"message" in clanLeaderboard ? (
-                <EmptyState message={clanLeaderboard.message} themeId={theme._id} />
-              ) : clanLeaderboard.length === 0 ? (
-                <EmptyState message="No points earned yet" themeId={theme._id} />
-              ) : (
-                clanLeaderboard.map((entry, index) => (
-                  <div key={entry.username} className="leaderboard-entry">
-                    <div
-                      className="leaderboard-pill"
-                      style={{
-                        borderColor: entry.profileBorderColor,
-                        backgroundColor: `${entry.profileBorderColor}33`,
-                        color: entry.profileBorderColor,
-                      }}
-                    >
-                      <div className="leaderboard-pill-left">
-                        <LeaderboardPfp
-                          pfp={entry.pfp}
-                          alt={entry.display}
-                          borderColor={entry.profileBorderColor}
-                        />
-                        <Typography.ProfileText>{entry.display}</Typography.ProfileText>
-                      </div>
-                      <Typography.LargeStat>#{index + 1}</Typography.LargeStat>
-                    </div>
-                    <Typography.SmallText style={{ opacity: 0.5, margin: 0, paddingLeft: 14 }}>
-                      {entry.pointsTotal} points
-                    </Typography.SmallText>
-                  </div>
-                ))
+            <div className="actions">
+              {role !== "owner" && (
+                <Button color="#e01313" onClick={handleLeave}>
+                  Leave Clan
+                </Button>
+              )}
+              {leaveError && (
+                <Typography.SmallText style={{ color: "#e01313", margin: 0, marginTop: 8 }}>
+                  {leaveError}
+                </Typography.SmallText>
+              )}
+              {isAdminOrOwner && (
+                <Button color="#43b9c6" onClick={() => setShowManage(true)}>
+                  Manage Clan
+                </Button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Leave Clan */}
-        <div style={{ marginTop: 30, marginBottom: 20 }}>
-          {role === "owner" ? (
-            <Typography.SmallText style={{ opacity: 0.5 }}>
-              Transfer ownership before leaving the clan.
-            </Typography.SmallText>
-          ) : (
-            <Button color="#ef4444" onClick={handleLeave}>
-              Leave Clan
-            </Button>
-          )}
-          {leaveError && (
-            <Typography.SmallText style={{ color: "#ff6b6b", margin: 0, marginTop: 8 }}>
-              {leaveError}
-            </Typography.SmallText>
-          )}
-        </div>
-
         {/* Manage Clan (admin/owner only) */}
         {isAdminOrOwner && (
           <div className="manage-clan-section">
-            <button className="primary narrow" onClick={() => setShowManage(true)}>
-              Manage Clan
-            </button>
-
             {showManage && (
               <div className="manage-dialog-overlay" onClick={() => setShowManage(false)}>
                 <div
@@ -450,7 +395,7 @@ export const ClanPage: React.FC = () => {
                     <Divider color={theme.text} style={{ marginBottom: 15 }} />
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <InputWithLabel
-                        color={theme.secondary}
+                        borderColor={theme.secondary}
                         label=""
                         value={inviteUsername}
                         onChange={(e) => setInviteUsername(e.target.value)}
@@ -465,7 +410,7 @@ export const ClanPage: React.FC = () => {
                         </Typography.SmallText>
                       )}
                       {inviteError && (
-                        <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
+                        <Typography.SmallText style={{ color: "#e01313", margin: 0 }}>
                           {inviteError}
                         </Typography.SmallText>
                       )}
@@ -497,7 +442,7 @@ export const ClanPage: React.FC = () => {
                             to={`/profile/${invite.user.username}`}
                             name={invite.user.display}
                             detail={invite.type === "invite" ? "Invited" : "Requested to join"}
-                            color={clan.color}
+                            color={invite.user.profileBorderColor || theme.text}
                             themeId={theme._id}
                           >
                             {invite.type === "request" ? (
@@ -528,14 +473,14 @@ export const ClanPage: React.FC = () => {
                     <Divider color={theme.text} style={{ marginBottom: 15 }} />
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       <InputWithLabel
-                        color={theme.secondary}
+                        borderColor={theme.secondary}
                         label="Clan Name"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder="Clan name (3-32 chars)"
                       />
                       <InputWithLabel
-                        color={theme.secondary}
+                        borderColor={theme.secondary}
                         label="Bio"
                         value={editBio}
                         onChange={(e) => setEditBio(e.target.value)}
@@ -572,7 +517,7 @@ export const ClanPage: React.FC = () => {
                         Public Clan
                       </label>
                       {editError && (
-                        <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
+                        <Typography.SmallText style={{ color: "#e01313", margin: 0 }}>
                           {editError}
                         </Typography.SmallText>
                       )}
@@ -591,7 +536,7 @@ export const ClanPage: React.FC = () => {
                       <Divider color={theme.text} style={{ marginBottom: 15 }} />
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         <InputWithLabel
-                          color="#ef4444"
+                          borderColor="#ef4444"
                           label=""
                           value={transferUsername}
                           onChange={(e) => setTransferUsername(e.target.value)}
@@ -601,7 +546,7 @@ export const ClanPage: React.FC = () => {
                           Transfer Ownership
                         </Button>
                         {transferError && (
-                          <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
+                          <Typography.SmallText style={{ color: "#e01313", margin: 0 }}>
                             {transferError}
                           </Typography.SmallText>
                         )}
@@ -691,14 +636,14 @@ export const ClanPage: React.FC = () => {
               }}
             >
               <InputWithLabel
-                color={theme.secondary}
+                borderColor={theme.secondary}
                 label="Clan Name"
                 value={createName}
                 onChange={(e) => setCreateName(e.target.value)}
                 placeholder="Enter clan name (3-32 chars)"
               />
               <InputWithLabel
-                color={theme.secondary}
+                borderColor={theme.secondary}
                 label="Bio"
                 value={createBio}
                 onChange={(e) => setCreateBio(e.target.value)}
@@ -733,7 +678,7 @@ export const ClanPage: React.FC = () => {
                 Public Clan
               </label>
               {createError && (
-                <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
+                <Typography.SmallText style={{ color: "#e01313", margin: 0 }}>
                   {createError}
                 </Typography.SmallText>
               )}

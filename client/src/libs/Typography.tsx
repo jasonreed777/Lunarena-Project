@@ -101,7 +101,6 @@ export const Code = styled.p`
   font-size: 16px;
 `;
 
-// TODO: This is the wrong typeface
 export const LargeStat = styled.p`
   font-family: "Fugaz One", serif;
   font-weight: 700;

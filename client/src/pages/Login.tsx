@@ -39,7 +39,7 @@ export default function Login({ setAuth }: LoginProps) {
           placeholder="Username"
           aria-label="Username"
           label="Username"
-          color="#d193ed"
+          borderColor="#d193ed"
         />
         <InputWithLabel
           type={showPassword ? "text" : "password"}
@@ -48,7 +48,7 @@ export default function Login({ setAuth }: LoginProps) {
           placeholder="Password"
           aria-label="Password"
           label="Password"
-          color="#d193ed"
+          borderColor="#d193ed"
         />
         {mode === "signup" && (
           <InputWithLabel
@@ -58,7 +58,7 @@ export default function Login({ setAuth }: LoginProps) {
             placeholder="Confirm Password"
             aria-label="Confirm Password"
             label="Confirm Password"
-            color="#d193ed"
+            borderColor="#d193ed"
           />
         )}
         <div className="labeled-section">

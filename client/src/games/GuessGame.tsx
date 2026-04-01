@@ -1,6 +1,10 @@
 import type { GuessMove, GuessView } from "@gamenite/shared";
 import type { GameProps } from "../util/types.ts";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import * as Typography from "../libs/Typography.tsx";
+import { Divider } from "../components/Divider.tsx";
+import { ThemeContext } from "../contexts/ThemeContext.ts";
+import { TranslucentButton as Button } from "../components/Buttons.tsx";
 
 export default function GuessGame({
   view,
@@ -8,6 +12,7 @@ export default function GuessGame({
   userPlayerIndex,
   makeMove,
 }: GameProps<GuessView, GuessMove>) {
+  const { theme } = useContext(ThemeContext);
   const [guess, setGuess] = useState(16);
   const playerHasGuessed = view.finished || view.guesses[userPlayerIndex] !== false;
 
@@ -39,22 +44,32 @@ export default function GuessGame({
   }
 
   return (
-    <div className="content spacedSection">
-      <div>In the guessing game, players guess a number between 1 and 100. The closest wins!</div>
+    <div className="content" style={{ color: theme.text }}>
+      <Typography.Paragraph style={{ color: theme.text }}>
+        In the guessing game, players guess a number between 1 and 100. The closest wins!
+      </Typography.Paragraph>
       <ul>
         {view.guesses.map((guess, index) => (
           <li key={index}>
-            {getGuessText(guess, index)}
-            {isBestGuess(index) && " 👑"}
+            <Typography.Paragraph style={{ color: theme.text }}>
+              {getGuessText(guess, index)}
+              {isBestGuess(index) && " 👑"}
+            </Typography.Paragraph>
           </li>
         ))}
       </ul>
-      <hr />
-      {view.finished && `Game over! The secret was ${view.secret}`}
+      <Divider color={theme.text} />
+      {view.finished && (
+        <Typography.Code
+          style={{ color: theme.text }}
+        >{`Game over! The secret was ${view.secret}`}</Typography.Code>
+      )}
       {!view.finished &&
         userPlayerIndex >= 0 &&
         (playerHasGuessed ? (
-          <>Waiting for other players...</>
+          <Typography.Code style={{ color: theme.text }}>
+            Waiting for other players...
+          </Typography.Code>
         ) : (
           <form
             onSubmit={(e) => {
@@ -62,7 +77,9 @@ export default function GuessGame({
               makeMove(guess);
             }}
           >
-            <div>Guess a number between 1 and 100!</div>
+            <Typography.Paragraph style={{ color: theme.text }}>
+              Guess a number between 1 and 100!
+            </Typography.Paragraph>
             <input
               type="range"
               value={guess}
@@ -71,8 +88,12 @@ export default function GuessGame({
               step={1}
               onChange={(e) => setGuess(parseInt(e.target.value))}
             />
-            <div>Ready to guess {guess}?</div>
-            <button className="primary narrow">Submit Guess</button>
+            <Typography.Paragraph style={{ marginBottom: "10px", color: theme.text }}>
+              Ready to guess {guess}?
+            </Typography.Paragraph>
+            <Button color={theme.text} text={theme.text}>
+              Submit Guess
+            </Button>
           </form>
         ))}
     </div>

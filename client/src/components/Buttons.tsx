@@ -1,8 +1,12 @@
 import styled from "@emotion/styled";
 import { hexToRGB } from "../util/utils";
 
-export const TranslucentButton = styled.button<{ color: string; text?: string }>`
-  width: 100%;
+export const TranslucentButton = styled.button<{
+  color: string;
+  text?: string;
+  fitContent?: boolean;
+}>`
+  width: ${({ fitContent }) => (fitContent ? "fit-content" : "100%")};
   color: ${({ text }) => text ?? "white"};
   background-color: rgba(
     ${({ color }) => `${hexToRGB(color).r}, ${hexToRGB(color).g}, ${hexToRGB(color).b}`},
@@ -12,7 +16,7 @@ export const TranslucentButton = styled.button<{ color: string; text?: string }>
   border-bottom-width: 5px;
   border-radius: 8px;
   padding: 5px;
-  margin-bottom: 0;
+  margin-top: 0;
   font-family: "filson-pro", sans-serif;
   font-weight: 700;
   font-style: normal;
@@ -21,7 +25,7 @@ export const TranslucentButton = styled.button<{ color: string; text?: string }>
 
   :hover {
     border-bottom-width: 3px;
-    margin-bottom: 2px;
+    margin-top: 2px;
   }
 `;
 

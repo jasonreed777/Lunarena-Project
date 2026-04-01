@@ -31,9 +31,9 @@ export default function MessageCreation({ handleMessageCreation }: MessageCreati
         value={text}
         onKeyDown={handleKeyDown}
         onChange={(e) => setText(e.target.value)}
-        color={"#298432"}
+        borderColor="#ffffff"
       ></StyledTextArea>
-      <Button className="visuallyHidden" color="#298432">
+      <Button className="visuallyHidden" color="#ffffff">
         Submit
       </Button>
     </form>

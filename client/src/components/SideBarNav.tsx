@@ -1,10 +1,10 @@
 import "./SideBarNav.css";
 import React, { useState, useEffect } from "react";
-import { NavLink, type NavLinkRenderProps } from "react-router-dom";
+import { NavLink, useLocation, type NavLinkRenderProps } from "react-router-dom";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { ThemeContext } from "../contexts/ThemeContext.ts";
 import styled from "@emotion/styled";
-import type { ColorTheme } from "../util/types.ts";
+import { PathColorMap, type ColorTheme } from "../util/types.ts";
 import * as Typography from "../libs/Typography.tsx";
 import { getProfileByUsername, getUploadedImage } from "../services/profileService.ts";
 import { AVATARS } from "../util/consts.ts";
@@ -21,6 +21,22 @@ const Container = styled.div<{ theme: ColorTheme }>`
   grid-area: sidebar;
 `;
 
+const MenuButton = styled(NavLink)<{ selected: boolean; path: string }>`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2.5rem;
+  width: 100%;
+  text-decoration: none;
+  color: currentColor;
+  border-left: 4px solid ${({ selected, path }) => (selected ? PathColorMap[path] : "transparent")};
+  transition: all 0.2s;
+
+  :hover {
+    text-decoration: underline;
+  }
+`;
+
 /**
  * The SideBarNav component contains the primary naviagation menu. It
  * highlights the currently selected page and triggers navigation when the
@@ -30,6 +46,7 @@ export default function SideBarNav() {
   const [showOptions, setShowOptions] = useState<boolean>(false);
   const { user } = useLoginContext();
   const { username } = user;
+  const { pathname } = useLocation();
   const { theme } = React.useContext(ThemeContext);
   const [avatarId, setAvatarId] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -82,32 +99,59 @@ export default function SideBarNav() {
 
   return (
     <Container className="side-bar-nav" theme={theme}>
-      <NavLink to="/" className={navClass}>
+      <MenuButton to="/" className={navClass} selected={pathname === "/"} path="/">
         <Typography.NavBar>Home</Typography.NavBar>
-      </NavLink>
-      <NavLink to="/games" className={navClass}>
+      </MenuButton>
+      <MenuButton
+        to="/games"
+        className={navClass}
+        selected={pathname.includes("/games") || pathname.includes("/game")}
+        path="/games"
+      >
         <Typography.NavBar>Games</Typography.NavBar>
-      </NavLink>
-      <NavLink to="/clan" className={navClass}>
+      </MenuButton>
+      <MenuButton
+        to="/clan"
+        className={navClass}
+        selected={pathname.includes("/clan")}
+        path="/clan"
+      >
         <Typography.NavBar>Clan</Typography.NavBar>
-      </NavLink>
-      <NavLink to="/forum" className={navClass}>
+      </MenuButton>
+      <MenuButton
+        to="/forum"
+        className={navClass}
+        selected={pathname.includes("/forum")}
+        path="/forum"
+      >
         <Typography.NavBar>Forum</Typography.NavBar>
-      </NavLink>
-      <NavLink to="/messages" className={navClass}>
+      </MenuButton>
+      <MenuButton
+        to="/messages"
+        className={navClass}
+        selected={pathname === "/messages"}
+        path="/messages"
+      >
         <Typography.NavBar>Messages</Typography.NavBar>
-      </NavLink>
-      <NavLink to="/friends" className={navClass}>
+      </MenuButton>
+      <MenuButton
+        to="/friends"
+        className={navClass}
+        selected={pathname === "/friends"}
+        path="/friends"
+      >
         <Typography.NavBar>Friends</Typography.NavBar>
-      </NavLink>
-      <NavLink
+      </MenuButton>
+      <MenuButton
         to={`/profile/${username}`}
         id="menu_user"
         className={navClass}
         onClick={toggleOptions}
+        selected={pathname.includes("/profile")}
+        path="/profile"
       >
         <Typography.NavBar>Profile</Typography.NavBar>
-      </NavLink>
+      </MenuButton>
       <div
         style={{
           width: "110px",

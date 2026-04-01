@@ -14,7 +14,7 @@ export default function ChatPanel({ chatId }: ChatProps) {
   const { messages, handleMessageCreation } = useSocketsForChat(chatId);
   return (
     messages && (
-      <div className="chatContainer">
+      <div className="chat-container">
         <MessageList messages={messages} />
         <MessageCreation handleMessageCreation={handleMessageCreation} />
       </div>
