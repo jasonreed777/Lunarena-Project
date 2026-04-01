@@ -19,7 +19,7 @@
 }
 
 .game-frame {
-  border: 3px solid black;
+  border: 3px solid;
   border-radius: 0.5rem;
   margin-top: 0.5rem;
   padding: 20px;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import "./GamePanel.css";
 import type { GameInfo } from "@gamenite/shared";
 import { gameNames } from "../util/consts.ts";
@@ -7,6 +7,10 @@ import GameDispatch from "../games/GameDispatch.tsx";
 import useSocketsForGame from "../hooks/useSocketsForGame.ts";
 import useTimeSince from "../hooks/useTimeSince.ts";
 import UserLink from "./UserLink.tsx";
+import * as Typography from "../libs/Typography.tsx";
+import { ThemeContext } from "../contexts/ThemeContext.ts";
+import { Divider } from "./Divider.tsx";
+import { TranslucentButton as Button } from "./Buttons.tsx";
 
 const gameInstructions: Record<string, { title: string; steps: string[] }> = {
   nim: {
@@ -38,6 +42,7 @@ export default function GamePanel({
   minPlayers,
 }: GameInfo) {
   const { user } = useLoginContext();
+  const { theme } = useContext(ThemeContext);
   const timeSince = useTimeSince();
   const [showInstructions, setShowInstructions] = useState(false);
 
@@ -47,48 +52,69 @@ export default function GamePanel({
   );
 
   return hasWatched ? (
-    <div className="gamePanel">
-      <div className="gameRoster">
-        <h2>{gameNames[type]}</h2>
-        <div className="smallAndGray">Game room created {timeSince(createdAt)}</div>
+    <div className="game-panel" style={{ backgroundColor: "transparent", color: theme.text }}>
+      <div className="game-roster">
+        <div className="title-row">
+          <div>
+            <Typography.LargeStat>{gameNames[type]}</Typography.LargeStat>
+            <Typography.SmallText style={{ color: theme.secondaryText }}>
+              Game room created {timeSince(createdAt)}
+            </Typography.SmallText>
+          </div>
+          <Button
+            onClick={() => setShowInstructions((prev) => !prev)}
+            color={theme.text}
+            text={theme.text}
+            fitContent
+          >
+            {showInstructions ? "Hide Instructions" : "How to Play"}
+          </Button>
+        </div>
+        <Divider color={theme.text} />
 
-        <button className="primary narrow" onClick={() => setShowInstructions((prev) => !prev)}>
-          {showInstructions ? "Hide Instructions" : "How to Play"}
-        </button>
-
-        <div className="dottedList" role="list">
+        <div role="list">
           {players.map((player, index) => (
-            <div className="dottedListItem" role="listitem" key={player.username}>
+            <Typography.ProfileText
+              role="listitem"
+              key={player.username}
+              style={{ color: theme.text }}
+            >
               {player.username === user.username ? (
-                `you are player #${index + 1}`
+                `You are player #${index + 1}!`
               ) : (
-                <span>
+                <Typography.ProfileText
+                  style={{ display: "flex", gap: "4px", alignItems: "center", color: theme.text }}
+                >
                   Player #{index + 1} is <UserLink user={player} />
-                </span>
+                </Typography.ProfileText>
               )}
-            </div>
+            </Typography.ProfileText>
           ))}
         </div>
 
         {userPlayerIndex < 0 && !view && (
-          <button className="primary narrow" onClick={joinGame}>
+          <Button onClick={joinGame} color="#43b9c6" text={theme.text}>
             Join Game
-          </button>
+          </Button>
         )}
 
         {userPlayerIndex >= 0 && !view && players.length >= minPlayers && (
-          <button className="primary narrow" onClick={startGame}>
+          <Button onClick={startGame} color="#36d26f" text={theme.text}>
             Start Game
-          </button>
+          </Button>
         )}
+
+        {showInstructions && <Divider color={theme.text} />}
 
         {showInstructions && (
           <div className="instructionsModalOverlay" onClick={() => setShowInstructions(false)}>
             <div className="instructionsModal" onClick={(e) => e.stopPropagation()}>
-              <h3>{gameInstructions[type].title}</h3>
-              <ul>
+              <Typography.LargeParagraph>{gameInstructions[type].title}</Typography.LargeParagraph>
+              <ul style={{ paddingTop: 10 }}>
                 {gameInstructions[type].steps.map((step) => (
-                  <li key={step}>{step}</li>
+                  <li key={step}>
+                    <Typography.Paragraph>{step}</Typography.Paragraph>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -97,7 +123,7 @@ export default function GamePanel({
       </div>
 
       {view ? (
-        <div className="gameFrame">
+        <div className="game-frame" style={{ borderColor: theme.text }}>
           <GameDispatch
             gameId={gameId}
             userPlayerIndex={userPlayerIndex}
@@ -106,7 +132,9 @@ export default function GamePanel({
           />
         </div>
       ) : (
-        <div className="gameFrame waiting content">waiting for game to begin</div>
+        <Typography.Paragraph className="game-frame" style={{ border: `3px solid ${theme.text}` }}>
+          Waiting for game to begin...
+        </Typography.Paragraph>
       )}
     </div>
   ) : (
