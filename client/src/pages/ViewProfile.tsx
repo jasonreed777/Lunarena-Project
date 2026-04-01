@@ -1,8 +1,7 @@
-import type { GameInfo, SafeUserInfo } from "@gamenite/shared";
+import type { GameInfo, SafeUserInfo, UserProfileWithStats } from "@gamenite/shared";
 import React, { useEffect, useState } from "react";
 import useTimeSince from "../hooks/useTimeSince";
 import { getUserById } from "../services/userService";
-import type { UserProfileRecord } from "../util/types";
 import { getProfileByUsername, getUploadedImage } from "../services/profileService";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { AVATARS } from "../util/consts";
@@ -26,7 +25,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
     | {
         type: "profile";
         user: SafeUserInfo;
-        profile: UserProfileRecord;
+        profile: UserProfileWithStats;
         uploadedImage: string | null;
         pointsTotal: number;
         streak: number;
@@ -306,6 +305,12 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                   ) : (
                     <p>No title selected.</p>
                   )}
+                </div>
+                <div className="profile-section">
+                  <h3>Overall Stats</h3>
+                  <p>Wins: {profile.stats.overall.wins}</p>
+                  <p>Games Played: {profile.stats.overall.gamesPlayed}</p>
+                  <p>Losses: {profile.stats.overall.losses}</p>
                 </div>
                 <div className="spacedSection">
                   <h3>Achievements</h3>

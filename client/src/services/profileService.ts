@@ -1,6 +1,6 @@
 import type { APIResponse, UserProfileRecord } from "../util/types.ts";
 import { api, exceptionToErrorMsg } from "./api.ts";
-import type { ErrorMsg, UserProfileUpdateRequest } from "@gamenite/shared";
+import type { ErrorMsg, UserProfileUpdateRequest, UserProfileWithStats } from "@gamenite/shared";
 
 const PROFILE_API_URL = `/api/profile`;
 
@@ -19,16 +19,14 @@ export const updateProfile = async (
   }
 };
 
-// Get needed profile info through provding username
-export const getProfileByUsername = async (username: string): APIResponse<UserProfileRecord> => {
+export const getProfileByUsername = async (username: string): APIResponse<UserProfileWithStats> => {
   try {
-    const res = await api.get<UserProfileRecord | ErrorMsg>(`${PROFILE_API_URL}/${username}`);
+    const res = await api.get<UserProfileWithStats | ErrorMsg>(`${PROFILE_API_URL}/${username}`);
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);
   }
 };
-
 // Upload a new profile picture for the user
 export const uploadPFP = async (
   username: string,
