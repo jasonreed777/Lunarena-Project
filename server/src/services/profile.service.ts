@@ -37,7 +37,7 @@ export async function createDefaultProfile(
     bio: "",
     pfp: {
       type: "avatar",
-      avatarId: "default",
+      avatarId: "gamer",
     },
     profileBorderColor: "#ffffff",
     updatedAt: now,
