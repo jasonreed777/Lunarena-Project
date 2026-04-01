@@ -75,7 +75,6 @@ export const InputWithLabel: React.FC<{
     <div>
       {label && <Typography.SubtitleSmall>{label}</Typography.SubtitleSmall>}
       <StyledInput
-        id={`${label || "an"}-input`}
         borderColor={/^#[0-9a-f]{3,6}$/i.test(borderColor) ? borderColor : "#ffffff"}
         textColor={textColor}
         placeholderColor={placeholderColor}
