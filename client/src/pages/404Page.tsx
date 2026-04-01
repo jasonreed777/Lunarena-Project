@@ -11,6 +11,8 @@ const Container = styled.div`
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-position: center;
+  background-size: cover;
+
   display: flex;
   justify-content: center;
   align-items: center;

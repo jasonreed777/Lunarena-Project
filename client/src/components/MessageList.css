@@ -1,5 +1,6 @@
 div.chatWindow {
   overflow-x: clip;
+  height: 100%;
   overflow-y: scroll;
 }
 

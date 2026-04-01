@@ -1,5 +1,4 @@
 div.chatContainer {
   display: grid;
   grid-template-rows: 1fr min-content;
-  height: var(--content-vh);
 }
