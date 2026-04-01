@@ -83,7 +83,7 @@ export const InputWithLabel: React.FC<{
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-      ></StyledInput>
+      />
     </div>
   );
 };
