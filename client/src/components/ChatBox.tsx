@@ -18,11 +18,24 @@ export const ChatBox: React.FC<{
   message: string;
   setMessage: React.Dispatch<React.SetStateAction<string>>;
 }> = ({ sendTo, theme, onClick, message, setMessage }) => {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.code === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (message !== "") {
+        onClick(message);
+      }
+      setMessage("");
+    }
+  }
+
   return (
     <Container>
       <StyledTextArea
-        color="#298432"
+        borderColor="#298432"
+        textColor={theme.text}
+        placeholderColor={theme.secondaryText}
         placeholder={`Send a message to ${sendTo}`}
+        onKeyDown={handleKeyDown}
         style={{ width: "95%" }}
         value={message}
         onChange={(event) => setMessage(event.target.value)}

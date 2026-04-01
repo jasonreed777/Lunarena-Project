@@ -145,7 +145,7 @@ export default function Header() {
   return (
     <Container id="header" theme={theme}>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <DefaultIcon src="/assets/logos/logo_grayscale.svg" />
+        <DefaultIcon src="/assets/logos/logo_grayscale.svg" onClick={() => navigate("")} />
         <Typography.SmallTitle className="title">GameNite!</Typography.SmallTitle>
       </div>
       {stats && (

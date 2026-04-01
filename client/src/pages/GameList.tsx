@@ -5,6 +5,24 @@ import { useContext, useEffect } from "react";
 import { updateProfile } from "../services/profileService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { ThemeContext } from "../contexts/ThemeContext.ts";
+import { TranslucentButton as Button } from "../components/Buttons.tsx";
+import { PageTitle } from "../libs/Typography.tsx";
+import styled from "@emotion/styled";
+
+const Container = styled.div`
+  min-height: var(--content-vh);
+  background-image: url(../assets/gradients/games_gradient.png);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  padding: 20px;
+  padding-top: 3rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
 
 export default function GameList() {
   const gameList = useGameList();
@@ -24,31 +42,34 @@ export default function GameList() {
   }, [user.username]);
 
   return (
-    <div className="content">
-      <div className="spacedSection">
-        <h2>All games</h2>
-        <div>
-          <button className="primary narrow" onClick={() => navigate("/game/new")}>
-            Create New Game
-          </button>
-        </div>
-        <>
-          {"message" in gameList ? (
-            gameList.message
-          ) : (
-            <div className="dottedList">
-              {gameList.map((game, index) => (
-                <GameSummaryView
-                  gameInfo={{ ...game }}
-                  key={game.gameId.toString()}
-                  theme={theme}
-                  index={index}
-                />
-              ))}
-            </div>
-          )}
-        </>
+    <Container style={{ backgroundColor: theme.primary, color: theme.text }}>
+      <PageTitle>All Games</PageTitle>
+      <div>
+        <Button
+          onClick={() => navigate("/game/new")}
+          color="#e05a35"
+          text={theme.text}
+          style={{ width: "fit-content" }}
+        >
+          Create New Game
+        </Button>
       </div>
-    </div>
+      <>
+        {"message" in gameList ? (
+          gameList.message
+        ) : (
+          <div>
+            {gameList.map((game, index) => (
+              <GameSummaryView
+                gameInfo={{ ...game }}
+                key={game.gameId.toString()}
+                theme={theme}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    </Container>
   );
 }

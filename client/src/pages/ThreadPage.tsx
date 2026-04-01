@@ -7,12 +7,50 @@ import UserLink from "../components/UserLink.tsx";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import { updateProfile } from "../services/profileService.ts";
 import { voteOnComment } from "../services/threadService.ts";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import type { VoteType } from "@gamenite/shared";
+import VoteControls from "../components/VoteControls.tsx";
+import styled from "@emotion/styled";
+import * as Typography from "../libs/Typography.tsx";
+import { ThemeContext } from "../contexts/ThemeContext.ts";
+import { Divider } from "../components/Divider.tsx";
+
+const Container = styled.div`
+  width: 100%;
+  height: 100%;
+
+  background-image: url(/assets/gradients/forum_gradient.png);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Content = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const Comment = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 5px 0;
+
+  :hover .vote-btn {
+    opacity: 1;
+  }
+`;
 
 export default function ThreadPage() {
   const formatTimeSince = useTimeSince();
   const { threadId } = useParams();
+  const { theme } = useContext(ThemeContext);
   const user = useLoginContext().user;
   // non-nullish assertion is okay here given that Thread is only called in a
   // route with `:threadId` on the path
@@ -61,50 +99,53 @@ export default function ThreadPage() {
   }
 
   return (
-    <div className="content">
+    <Container style={{ backgroundColor: theme.primary, color: theme.text }}>
       {"message" in threadInfo ? (
         threadInfo.message
       ) : (
-        <div className="spacedSection">
-          <h2>{threadInfo.title}</h2>
-          <div className="notTooWide">{threadInfo.text}</div>
-          <div className="smallAndGray">
+        <Content>
+          <Typography.SmallTitle>{threadInfo.title}</Typography.SmallTitle>
+          <Typography.Paragraph style={{ color: theme.text }}>
+            {threadInfo.text}
+          </Typography.Paragraph>
+          <Typography.SmallText style={{ color: theme.secondaryText }}>
             Posted by <UserLink user={threadInfo.createdBy} />{" "}
             {formatTimeSince(threadInfo.createdAt)}
-          </div>
-          <div className="dottedList" role="list">
+          </Typography.SmallText>
+          <div role="list">
             {threadInfo.comments.map(
-              ({ commentId, text, createdBy, createdAt, editedAt, score, userVoted }) => (
-                <div className="dottedListItem commentItem" role="listitem" key={commentId}>
-                  <div className="voteControls">
-                    <button
-                      className={`voteBtn upvoteBtn${userVoted === "upvote" ? " voted" : ""}`}
-                      onClick={() => handleVote(commentId, "upvote", userVoted, score)}
-                      aria-label="Upvote"
-                    >
-                      ▲
-                    </button>
-                    <span className="commentScore">{score}</span>
-                    <button
-                      className={`voteBtn downvoteBtn${userVoted === "downvote" ? " voted" : ""}`}
-                      onClick={() => handleVote(commentId, "downvote", userVoted, score)}
-                      aria-label="Downvote"
-                    >
-                      ▼
-                    </button>
-                  </div>
-                  <div>
-                    <div>{text}</div>
-                    <div className="smallAndGray">
-                      Reply by <UserLink user={createdBy} />
-                      {createdBy.username === threadInfo.createdBy.username && (
-                        <span className="opBlue"> OP</span>
-                      )}{" "}
-                      {formatTimeSince(createdAt)}
-                      {editedAt && ` (last edited ${formatTimeSince(editedAt)})`}
+              ({ commentId, text, createdBy, createdAt, editedAt, score, userVoted }, index) => (
+                <>
+                  {index < threadInfo.comments.length && <Divider style={{ color: theme.text }} />}
+                  <Comment role="listitem" key={commentId}>
+                    <VoteControls
+                      userVoted={userVoted}
+                      score={score}
+                      handleVote={handleVote}
+                      commentId={commentId}
+                    />
+                    <div>
+                      <Typography.Paragraph style={{ color: theme.text }}>
+                        {text}
+                      </Typography.Paragraph>
+                      <Typography.SmallText style={{ color: theme.text }}>
+                        Reply by <UserLink user={createdBy} />
+                        {createdBy.username === threadInfo.createdBy.username && (
+                          <span
+                            style={{
+                              color: theme._id === "dark" ? "#f7cd59" : "#a88b3b",
+                            }}
+                          >
+                            {" "}
+                            OP
+                          </span>
+                        )}{" "}
+                        {formatTimeSince(createdAt)}
+                        {editedAt && ` (last edited ${formatTimeSince(editedAt)})`}
+                      </Typography.SmallText>
                     </div>
-                  </div>
-                </div>
+                  </Comment>
+                </>
               ),
             )}
           </div>
@@ -113,8 +154,8 @@ export default function ThreadPage() {
             threadId={threadInfo.threadId.toString()}
             setThread={setThread}
           />
-        </div>
+        </Content>
       )}
-    </div>
+    </Container>
   );
 }

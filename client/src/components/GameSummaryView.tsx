@@ -32,6 +32,16 @@ const StyledLink = styled.div`
   }
 `;
 
+const StyledSmallSubtitle = styled(Typography.SubtitleSmall)`
+  text-wrap: nowrap;
+  cursor: pointer;
+  transform: all 0.2s;
+
+  :hover {
+    text-decoration: underline;
+  }
+`;
+
 /**
  * Summarizes information for a single game as part of a list of games
  */
@@ -59,13 +69,13 @@ const GameSummaryView: React.FC<{ gameInfo: GameInfo; theme: ColorTheme; index: 
         <Divider color={theme.secondaryText} />
       </Column>
       <Column>
-        <Typography.SubtitleSmall
+        <StyledSmallSubtitle
           style={{ color: theme.secondaryText, textWrap: "nowrap" }}
           onClick={() => navigate(`/game/${gameInfo.gameId}`)}
         >
           {gameInfo.status}
           {gameInfo.status !== "done" && `, ${numPlayers} player${numPlayers === 1 ? "" : "s"}`}
-        </Typography.SubtitleSmall>
+        </StyledSmallSubtitle>
         <Divider color={theme.secondaryText} />
         <Typography.ProfileText
           style={{

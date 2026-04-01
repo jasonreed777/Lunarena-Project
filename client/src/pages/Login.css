@@ -8,6 +8,11 @@
   background-color: black;
   color: white;
   background-image: url("../assets/gradients/login_gradient.png");
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+
   padding: 20px;
 }
 
