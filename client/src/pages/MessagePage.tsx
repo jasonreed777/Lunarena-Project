@@ -85,7 +85,10 @@ export const MessagePage: React.FC = () => {
    * Handles the user sending a message
    */
   const handleSendMessage = (message: string) => {
-    if (selected) handleMessageCreation(selected?.chatId, message);
+    if (selected) {
+      handleMessageCreation(selected?.chatId, message);
+      setCurMessage("");
+    }
   };
 
   return (
@@ -129,7 +132,14 @@ export const MessagePage: React.FC = () => {
           <div>
             <Typography.Subtitle>Messages</Typography.Subtitle>
           </div>
-          <div style={{ position: "absolute", bottom: 0, width: "100%" }}>
+          <div
+            style={{
+              position: "absolute",
+              bottom: 50,
+              width: "100%",
+              height: "calc(100% - 110px)",
+            }}
+          >
             <MessageList messages={allMessages} />
             <ChatBox
               sendTo={

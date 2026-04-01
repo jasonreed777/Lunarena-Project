@@ -145,7 +145,7 @@ export default function FriendsList() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundImage: "url(../assets/gradients/clan_gradient.png)",
+        backgroundImage: "url(../assets/gradients/friends_gradient.png)",
         padding: "20px",
         paddingTop: "3rem",
         backgroundColor: theme.primary,
@@ -153,7 +153,6 @@ export default function FriendsList() {
       }}
     >
       <Typography.PageTitle>Friends</Typography.PageTitle>
-      <Divider color={theme.text} />
 
       <div style={{ marginBottom: 30 }}>
         <Typography.Subtitle style={{ color: theme.secondaryText }}>

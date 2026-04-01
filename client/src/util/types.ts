@@ -157,3 +157,16 @@ export const TrophyColorMap: Record<number, string> = {
   1: "#767f81",
   2: "#c78543",
 };
+
+/**
+ * Maps each path of GameNite to an assocaiated color.
+ */
+export const PathColorMap: Record<string, string> = {
+  "/": "#25808a",
+  "/games": "#e05a35",
+  "/clan": "#734189",
+  "/forum": "#f7cd59",
+  "/messages": "#298432",
+  "/friends": "#09d8fc",
+  "/profile": "#ffffff",
+};
