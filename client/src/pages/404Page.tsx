@@ -34,7 +34,9 @@ const NotFoundPage: React.FC<{ pathname: string }> = ({ pathname }) => {
   return (
     <Container style={{ backgroundColor: theme.primary, color: theme.text }}>
       <Content>
-        <Typography.PageTitle>404: Page Not Found</Typography.PageTitle>
+        <Typography.PageTitle style={{ textWrap: "nowrap" }}>
+          404: Page Not Found
+        </Typography.PageTitle>
         <Typography.Code>{`The page "${pathname}" does not exist :(`}</Typography.Code>
         <TranslucentButton
           onClick={() => navigate("/")}
