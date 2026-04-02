@@ -1,5 +1,10 @@
 import { type SafeUserInfo, zUserUpdateRequest } from "@gamenite/shared";
-import { getUsersByUsername, populateSafeUserInfo, searchUsers, updateUser } from "../services/user.service.ts";
+import {
+  getUsersByUsername,
+  populateSafeUserInfo,
+  searchUsers,
+  updateUser,
+} from "../services/user.service.ts";
 import { type RestAPI } from "../types.ts";
 import { z } from "zod";
 import { getUserByUsername } from "../services/auth.service.ts";

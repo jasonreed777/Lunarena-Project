@@ -94,29 +94,26 @@ export default function FriendsList() {
   const [hasSearched, setHasSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const doSearch = useCallback(
-    (q: string) => {
-      if (q.trim().length === 0) {
-        setSearchResults([]);
-        setHasSearched(false);
-        return;
-      }
-      searchUsers(q.trim()).then((res) => {
-        if ("error" in res) return;
-        setSearchResults(res);
-        setHasSearched(true);
-        // fetch border colors for results
-        Promise.all(
-          res.map(async (u) => {
-            const profile = await getProfileByUsername(u.username);
-            if ("error" in profile) return [u.username, DEFAULT_PILL_COLOR] as const;
-            return [u.username, profile.profileBorderColor || DEFAULT_PILL_COLOR] as const;
-          }),
-        ).then((entries) => setSearchColorMap(Object.fromEntries(entries)));
-      });
-    },
-    [],
-  );
+  const doSearch = useCallback((q: string) => {
+    if (q.trim().length === 0) {
+      setSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+    searchUsers(q.trim()).then((res) => {
+      if ("error" in res) return;
+      setSearchResults(res);
+      setHasSearched(true);
+      // fetch border colors for results
+      Promise.all(
+        res.map(async (u) => {
+          const profile = await getProfileByUsername(u.username);
+          if ("error" in profile) return [u.username, DEFAULT_PILL_COLOR] as const;
+          return [u.username, profile.profileBorderColor || DEFAULT_PILL_COLOR] as const;
+        }),
+      ).then((entries) => setSearchColorMap(Object.fromEntries(entries)));
+    });
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -215,7 +212,9 @@ export default function FriendsList() {
           {searchResults.length === 0 ? (
             <EmptyState message="No results" themeId={theme._id} />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}
+            >
               {searchResults.map((u) => (
                 <FriendPill
                   key={u.username}
