@@ -41,6 +41,7 @@ export async function createDefaultProfile(
     },
     profileBorderColor: "#ffffff",
     updatedAt: now,
+    totalTimePlayedMS: 0,
     onlinePresence: {
       status: "offline",
       lastActive: now,
@@ -102,6 +103,7 @@ export async function updateProfile(
   if (!user) throw new Error(`No user ${username}`);
 
   const profile = await createDefaultProfile(user.userId, username);
+  const previousOnlinePresence = profile.onlinePresence;
 
   if (updates.bio !== undefined) profile.bio = updates.bio;
   if (updates.pfp !== undefined) profile.pfp = updates.pfp;
@@ -109,8 +111,36 @@ export async function updateProfile(
   if (updates.profileBorderColor !== undefined) {
     profile.profileBorderColor = updates.profileBorderColor;
   }
+  // If online presence is being updated, calculate time played based on the previous presence status and last active time
   if (updates.onlinePresence !== undefined) {
-    profile.onlinePresence = updates.onlinePresence;
+    if (previousOnlinePresence.status === "active" && updates.onlinePresence.status === "offline") {
+      const sessionStart = new Date(previousOnlinePresence.lastActive).getTime();
+      const sessionEnd = new Date().getTime();
+      const sessionDuration = sessionEnd - sessionStart;
+
+      if (sessionDuration > 0) {
+        profile.totalTimePlayedMS = (profile.totalTimePlayedMS ?? 0) + sessionDuration;
+      }
+
+      profile.onlinePresence = updates.onlinePresence;
+    } else if (
+      previousOnlinePresence.status === "offline" &&
+      updates.onlinePresence.status === "active"
+    ) {
+      // Start of a new active session
+      profile.onlinePresence = updates.onlinePresence;
+    } else if (
+      previousOnlinePresence.status === "active" &&
+      updates.onlinePresence.status === "active"
+    ) {
+      // Keep original session start time instead of resetting it
+      profile.onlinePresence = {
+        ...updates.onlinePresence,
+        lastActive: previousOnlinePresence.lastActive,
+      };
+    } else {
+      profile.onlinePresence = updates.onlinePresence;
+    }
   }
 
   profile.updatedAt = new Date().toISOString();
@@ -203,6 +233,8 @@ export async function getProfileWithStatsByUsername(
   if (!existingStats) {
     return {
       ...profile,
+      // Ensure totalTimePlayedMS is set to 0 if undefined
+      totalTimePlayedMS: profile.totalTimePlayedMS ?? 0,
       stats: {
         overall: {
           wins: 0,
@@ -230,6 +262,7 @@ export async function getProfileWithStatsByUsername(
 
   return {
     ...profile,
+    totalTimePlayedMS: profile.totalTimePlayedMS ?? 0,
     stats: {
       overall: {
         wins: existingStats.winsTotal,

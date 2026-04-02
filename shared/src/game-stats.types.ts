@@ -39,6 +39,7 @@ export const zUserProfileWithStats = z.object({
   titleId: z.string().optional(),
   profileBorderColor: z.string(),
   updatedAt: z.string(),
+  totalTimePlayedMS: z.number().nonnegative(),
   onlinePresence: z.object({
     status: z.enum(["active", "offline"]),
     activeGameId: z.string().optional(),

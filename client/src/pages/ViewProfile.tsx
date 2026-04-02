@@ -12,6 +12,7 @@ import { FriendActionButtons } from "../components/FriendActionButtons.tsx";
 import * as Typography from "../libs/Typography";
 import { Divider } from "../components/Divider.tsx";
 import { ActivityGraph } from "../components/ActivityGraph.tsx";
+import { formatTimePlayed } from "../util/utils.ts";
 
 interface ViewProfileProps {
   username: string;
@@ -67,6 +68,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         } else {
           setActiveGame(null);
         }
+        console.log("HERE", profileResponse);
 
         let uploadedImage: string | null = null;
 
@@ -201,7 +203,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                 </div>
               </div>
               <div style={{ textAlign: "center", minWidth: "260px" }}>
-                <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
+                <h2 style={{ marginBottom: "0.5rem" }}>Online Status</h2>
 
                 {profile.onlinePresence?.activeGameId ? (
                   <div>
@@ -250,6 +252,17 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                     {statusLabel}
                   </p>
                 )}
+              </div>
+              <div className="profile-time-played">
+                <h2>Time Played</h2>
+                <div
+                  className="pointsValue"
+                  style={{
+                    color: profile.profileBorderColor,
+                  }}
+                >
+                  {formatTimePlayed(profile.totalTimePlayedMS ?? 0)}
+                </div>
               </div>
               <div style={{ minWidth: 0, flex: "1 1 0", overflow: "hidden" }}>
                 <ActivityGraph

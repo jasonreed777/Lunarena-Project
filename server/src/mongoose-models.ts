@@ -159,6 +159,7 @@ export const UserProfileModel = mongoose.model<UserProfileRecord & { _id: string
       titleId: String,
       profileBorderColor: String,
       updatedAt: String,
+      totalTimePlayedMS: Number,
       onlinePresence: OnlinePresenceSchema,
     },
     opts,

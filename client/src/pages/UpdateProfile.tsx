@@ -10,6 +10,7 @@ import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 import { ActivityGraph } from "../components/ActivityGraph.tsx";
 import type { UserProfileWithStats } from "@gamenite/shared";
 import { getProfileByUsername } from "../services/profileService.ts";
+import { formatTimePlayed } from "../util/utils.ts";
 
 // Infer achievement item type from getUserAchievements return type
 type AchievementItem = Awaited<ReturnType<typeof getUserAchievements>>[number];
@@ -137,6 +138,17 @@ export default function UpdateProfile() {
               {pointsTotal}
             </div>
           </div>
+          <div className="profile-time-played">
+            <h2>Time Played</h2>
+            <div
+              className="pointsValue"
+              style={{
+                color: profileBorderColor,
+              }}
+            >
+              {formatTimePlayed(profileStats?.totalTimePlayedMS ?? 0)}
+            </div>
+          </div>
         </div>
         <div className="profile-main">
           <div className="profile-column">
@@ -193,6 +205,10 @@ export default function UpdateProfile() {
                 className="widefill notTooWide"
                 value={titleId}
                 onChange={(e) => setTitleId(e.target.value)}
+                style={{
+                  color: theme.text,
+                  borderColor: theme.text,
+                }}
               >
                 <option value="">Select a title</option>
                 <option value="Nim Master">Nim Master</option>
