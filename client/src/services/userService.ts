@@ -64,6 +64,20 @@ export const signupUser = async (user: UserAuth): APIResponse<SafeUserInfo> => {
 };
 
 /**
+ * Searches for users by username or display name.
+ */
+export const searchUsers = async (query: string): APIResponse<SafeUserInfo[]> => {
+  try {
+    const res = await api.get<SafeUserInfo[] | ErrorMsg>(`${USER_API_URL}/search`, {
+      params: { q: query },
+    });
+    return res.data;
+  } catch (error) {
+    return exceptionToErrorMsg(error);
+  }
+};
+
+/**
  * Sends a GET request for a user's data
  *
  * @param username - The username
