@@ -63,6 +63,7 @@ describe("POST /api/game/create", () => {
         username: "user3",
         display: "Frau Drei",
         createdAt: expect.anything(),
+        profileBorderColor: "#8d8d8d",
       },
       createdAt: expect.anything(),
       minPlayers: 2,
@@ -71,6 +72,7 @@ describe("POST /api/game/create", () => {
           username: "user3",
           display: "Frau Drei",
           createdAt: expect.anything(),
+          profileBorderColor: "#8d8d8d",
         },
       ],
     });

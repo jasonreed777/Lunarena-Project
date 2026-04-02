@@ -30,8 +30,8 @@ function logout() {
 }
 
 let response: Response;
-const user1 = { username: "user1", display: "Yāo" };
-const user2 = { username: "user2", display: "Sénior Dos" };
+const user1 = { username: "user1", display: "Yāo", profileBorderColor: "#8d8d8d" };
+const user2 = { username: "user2", display: "Sénior Dos", profileBorderColor: "#8d8d8d" };
 
 beforeEach(() => logout());
 
