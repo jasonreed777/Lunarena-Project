@@ -96,7 +96,10 @@ export const MessagePage: React.FC = () => {
         <div className="friend-list">
           <Typography.Subtitle>Messages</Typography.Subtitle>
           {chatList
-            .sort((chat1, chat2) => chat2.lastMessageAt.getTime() - chat1.lastMessageAt.getTime())
+            .sort(
+              (chat1, chat2) =>
+                new Date(chat2.lastMessageAt).getTime() - new Date(chat1.lastMessageAt).getTime(),
+            )
             .map((chatInfo) => {
               const otherUser = getOtherParticipant(user, chatInfo);
               if (!otherUser) {
