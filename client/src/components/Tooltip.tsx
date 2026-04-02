@@ -28,7 +28,7 @@ const Triangle = styled.div`
 const Tooltip: React.FC<{ text: string; visible: boolean }> = ({ text, visible }) => {
   return (
     <Container visible={visible}>
-      <SmallText>{text}</SmallText>
+      <SmallText style={{ textWrap: "nowrap" }}>{text}</SmallText>
       <Triangle />
     </Container>
   );
