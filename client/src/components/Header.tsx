@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import "./Header.css";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +16,7 @@ import { AVATARS } from "../util/consts.ts";
 import { Avatar } from "./Avatar.tsx";
 import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 import { getUserAchievements } from "../services/achievementService.ts";
+import useSocketsForNotification from "../hooks/useSocketsForNotification.ts";
 
 /**
  * Container which houses all elements.
@@ -26,7 +27,7 @@ const Container = styled.div<{ theme: ColorTheme }>`
   height: 3rem;
   gap: 15px;
   padding-inline: 1rem;
-  grid-template-columns: 1fr 1fr repeat(5, max-content);
+  grid-template-columns: 1fr 1fr repeat(6, max-content);
   width: 100%;
   grid-area: header;
   background-color: ${({ theme }) => theme.navBar};
@@ -72,6 +73,19 @@ export default function Header() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [profileBorderColor, setProfileBorderColor] = useState("#888888");
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
+  const { notifications, count, dismissOne, dismissAll } = useSocketsForNotification();
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const [stats, setStats] = useState<{
     points: number;
     streak: number;
@@ -189,6 +203,59 @@ export default function Header() {
         onClick={() => handleThemeToggle()}
         hover
       />
+      <div style={{ position: "relative" }} ref={notificationRef}>
+        <div className="notification-bell" onClick={() => setShowNotifications(!showNotifications)}>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={theme.text}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          {count > 0 && <span className="notification-badge">{count > 99 ? "99+" : count}</span>}
+        </div>
+        <div
+          style={{
+            display: showNotifications ? "block" : "none",
+            backgroundColor: theme.navBar,
+          }}
+          className="notification-menu"
+        >
+          {notifications.length > 0 && (
+            <div className="notification-clear-all" onClick={() => dismissAll()}>
+              <Typography.Code>Clear all</Typography.Code>
+            </div>
+          )}
+          {notifications.length === 0 ? (
+            <div className="notification-empty">
+              <Typography.Code>No notifications</Typography.Code>
+            </div>
+          ) : (
+            notifications.map((n) => (
+              <div
+                key={n.notificationId}
+                className="notification-item"
+                onClick={() => dismissOne(n.notificationId)}
+              >
+                {n.header && (
+                  <div className="notification-item-header">
+                    <Typography.Code>{n.header}</Typography.Code>
+                  </div>
+                )}
+                <div className="notification-item-message">
+                  <Typography.Code>{n.message}</Typography.Code>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
       <div style={{ position: "relative" }}>
         <DefaultIcon
           src="/assets/icons/settings.svg"

@@ -5,7 +5,7 @@ import {
   zSendFriendRequestPayload,
   zRespondFriendRequestPayload,
 } from "@gamenite/shared";
-import { type RestAPI } from "../types.ts";
+import { type GameServer, type RestAPI } from "../types.ts";
 import {
   getFriendsList,
   getIncomingFriendRequests,
@@ -15,6 +15,8 @@ import {
   removeFriend,
 } from "../services/friendship.service.ts";
 import { z } from "zod";
+import { emitNotification } from "./notification.controller.ts";
+import { getUserByUsername } from "../services/auth.service.ts";
 
 /**
  * POST /api/friends/list - Get current user's friends
@@ -47,12 +49,19 @@ export const postRequest: RestAPI<FriendshipInfo> = async (req, res) => {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
-
-  const result = await sendFriendRequest(
-    req.authUser,
-    body.data.payload.receiverUsername,
-    new Date(),
-  );
+  const receiverUsername = body.data.payload.receiverUsername;
+  const result = await sendFriendRequest(req.authUser, receiverUsername, new Date());
+  const receiver = await getUserByUsername(receiverUsername);
+  if (!("error" in result) && receiver) {
+    const io = req.app.get("io") as GameServer;
+    await emitNotification(
+      io,
+      receiver.userId,
+      "FriendRequest",
+      "New friend request",
+      `${req.authUser.username} wants to be your friend!`,
+    );
+  }
   res.send(result);
 };
 

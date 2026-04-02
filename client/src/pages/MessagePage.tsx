@@ -12,19 +12,21 @@ import { chatCreate, getChatList, getChatMessages } from "../services/dmService.
 import { friendsList } from "../services/friendshipService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import useSocketsForDM from "../hooks/useSocketsForDM.ts";
+import { useParams, useNavigate } from "react-router-dom";
 
 /**
  * A direct messaging page with messages from friends.
  * @returns direct messaging page
  */
 export const MessagePage: React.FC = () => {
+  const { chatId } = useParams();
   const [chatList, setChatList] = React.useState<DMChatOverview[]>([]);
   const [selected, setSelected] = React.useState<DMChatOverview>();
   const [fetchedMessages, setFetchedMessages] = React.useState<MessageInfo[]>([]);
   const [curMessage, setCurMessage] = React.useState<string>("");
   const { theme } = React.useContext(ThemeContext);
   const { user } = useLoginContext();
-
+  const navigate = useNavigate();
   const { messages: socketMessages, handleMessageCreation } = useSocketsForDM();
 
   React.useEffect(() => {
@@ -60,14 +62,15 @@ export const MessagePage: React.FC = () => {
 
   // Load messages when a chat is selected
   React.useEffect(() => {
-    if (!selected) return;
-    getChatMessages({ chatId: selected.chatId, pageIndex: 0, pageSize: 50 }).then((res) => {
+    if (!chatId) return;
+    setSelected(chatList.find((chat) => chat.chatId === chatId));
+    getChatMessages({ chatId, pageIndex: 0, pageSize: 50 }).then((res) => {
       if (!("error" in res)) setFetchedMessages([...res].reverse());
     });
-  }, [selected]);
+  }, [chatId, chatList]);
 
   // Merge historical + socket messages for the selected chat
-  const socketSelected = selected ? (socketMessages[selected.chatId] ?? []) : [];
+  const socketSelected = chatId ? (socketMessages[chatId] ?? []) : [];
   // Make sure socket messages aren't double counted with fetched messages
   const allMessages: MessageInfo[] = [
     ...fetchedMessages,
@@ -75,20 +78,11 @@ export const MessagePage: React.FC = () => {
   ];
 
   /**
-   * Fires when the user selects a chat from the list
-   */
-  const handleSelectChat = (chat: DMChatOverview) => {
-    setSelected(chat);
-  };
-
-  /**
    * Handles the user sending a message
    */
   const handleSendMessage = (message: string) => {
-    if (selected) {
-      handleMessageCreation(selected?.chatId, message);
-      setCurMessage("");
-    }
+    if (chatId) handleMessageCreation(chatId, message);
+    setCurMessage("");
   };
 
   return (
@@ -100,30 +94,36 @@ export const MessagePage: React.FC = () => {
       <Divider />
       <div className="messages-body-container">
         <div className="friend-list">
-          <Typography.Subtitle>Friends</Typography.Subtitle>
-          {chatList.map((chatInfo) => {
-            const otherUser = getOtherParticipant(user, chatInfo);
-            if (!otherUser) {
-              return "invalid chat, only self present";
-            }
-            const color = otherUser.profileBorderColor;
-            const isSelected = selected?.chatId === chatInfo.chatId;
-            return (
-              <div
-                className={`friend-info ${isSelected && "selected"}`}
-                style={{
-                  color,
-                  borderLeft: `4px solid ${isSelected ? color || "white" : "transparent"}`,
-                }}
-                onClick={() => handleSelectChat(chatInfo)}
-              >
-                <Avatar src={getProfilePicture(otherUser)} size="small" border={{ color: color }} />
-                <Typography.ProfileText>
-                  {otherUser.display || otherUser.username}
-                </Typography.ProfileText>
-              </div>
-            );
-          })}
+          <Typography.Subtitle>Messages</Typography.Subtitle>
+          {chatList
+            .sort((chat1, chat2) => chat2.lastMessageAt.getTime() - chat1.lastMessageAt.getTime())
+            .map((chatInfo) => {
+              const otherUser = getOtherParticipant(user, chatInfo);
+              if (!otherUser) {
+                return "invalid chat, only self present";
+              }
+              const color = otherUser.profileBorderColor;
+              const isSelected = selected?.chatId === chatInfo.chatId;
+              return (
+                <div
+                  className={`friend-info ${isSelected && "selected"}`}
+                  style={{
+                    color,
+                    borderLeft: `4px solid ${isSelected ? color || "white" : "transparent"}`,
+                  }}
+                  onClick={() => navigate(`/messages/${chatInfo.chatId}`)}
+                >
+                  <Avatar
+                    src={getProfilePicture(otherUser)}
+                    size="small"
+                    border={{ color: color }}
+                  />
+                  <Typography.ProfileText>
+                    {otherUser.display || otherUser.username}
+                  </Typography.ProfileText>
+                </div>
+              );
+            })}
         </div>
         <div style={{ width: "fit-content" }}>
           <Divider vertical color="#7A797A" />

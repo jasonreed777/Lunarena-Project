@@ -7,9 +7,6 @@ export default function useSocketsForDM() {
   const [messages, setMessages] = useState<Record<string, MessageInfo[]>>({});
 
   useEffect(() => {
-    // Username pulled from socket on server side, join string is placeholder
-    socket.emit("dmChatJoin", "join");
-
     socket.on("dmNewMessage", handleNewMessage);
 
     function handleNewMessage(message: ChatNewMessagePayload) {

@@ -22,6 +22,7 @@ import type {
   DMChatRecord,
   DMChatMessageRecord,
   CommentVoteRecord,
+  NotificationRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
@@ -334,4 +335,21 @@ export const UserGameStatsModel = mongoose.model<UserGameStatsRecord & { _id: st
     },
     opts,
   ),
+);
+
+export const NotificationModel = mongoose.model<NotificationRecord>(
+  "notification",
+  new Schema(
+    {
+      userId: String,
+      type: String,
+      header: String,
+      message: String,
+      sentAt: Date,
+    },
+    opts,
+  ).index({
+    userId: 1,
+    sentAt: -1,
+  }),
 );

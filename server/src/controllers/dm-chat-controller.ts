@@ -18,6 +18,7 @@ import {
 import { populateSafeUserInfo } from "../services/user.service.ts";
 import { z } from "zod";
 import { getUserByUsername } from "../services/auth.service.ts";
+import { emitNotification } from "./notification.controller.ts";
 
 /**
  * Handle a socket request to send a direct message: store the message and
@@ -29,15 +30,27 @@ export const socketSendMessage: SocketAPI = (socket, io) => async (body) => {
     const user = socket.data.user;
     const { chatId, text } = zNewMessageRequest.parse(body);
     const { chat, message: messageDoc } = await sendMessage(user.userId, text, chatId);
+    const sender = await populateSafeUserInfo(messageDoc.sender);
     const message: MessageInfo = {
       messageId: messageDoc._id.toString(),
       text: messageDoc.text,
-      createdBy: await populateSafeUserInfo(messageDoc.sender),
+      createdBy: sender,
       createdAt: messageDoc.timestamp,
     };
     for (const participant of chat.participants) {
       // Do send messages back to the sender, so they can update their own chat
       io.to(participant).emit("dmNewMessage", { chatId, message });
+
+      // Don't send a notification to yourself
+      if (user.userId !== participant) {
+        await emitNotification(
+          io,
+          participant,
+          "DM",
+          "New Message",
+          `New message received from ${sender.username}`,
+        );
+      }
     }
   } catch (err) {
     logSocketError(socket, err);

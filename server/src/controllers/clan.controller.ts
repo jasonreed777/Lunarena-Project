@@ -13,9 +13,12 @@ import {
   zUpdateMemberRolePayload,
   zTransferOwnershipPayload,
 } from "@gamenite/shared";
-import { type RestAPI } from "../types.ts";
+import { type GameServer, type RestAPI } from "../types.ts";
 import * as clanService from "../services/clan.service.ts";
 import { z } from "zod";
+import { emitNotification } from "./notification.controller.ts";
+import { getClanById } from "../services/clan.service.ts";
+import { getUserByUsername } from "../services/auth.service.ts";
 
 /**
  * GET /api/clans/list - List all public clans
@@ -123,6 +126,18 @@ export const postInvite: RestAPI<ClanInviteInfo, { id: string }> = async (req, r
     body.data.payload.username,
     new Date(),
   );
+  const receiver = await getUserByUsername(body.data.payload.username);
+  if (!("error" in result) && receiver) {
+    const clanInfo = await getClanById(req.params.id);
+    const io = req.app.get("io") as GameServer;
+    await emitNotification(
+      io,
+      receiver.userId,
+      "ClanInvite",
+      "Clan Invite Received",
+      `${req.authUser.username} has invited you to join clan ${clanInfo?.name}`,
+    );
+  }
   res.send(result);
 };
 

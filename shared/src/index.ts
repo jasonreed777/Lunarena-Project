@@ -23,3 +23,4 @@ export * from "./points.types.ts";
 export * from "./achievement.types.ts";
 export * from "./user-achievement.types.ts";
 export * from "./game-stats.types.ts";
+export * from "./notifications.types.ts";

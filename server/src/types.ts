@@ -22,6 +22,9 @@ declare global {
     interface Request {
       authUser: UserWithId;
     }
+    interface Application {
+      get(name: "io"): GameServer;
+    }
   }
 }
 
