@@ -31,6 +31,16 @@ const StyledNavLink = styled(NavLink)`
   }
 `;
 
+const StyledSubtitle = styled(Typography.SubtitleSmall)`
+  text-wrap: nowrap;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  :hover {
+    text-decoration: underline;
+  }
+`;
+
 /**
  * Summarizes information for a single thread as part of a list of threads
  */
@@ -52,12 +62,12 @@ const ThreadSummaryView: React.FC<{ thread: ThreadSummary; theme: ColorTheme; in
         <Divider color={theme.secondaryText} />
       </Column>
       <Column>
-        <Typography.SubtitleSmall
-          style={{ color: theme.secondaryText, textWrap: "nowrap" }}
+        <StyledSubtitle
+          style={{ color: theme.secondaryText }}
           onClick={() => navigate(`/forum/post/${thread.threadId}`)}
         >
           {thread.comments} {thread.comments === 1 ? "reply" : "replies"}
-        </Typography.SubtitleSmall>
+        </StyledSubtitle>
         <Divider color={theme.secondaryText} />
         <Typography.ProfileText
           style={{
