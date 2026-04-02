@@ -1,5 +1,5 @@
 import { type SafeUserInfo, zUserUpdateRequest } from "@gamenite/shared";
-import { getUsersByUsername, populateSafeUserInfo, updateUser } from "../services/user.service.ts";
+import { getUsersByUsername, populateSafeUserInfo, searchUsers, updateUser } from "../services/user.service.ts";
 import { type RestAPI } from "../types.ts";
 import { z } from "zod";
 import { getUserByUsername } from "../services/auth.service.ts";
@@ -32,6 +32,18 @@ export const getByUsername: RestAPI<SafeUserInfo, { username: string }> = async 
     return;
   }
   res.send(await populateSafeUserInfo(user.userId));
+};
+
+/**
+ * Searches for users by username or display name.
+ */
+export const getSearch: RestAPI<SafeUserInfo[]> = async (req, res) => {
+  const q = req.query.q;
+  if (typeof q !== "string" || q.trim().length === 0) {
+    res.status(400).send({ error: "Missing search query" });
+    return;
+  }
+  res.send(await searchUsers(q.trim(), 5));
 };
 
 /**

@@ -62,6 +62,19 @@ export async function getUsersByUsername(usernames: string[]): Promise<SafeUserI
  * Updates user information in the database.
  * Password changes are handled client-side via betterAuth.
  */
+/**
+ * Searches for users whose username or display name matches the query (case-insensitive).
+ */
+export async function searchUsers(query: string, limit: number): Promise<SafeUserInfo[]> {
+  const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  const docs = await UserModel.find({
+    $or: [{ username: regex }, { display: regex }],
+  })
+    .limit(limit)
+    .lean();
+  return Promise.all(docs.map((doc) => populateSafeUserInfo(doc._id.toString())));
+}
+
 export async function updateUser(
   username: string,
   { display }: UserUpdateRequest,

@@ -72,6 +72,7 @@ app.use(
     .use(
       "/user",
       Router()
+        .get("/search", requireAuth, user.getSearch)
         .post("/list", user.postList)
         .post("/:username", requireAuth, user.postByUsername)
         .get("/:username", user.getByUsername),
