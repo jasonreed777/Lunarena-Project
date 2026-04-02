@@ -51,9 +51,7 @@ export const postRequest: RestAPI<FriendshipInfo> = async (req, res) => {
   }
   const receiverUsername = body.data.payload.receiverUsername;
   const result = await sendFriendRequest(req.authUser, receiverUsername, new Date());
-  console.log(result);
   const receiver = await getUserByUsername(receiverUsername);
-  console.log(receiver);
   if (!("error" in result) && receiver) {
     const io = req.app.get("io") as GameServer;
     await emitNotification(

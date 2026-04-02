@@ -1,4 +1,4 @@
-import type { GameServer, RestAPI, SocketAPI } from "../types.ts";
+import type { RestAPI, SocketAPI } from "../types.ts";
 import {
   type DMChatOverview,
   type MessageInfo,
