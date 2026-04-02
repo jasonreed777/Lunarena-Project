@@ -1,7 +1,6 @@
 /* eslint no-console: "off" */
 
 import express, { Router } from "express";
-import { Server } from "socket.io";
 import { toNodeHandler, fromNodeHeaders } from "better-auth/node";
 import * as http from "node:http";
 import * as gameChat from "./controllers/game-chat.controller.ts";
@@ -14,6 +13,8 @@ import * as thread from "./controllers/thread.controller.ts";
 import * as profile from "./controllers/profile.controller.ts";
 import * as points from "./controllers/points.controller.ts";
 import * as achievements from "./controllers/achievement.controller.ts";
+import * as notifications from "./controllers/notification.controller.ts";
+import { Server } from "socket.io";
 import { type GameServer } from "./types.ts";
 import { requireAuth } from "./middleware/auth.middleware.ts";
 import { UserModel } from "./mongoose-models.ts";
@@ -23,6 +24,7 @@ import { getAuth, setupAuth } from "./auth.ts";
 export const app = express();
 export const httpServer = http.createServer(app);
 const io: GameServer = new Server(httpServer);
+app.set("io", io);
 
 const MONGO_STR = process.env.MONGO_STR;
 const MONGO_DB_NAME = process.env.MONGO_DB_NAME || "GameNite";
@@ -94,6 +96,13 @@ app.use(
         .get("/daily/:username", points.getDailyPointsByUsername),
     )
     .use("/achievements", Router().get("/:username", achievements.getAchievementsByUsername))
+    .use(
+      "/notifications",
+      Router()
+        .get("/", requireAuth, notifications.getNotifications)
+        .delete("/", requireAuth, notifications.deleteAll)
+        .delete("/:id", requireAuth, notifications.deleteOne),
+    )
     .use(
       "/friends",
       Router()

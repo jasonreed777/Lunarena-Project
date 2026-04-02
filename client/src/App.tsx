@@ -40,6 +40,7 @@ if (typeof window !== "undefined") {
   socket.on("connect", () => console.log("[socket] connected, id=", socket?.id));
   socket.on("connect_error", (err) => console.log("[socket] connect_error:", err.message));
   socket.on("disconnect", (reason) => console.log("[socket] disconnected:", reason));
+
   if (DEBUG_SOCKETS) {
     socket.onAny((tag, payload) => {
       console.log(`from socket got ${tag}(${JSON.stringify(payload)})`);
@@ -66,6 +67,8 @@ export default function App() {
   useEffect(() => {
     if (auth) {
       socket?.connect();
+      // Username pulled from socket on server side, join string is placeholder, needed for notifications and dms
+      socket?.emit("dmChatJoin", "join");
     } else {
       socket?.disconnect();
     }
@@ -119,6 +122,7 @@ export default function App() {
               <Route path="/games" element={<GameList />} />
               <Route path="/friends" element={<FriendsList />} />
               <Route path="/messages" element={<MessagePage />} />
+              <Route path="/messages/:chatId" element={<MessagePage />} />
               <Route path="/game/new" element={<NewGame />} />
               <Route path="/game/:gameId" element={<Game />} />
               <Route path="/clan" element={<ClanPage />} />

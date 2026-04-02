@@ -1,4 +1,4 @@
-import type { GameKey, VoteType } from "@gamenite/shared";
+import type { GameKey, NotificationType, VoteType } from "@gamenite/shared";
 
 /**
  * Record identifiers used to look up keys in a database. This type
@@ -352,4 +352,15 @@ export interface UserGameStatsRecord {
   gamesPlayedTotal: number;
   byGame: Map<string, PerGameTypeStats>;
   updatedAt: DateISO;
+}
+
+/**
+ * Represents a notification for a specific user
+ */
+export interface NotificationRecord {
+  userId: RecordId;
+  type: NotificationType;
+  header: string | null;
+  message: string;
+  sentAt: Date;
 }

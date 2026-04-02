@@ -8,6 +8,7 @@ import {
 import { type NewMessagePayload } from "./message.types.ts";
 import { type GameMakeMovePayload, type GamePlayInfo, type TaggedGameView } from "./game.types.ts";
 import { type SafeUserInfo } from "./user.types.ts";
+import { type NotificationInfo } from "./notifications.types.ts";
 
 /**
  * The Socket.io interface for client to server communication.
@@ -39,4 +40,5 @@ export interface ServerToClientEvents {
   gamePlayersUpdated: (payload: SafeUserInfo[]) => void;
   gameStateUpdated: (payload: TaggedGameView & { forPlayer: boolean }) => void;
   gameWatched: (payload: GamePlayInfo) => void;
+  notification: (payload: NotificationInfo) => void;
 }
