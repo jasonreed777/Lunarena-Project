@@ -171,6 +171,7 @@ export interface UserProfileRecord {
   titleId?: string; // References a title that the user has chosen to display
   profileBorderColor: string; // Hex code for the color of the user's profile border
   updatedAt: DateISO; // When profile was last updated
+  totalTimePlayedMS: number; // Total time a user has spent on GameNite in milliseconds
   onlinePresence: {
     status: "active" | "offline"; // User's current online status
     activeGameId?: RecordId; // References a Game record if the user is currently in a game

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getUserByUsername } from "./auth.service.ts";
-import { UserProfileModel, UploadedImageModel } from "../mongoose-models.ts";
+import { UserProfileModel, UploadedImageModel, UserGameStatsModel } from "../mongoose-models.ts";
 import { type UserProfileRecord, type UploadedImageRecord } from "../models.ts";
 import type { UserProfileImageUploadRequest } from "@gamenite/shared";
 import { getOrUpdateStreak } from "./points.service.ts";
@@ -37,10 +37,11 @@ export async function createDefaultProfile(
     bio: "",
     pfp: {
       type: "avatar",
-      avatarId: "default",
+      avatarId: "gamer",
     },
     profileBorderColor: "#ffffff",
     updatedAt: now,
+    totalTimePlayedMS: 0,
     onlinePresence: {
       status: "offline",
       lastActive: now,
@@ -102,6 +103,7 @@ export async function updateProfile(
   if (!user) throw new Error(`No user ${username}`);
 
   const profile = await createDefaultProfile(user.userId, username);
+  const previousOnlinePresence = profile.onlinePresence;
 
   if (updates.bio !== undefined) profile.bio = updates.bio;
   if (updates.pfp !== undefined) profile.pfp = updates.pfp;
@@ -109,8 +111,36 @@ export async function updateProfile(
   if (updates.profileBorderColor !== undefined) {
     profile.profileBorderColor = updates.profileBorderColor;
   }
+  // If online presence is being updated, calculate time played based on the previous presence status and last active time
   if (updates.onlinePresence !== undefined) {
-    profile.onlinePresence = updates.onlinePresence;
+    if (previousOnlinePresence.status === "active" && updates.onlinePresence.status === "offline") {
+      const sessionStart = new Date(previousOnlinePresence.lastActive).getTime();
+      const sessionEnd = new Date().getTime();
+      const sessionDuration = sessionEnd - sessionStart;
+
+      if (sessionDuration > 0) {
+        profile.totalTimePlayedMS = (profile.totalTimePlayedMS ?? 0) + sessionDuration;
+      }
+
+      profile.onlinePresence = updates.onlinePresence;
+    } else if (
+      previousOnlinePresence.status === "offline" &&
+      updates.onlinePresence.status === "active"
+    ) {
+      // Start of a new active session
+      profile.onlinePresence = updates.onlinePresence;
+    } else if (
+      previousOnlinePresence.status === "active" &&
+      updates.onlinePresence.status === "active"
+    ) {
+      // Keep original session start time instead of resetting it
+      profile.onlinePresence = {
+        ...updates.onlinePresence,
+        lastActive: previousOnlinePresence.lastActive,
+      };
+    } else {
+      profile.onlinePresence = updates.onlinePresence;
+    }
   }
 
   profile.updatedAt = new Date().toISOString();
@@ -165,4 +195,81 @@ export async function getUploadedImage(uploadId: string): Promise<UploadedImageR
   const doc = await UploadedImageModel.findById(uploadId).lean();
   if (!doc) throw new Error(`Failed to find uploaded image ${uploadId}`);
   return doc as unknown as UploadedImageRecord;
+}
+
+export interface ProfileGameStats {
+  wins: number;
+  gamesPlayed: number;
+  losses: number;
+}
+
+// Includes everything in UserPRofileRecord plus a stats field with overall and per-game stats
+export interface UserProfileWithStats extends UserProfileRecord {
+  stats: {
+    overall: ProfileGameStats;
+    byGame: Record<string, ProfileGameStats>;
+  };
+}
+
+// Original per game stats shape as stored in the database
+type StoredPerGameStats = {
+  wins: number;
+  gamesPlayed: number;
+};
+
+/**
+ * Retrieves a user's profile along with their game statistics
+ * @param username username to look up
+ * @returns a promise that resolves to the user's profile along with their game statistics
+ */
+export async function getProfileWithStatsByUsername(
+  username: string,
+): Promise<UserProfileWithStats> {
+  // Get existing profile info
+  const profile = await getProfileByUsername(username);
+  // Get game stats for the user
+  const existingStats = await UserGameStatsModel.findById(username).lean();
+  // If no stats record exists for this user, return the profile with default 0 stats
+  if (!existingStats) {
+    return {
+      ...profile,
+      // Ensure totalTimePlayedMS is set to 0 if undefined
+      totalTimePlayedMS: profile.totalTimePlayedMS ?? 0,
+      stats: {
+        overall: {
+          wins: 0,
+          gamesPlayed: 0,
+          losses: 0,
+        },
+        byGame: {},
+      },
+    };
+  }
+  // If stats record exists, use it, if not use an empty object for per-game stats
+  const storedStatsPerGame = (existingStats.byGame ?? {}) as Record<string, StoredPerGameStats>;
+  // Hold finalized per game stats
+  const profileStatsPerGame: Record<string, ProfileGameStats> = Object.fromEntries(
+    // Map the raw per-game stats from the database to include losses calculated from wins and games played
+    Object.entries(storedStatsPerGame).map(([gameType, gameStats]) => [
+      gameType,
+      {
+        wins: gameStats.wins,
+        gamesPlayed: gameStats.gamesPlayed,
+        losses: gameStats.gamesPlayed - gameStats.wins,
+      },
+    ]),
+  );
+
+  return {
+    ...profile,
+    totalTimePlayedMS: profile.totalTimePlayedMS ?? 0,
+    stats: {
+      overall: {
+        wins: existingStats.winsTotal,
+        gamesPlayed: existingStats.gamesPlayedTotal,
+        losses: existingStats.gamesPlayedTotal - existingStats.winsTotal,
+      },
+      byGame: profileStatsPerGame,
+    },
+  };
 }

@@ -2,19 +2,23 @@ import { zUserProfileUpdateRequest, zUserProfileImageUploadRequest } from "@game
 import { type UploadedImageRecord, type UserProfileRecord } from "../models.ts";
 
 import {
-  getProfileByUsername,
   getUploadedImage,
   updateProfile,
   uploadProfileImage,
+  getProfileWithStatsByUsername,
+  type UserProfileWithStats,
 } from "../services/profile.service.ts";
 import { type RestAPI } from "../types.ts";
 
 /**
  * Retrieves a user's profile by their username
  */
-export const getByUsername: RestAPI<UserProfileRecord, { username: string }> = async (req, res) => {
+export const getByUsername: RestAPI<UserProfileWithStats, { username: string }> = async (
+  req,
+  res,
+) => {
   try {
-    res.send(await getProfileByUsername(req.params.username));
+    res.send(await getProfileWithStatsByUsername(req.params.username));
   } catch {
     res.status(404).send({ error: "User not found" });
   }

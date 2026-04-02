@@ -19,7 +19,7 @@ const PointsContainer = styled.div<{ theme: ColorTheme }>`
   grid-template-rows: repeat(7, 1fr);
   grid-auto-flow: column;
   grid-auto-columns: 20px;
-  justify-content: end;
+  justify-content: start;
   gap: 5px;
   border: 1px solid ${({ theme }) => theme.text};
   border-radius: 8px;

@@ -27,10 +27,45 @@ export async function recordWin(username: string, gameType: string) {
   }
 
   stats.winsTotal += 1;
-  stats.gamesPlayedTotal += 1;
 
   const gameStats = stats.byGame.get(gameType) ?? { wins: 0, gamesPlayed: 0 };
   gameStats.wins += 1;
+  stats.byGame.set(gameType, gameStats);
+
+  stats.updatedAt = now;
+  await stats.save();
+}
+
+/**
+ * Records that a user played a game of a given type by updating their overall and per-game
+ * games played stats.
+ * @param username user to record game played for
+ * @param gameType game type of the game played (e.g. "nim")
+ * @returns Promise that resolves when stats are updated and saved to the database
+ */
+export async function recordGamePlayed(username: string, gameType: string) {
+  const now = new Date().toISOString();
+  const stats = await UserGameStatsModel.findById(username);
+
+  if (!stats) {
+    await UserGameStatsModel.create({
+      _id: username,
+      winsTotal: 0,
+      gamesPlayedTotal: 1,
+      byGame: {
+        [gameType]: {
+          wins: 0,
+          gamesPlayed: 1,
+        },
+      },
+      updatedAt: now,
+    });
+    return;
+  }
+
+  stats.gamesPlayedTotal += 1;
+
+  const gameStats = stats.byGame.get(gameType) ?? { wins: 0, gamesPlayed: 0 };
   gameStats.gamesPlayed += 1;
   stats.byGame.set(gameType, gameStats);
 

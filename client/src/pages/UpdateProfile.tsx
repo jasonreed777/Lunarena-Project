@@ -8,6 +8,9 @@ import { ThemeContext } from "../contexts/ThemeContext";
 import { getUserAchievements } from "../services/achievementService.ts";
 import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 import { ActivityGraph } from "../components/ActivityGraph.tsx";
+import type { UserProfileWithStats } from "@gamenite/shared";
+import { getProfileByUsername } from "../services/profileService.ts";
+import { formatTimePlayed } from "../util/utils.ts";
 
 // Infer achievement item type from getUserAchievements return type
 type AchievementItem = Awaited<ReturnType<typeof getUserAchievements>>[number];
@@ -18,6 +21,7 @@ export default function UpdateProfile() {
   const [pointsTotal, setPointsTotal] = useState<number>(0);
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [streak, setStreak] = useState<number>(0);
+  const [profileStats, setProfileStats] = useState<UserProfileWithStats | null>(null);
   const [showPass, setShowPass] = useState(false);
   const {
     display,
@@ -50,11 +54,13 @@ export default function UpdateProfile() {
     let cancel = false;
 
     async function loadProfileExtras() {
-      const [pointsResult, achievementsResult, streakResult] = await Promise.allSettled([
-        getUserPoints(user.username),
-        getUserAchievements(user.username),
-        getUserStreak(user.username),
-      ]);
+      const [profileResult, pointsResult, achievementsResult, streakResult] =
+        await Promise.allSettled([
+          getProfileByUsername(user.username),
+          getUserPoints(user.username),
+          getUserAchievements(user.username),
+          getUserStreak(user.username),
+        ]);
 
       if (cancel) return;
 
@@ -74,6 +80,11 @@ export default function UpdateProfile() {
         setStreak(streakResult.value);
       } else {
         setStreak(0);
+      }
+      if (profileResult.status === "fulfilled" && !("error" in profileResult.value)) {
+        setProfileStats(profileResult.value);
+      } else {
+        setProfileStats(null);
       }
     }
 
@@ -125,6 +136,17 @@ export default function UpdateProfile() {
               }}
             >
               {pointsTotal}
+            </div>
+          </div>
+          <div className="profile-time-played">
+            <h2>Time Played</h2>
+            <div
+              className="pointsValue"
+              style={{
+                color: profileBorderColor,
+              }}
+            >
+              {formatTimePlayed(profileStats?.totalTimePlayedMS ?? 0)}
             </div>
           </div>
         </div>
@@ -183,6 +205,10 @@ export default function UpdateProfile() {
                 className="widefill notTooWide"
                 value={titleId}
                 onChange={(e) => setTitleId(e.target.value)}
+                style={{
+                  color: theme.text,
+                  borderColor: theme.text,
+                }}
               >
                 <option value="">Select a title</option>
                 <option value="Nim Master">Nim Master</option>
@@ -418,6 +444,43 @@ export default function UpdateProfile() {
               After updating your display name or password, you will be logged out
             </div>
             <ActivityGraph theme={theme} color={profileBorderColor} username={user.username} />
+            <div style={{ marginTop: "2rem" }}>
+              <h3>Overall Stats Across Games</h3>
+              <div className="profile-section">
+                <div className="list">
+                  <div className="achievement-card">
+                    <div className="achievement-description">
+                      <div>Wins: {profileStats?.stats.overall.wins ?? 0}</div>
+                      <div>Games Played: {profileStats?.stats.overall.gamesPlayed ?? 0}</div>
+                      <div>Losses: {profileStats?.stats.overall.losses ?? 0}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="profile-section">
+                <h3>Per-Game Stats</h3>
+                {!profileStats || Object.keys(profileStats.stats.byGame).length === 0 ? (
+                  <p>No game stats yet.</p>
+                ) : (
+                  <div className="list">
+                    {Object.entries(profileStats.stats.byGame).map(([gameType, stats]) => (
+                      <div key={gameType} className="achievement-card">
+                        <div className="achievement-title">
+                          {gameType === "guess"
+                            ? "Number Guesser"
+                            : gameType.charAt(0).toUpperCase() + gameType.slice(1)}
+                        </div>
+                        <div className="achievement-description">
+                          <div>Wins: {stats.wins}</div>
+                          <div>Games Played: {stats.gamesPlayed}</div>
+                          <div>Losses: {stats.losses}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,7 @@
-import type { GameInfo, SafeUserInfo } from "@gamenite/shared";
+import type { GameInfo, SafeUserInfo, UserProfileWithStats } from "@gamenite/shared";
 import React, { useEffect, useState } from "react";
 import useTimeSince from "../hooks/useTimeSince";
 import { getUserById } from "../services/userService";
-import type { UserProfileRecord } from "../util/types";
 import { getProfileByUsername, getUploadedImage } from "../services/profileService";
 import { ThemeContext } from "../contexts/ThemeContext";
 import { AVATARS } from "../util/consts";
@@ -13,6 +12,7 @@ import { FriendActionButtons } from "../components/FriendActionButtons.tsx";
 import * as Typography from "../libs/Typography";
 import { Divider } from "../components/Divider.tsx";
 import { ActivityGraph } from "../components/ActivityGraph.tsx";
+import { formatTimePlayed } from "../util/utils.ts";
 
 interface ViewProfileProps {
   username: string;
@@ -26,7 +26,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
     | {
         type: "profile";
         user: SafeUserInfo;
-        profile: UserProfileRecord;
+        profile: UserProfileWithStats;
         uploadedImage: string | null;
         pointsTotal: number;
         streak: number;
@@ -68,6 +68,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         } else {
           setActiveGame(null);
         }
+        console.log("HERE", profileResponse);
 
         let uploadedImage: string | null = null;
 
@@ -202,7 +203,7 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                 </div>
               </div>
               <div style={{ textAlign: "center", minWidth: "260px" }}>
-                <h3 style={{ marginBottom: "0.5rem" }}>Online Status</h3>
+                <h2 style={{ marginBottom: "0.5rem" }}>Online Status</h2>
 
                 {profile.onlinePresence?.activeGameId ? (
                   <div>
@@ -251,6 +252,17 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                     {statusLabel}
                   </p>
                 )}
+              </div>
+              <div className="profile-time-played">
+                <h2>Time Played</h2>
+                <div
+                  className="pointsValue"
+                  style={{
+                    color: profile.profileBorderColor,
+                  }}
+                >
+                  {formatTimePlayed(profile.totalTimePlayedMS ?? 0)}
+                </div>
               </div>
               <div style={{ minWidth: 0, flex: "1 1 0", overflow: "hidden" }}>
                 <ActivityGraph
@@ -355,6 +367,45 @@ export default function ViewProfile({ username }: ViewProfileProps) {
                         border: `5px solid ${profile.profileBorderColor}`,
                       }}
                     />
+                  </div>
+                </div>
+                <div style={{ marginTop: "2rem" }}>
+                  <div className="profile-section">
+                    <h3>Overall Stats</h3>
+                    <div className="list">
+                      <div className="achievement-card">
+                        <div className="achievement-title">Overall Stats</div>
+                        <div className="achievement-description">
+                          <div>Wins: {profile.stats.overall.wins}</div>
+                          <div>Games Played: {profile.stats.overall.gamesPlayed}</div>
+                          <div>Losses: {profile.stats.overall.losses}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="profile-section">
+                    <h3>Per-Game Stats</h3>
+                    {Object.keys(profile.stats.byGame).length === 0 ? (
+                      <p>No game stats yet.</p>
+                    ) : (
+                      <div className="list">
+                        {Object.entries(profile.stats.byGame).map(([gameType, stats]) => (
+                          <div key={gameType} className="achievement-card">
+                            <div className="achievement-title">
+                              {gameType === "guess"
+                                ? "Number Guesser"
+                                : gameType.charAt(0).toUpperCase() + gameType.slice(1)}
+                            </div>
+                            <div className="achievement-description">
+                              <div>Wins: {stats.wins}</div>
+                              <div>Games Played: {stats.gamesPlayed}</div>
+                              <div>Losses: {stats.losses}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

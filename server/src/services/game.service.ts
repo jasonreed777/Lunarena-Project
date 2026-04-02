@@ -10,7 +10,7 @@ import { GameModel } from "../mongoose-models.ts";
 import { updateProfile } from "./profile.service.ts";
 import { awardPoints } from "./points.service.ts";
 import { checkWinAchievements } from "./achievement.service.ts";
-import { recordWin } from "./game-stats.service.ts";
+import { recordWin, recordGamePlayed } from "./game-stats.service.ts";
 
 /**
  * The service interface for individual games
@@ -194,6 +194,11 @@ export async function updateGame(
   });
   // If the game just transitioned to done, award points to the winner
   if (!game.done && result.done && result.winnerIndex !== undefined) {
+    for (const playerUserId of players) {
+      const player = await populateSafeUserInfo(playerUserId);
+      await recordGamePlayed(player.username, game.type);
+    }
+
     const winnerUserId = players[result.winnerIndex];
     const winner = await populateSafeUserInfo(winnerUserId);
 
