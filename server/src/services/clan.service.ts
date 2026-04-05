@@ -243,6 +243,12 @@ export async function joinClan(
       joinedAt: now,
     });
 
+    // Clean up pending invites for this user to this clan
+    await ClanInviteModel.updateMany(
+      { userId: user.userId, clanId, status: "pending" },
+      { status: "rejected" },
+    );
+
     return {
       clan: await populateClanInfo(clanId),
       role: "member",
@@ -285,14 +291,21 @@ export async function leaveClan(
   }
 
   if (membership.role === "owner") {
-    // Owner must transfer ownership or disband
     const memberCount = await ClanMemberModel.countDocuments({ clanId });
     if (memberCount > 1) {
-      return { error: "You must transfer ownership before leaving" };
+      // Auto-transfer: prefer admins, then oldest member
+      // MongoDB string sort: "admin" < "member" alphabetically, so admins come first
+      const successor = await ClanMemberModel.findOne(
+        { clanId, userId: { $ne: user.userId } },
+      ).sort({ role: 1, joinedAt: 1 }).lean();
+      if (successor) {
+        await ClanMemberModel.findByIdAndUpdate(successor._id, { role: "owner" });
+      }
+    } else {
+      // Last member leaving - disband clan
+      await ClanModel.findByIdAndDelete(clanId);
+      await ClanInviteModel.deleteMany({ clanId });
     }
-    // Last member leaving - disband clan
-    await ClanModel.findByIdAndDelete(clanId);
-    await ClanInviteModel.deleteMany({ clanId });
   }
 
   await ClanMemberModel.findByIdAndDelete(membership._id);
@@ -442,6 +455,12 @@ async function acceptInviteInternal(
 
   await ClanInviteModel.findByIdAndUpdate(inviteId, { status: "accepted" });
 
+  // Reject other pending invites for this user to the same clan
+  await ClanInviteModel.updateMany(
+    { userId: user.userId, clanId: invite.clanId, status: "pending", _id: { $ne: inviteId } },
+    { status: "rejected" },
+  );
+
   return {
     clan: await populateClanInfo(invite.clanId),
     role: "member",
@@ -481,6 +500,12 @@ async function acceptJoinRequestInternal(
 
   await ClanInviteModel.findByIdAndUpdate(inviteId, { status: "accepted" });
 
+  // Reject other pending invites/requests for this user to the same clan
+  await ClanInviteModel.updateMany(
+    { userId: invite.userId, clanId: invite.clanId, status: "pending", _id: { $ne: inviteId } },
+    { status: "rejected" },
+  );
+
   return {
     inviteId,
     clan: await populateClanInfo(invite.clanId),
@@ -489,6 +514,13 @@ async function acceptJoinRequestInternal(
     invitedBy: null,
     createdAt: new Date(invite.createdAt),
   };
+}
+
+/**
+ * Look up a raw invite record by ID (used by controller for notifications)
+ */
+export async function getInviteById(inviteId: string) {
+  return ClanInviteModel.findById(inviteId).lean();
 }
 
 /**
@@ -573,9 +605,20 @@ export async function getClanInvites(
   }
 
   const invites = await ClanInviteModel.find({ clanId, status: "pending" }).lean();
-  const clanInfo = await populateClanInfo(clanId);
 
-  return Promise.all(invites.map((inv) => populateClanInviteInfo(inv, clanInfo)));
+  // Safety net: auto-reject invites for users who already joined a clan
+  const validInvites = [];
+  for (const inv of invites) {
+    const existing = await ClanMemberModel.findOne({ userId: inv.userId }).lean();
+    if (existing) {
+      await ClanInviteModel.findByIdAndUpdate(inv._id, { status: "rejected" });
+    } else {
+      validInvites.push(inv);
+    }
+  }
+
+  const clanInfo = await populateClanInfo(clanId);
+  return Promise.all(validInvites.map((inv) => populateClanInviteInfo(inv, clanInfo)));
 }
 
 /**

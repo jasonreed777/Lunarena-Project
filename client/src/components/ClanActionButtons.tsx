@@ -207,9 +207,14 @@ export const KickButton: React.FC<KickButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  const handleKick = async () => {
-    if (!window.confirm(`Are you sure you want to kick ${username}?`)) return;
+  const handleClick = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     setLoading(true);
     setError(null);
     const result = await kickMember(clanId, username);
@@ -223,8 +228,14 @@ export const KickButton: React.FC<KickButtonProps> = ({
 
   return (
     <ButtonRow compact={compact} onClick={(e) => e.stopPropagation()}>
-      <ActionButton color={COLORS.kick} compact={compact} disabled={loading} onClick={handleKick}>
-        {loading ? "Kicking..." : "Kick"}
+      <ActionButton
+        color={COLORS.kick}
+        compact={compact}
+        disabled={loading}
+        onClick={handleClick}
+        onBlur={() => setConfirming(false)}
+      >
+        {loading ? "Kicking..." : confirming ? "Sure?" : "Kick"}
       </ActionButton>
       {error && <ErrorText compact={compact}>{error}</ErrorText>}
     </ButtonRow>

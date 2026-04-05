@@ -48,7 +48,8 @@ export const getSearch: RestAPI<SafeUserInfo[]> = async (req, res) => {
     res.status(400).send({ error: "Missing search query" });
     return;
   }
-  res.send(await searchUsers(q.trim(), 5));
+  const clanId = typeof req.query.clanId === "string" ? req.query.clanId : undefined;
+  res.send(await searchUsers(q.trim(), 5, clanId));
 };
 
 /**
