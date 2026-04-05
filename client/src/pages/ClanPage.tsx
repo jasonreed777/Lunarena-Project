@@ -94,12 +94,12 @@ export const ClanPage: React.FC = () => {
   const myInvites = useMyInvites(refetchKey);
   const user = useLoginContext().user;
   const { theme } = React.useContext(ThemeContext);
-  const gameList = useGameList(8) as GameInfo[];
 
   const hasNoClan = !("message" in userClan) && userClan.data === null;
   const hasClan = !("message" in userClan) && userClan.data !== null;
 
   const clanId = hasClan && userClan.data ? userClan.data.clan.clanId : null;
+  const gameList = useGameList({ clanId: clanId ?? undefined, limit: 10 }, !clanId) as GameInfo[];
   const userRole = hasClan && userClan.data ? userClan.data.role : null;
   const isAdminOrOwner = userRole === "admin" || userRole === "owner";
 

@@ -30,12 +30,18 @@ export const getGameById = async (gameId: string): APIResponse<GameInfo> => {
   }
 };
 
+export interface GameListParams {
+  clanId?: string;
+  userId?: string;
+  limit?: number;
+}
+
 /**
- * Sends a GET request for all games
+ * Sends a GET request for games, optionally filtered by clan or user
  */
-export const gameList = async (): APIResponse<GameInfo[]> => {
+export const gameList = async (params?: GameListParams): APIResponse<GameInfo[]> => {
   try {
-    const res = await api.get<GameInfo[] | ErrorMsg>(`${GAME_API_URL}/list`);
+    const res = await api.get<GameInfo[] | ErrorMsg>(`${GAME_API_URL}/list`, { params });
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);
