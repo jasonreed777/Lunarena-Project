@@ -295,9 +295,9 @@ export async function leaveClan(
     if (memberCount > 1) {
       // Auto-transfer: prefer admins, then oldest member
       // MongoDB string sort: "admin" < "member" alphabetically, so admins come first
-      const successor = await ClanMemberModel.findOne(
-        { clanId, userId: { $ne: user.userId } },
-      ).sort({ role: 1, joinedAt: 1 }).lean();
+      const successor = await ClanMemberModel.findOne({ clanId, userId: { $ne: user.userId } })
+        .sort({ role: 1, joinedAt: 1 })
+        .lean();
       if (successor) {
         await ClanMemberModel.findByIdAndUpdate(successor._id, { role: "owner" });
       }

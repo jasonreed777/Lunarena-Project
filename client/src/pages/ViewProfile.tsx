@@ -68,7 +68,6 @@ export default function ViewProfile({ username }: ViewProfileProps) {
         } else {
           setActiveGame(null);
         }
-        console.log("HERE", profileResponse);
 
         let uploadedImage: string | null = null;
 

@@ -198,17 +198,20 @@ export const postRespondInvite: RestAPI<
 
     if (invite.type === "request") {
       // Admin accepted/rejected a join request → notify the requester
-      const header = body.data.payload.action === "accept" ? "Join Request Accepted" : "Join Request Rejected";
-      const message = body.data.payload.action === "accept"
-        ? `Your request to join ${clanName} has been accepted!`
-        : `Your request to join ${clanName} has been rejected.`;
+      const header =
+        body.data.payload.action === "accept" ? "Join Request Accepted" : "Join Request Rejected";
+      const message =
+        body.data.payload.action === "accept"
+          ? `Your request to join ${clanName} has been accepted!`
+          : `Your request to join ${clanName} has been rejected.`;
       await emitNotification(io, invite.userId, "ClanInvite", header, message);
     } else if (invite.type === "invite" && invite.invitedBy) {
       // User accepted/rejected an invite → notify the inviter
       const header = body.data.payload.action === "accept" ? "Invite Accepted" : "Invite Declined";
-      const message = body.data.payload.action === "accept"
-        ? `${req.authUser.username} accepted your invite to ${clanName}!`
-        : `${req.authUser.username} declined your invite to ${clanName}.`;
+      const message =
+        body.data.payload.action === "accept"
+          ? `${req.authUser.username} accepted your invite to ${clanName}!`
+          : `${req.authUser.username} declined your invite to ${clanName}.`;
       await emitNotification(io, invite.invitedBy, "ClanInvite", header, message);
     }
   }

@@ -14,7 +14,6 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import {
   JoinClanButton,
   InviteResponseButtons,
-  CancelInviteButton,
   KickButton,
   RoleToggleButton,
 } from "../components/ClanActionButtons";
@@ -25,11 +24,7 @@ import useClanList from "../hooks/useClanList";
 import useUserClan from "../hooks/useUserClan";
 import useMyInvites from "../hooks/useMyInvites";
 import useClanLeaderboard from "../hooks/useClanLeaderboard";
-import {
-  createClan,
-  getClanById,
-  leaveClan,
-} from "../services/clanService";
+import { createClan, getClanById, leaveClan } from "../services/clanService";
 import { updateProfile } from "../services/profileService";
 import { Leaderboard } from "../components/Leaderboard";
 

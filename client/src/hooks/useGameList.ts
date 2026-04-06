@@ -20,7 +20,7 @@ export default function useGameList(
 
   useEffect(() => {
     if (skip) return;
-    gameList(params).then(setGames);
+    gameList({ clanId, userId, limit }).then(setGames);
   }, [clanId, userId, limit, skip]);
 
   if (skip || !games) return { message: "Loading..." };

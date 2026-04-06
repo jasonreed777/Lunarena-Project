@@ -65,7 +65,11 @@ export async function getUsersByUsername(usernames: string[]): Promise<SafeUserI
 /**
  * Searches for users whose username or display name matches the query (case-insensitive).
  */
-export async function searchUsers(query: string, limit: number, clanId?: string): Promise<SafeUserInfo[]> {
+export async function searchUsers(
+  query: string,
+  limit: number,
+  clanId?: string,
+): Promise<SafeUserInfo[]> {
   const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 
   const filter: Record<string, unknown> = {
