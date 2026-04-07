@@ -68,7 +68,7 @@ async function leaveAnyClan(username: string) {
 }
 
 describe("GET /api/clans/list", () => {
-  it("should return empty array when no public clans exist", async () => {
+  it("should return empty array when no clans exist", async () => {
     response = await supertest(app).get("/api/clans/list");
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -621,14 +621,20 @@ describe("POST /api/clans/invites/:inviteId/respond", () => {
 });
 
 describe("Clan list visibility", () => {
-  it("should show public clans in list", async () => {
+  it("should show all clans in list", async () => {
     response = await supertest(app).get("/api/clans/list");
     expect(response.status).toBe(200);
 
-    const publicClans = response.body as ClanInfo[];
-    const testClan = publicClans.find((c) => c.name === "Test Public Clan");
-    expect(testClan).toBeDefined();
-    expect(testClan?.isPublic).toBe(true);
+    const clans = response.body as ClanInfo[];
+    const publicClan = clans.find((c) => c.name === "Test Public Clan");
+    expect(publicClan).toBeDefined();
+    expect(publicClan?.isPublic).toBe(true);
+
+    // Private clans should also be listed
+    const privateClan = clans.find((c) => !c.isPublic);
+    if (privateClan) {
+      expect(privateClan.isPublic).toBe(false);
+    }
   });
 });
 

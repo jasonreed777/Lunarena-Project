@@ -19,12 +19,13 @@ import { z } from "zod";
 import { emitNotification } from "./notification.controller.ts";
 import { getClanById } from "../services/clan.service.ts";
 import { getUserByUsername } from "../services/auth.service.ts";
+import { ClanMemberModel } from "../mongoose-models.ts";
 
 /**
- * GET /api/clans/list - List all public clans
+ * GET /api/clans/list - List all clans
  */
 export const getList: RestAPI<ClanInfo[]> = async (_req, res) => {
-  res.send(await clanService.listPublicClans());
+  res.send(await clanService.listClans());
 };
 
 /**
@@ -81,6 +82,24 @@ export const postJoin: RestAPI<UserClanInfo | ClanInviteInfo, { id: string }> = 
   res,
 ) => {
   const result = await clanService.joinClan(req.authUser, req.params.id, new Date());
+  // Notify admins/owners when a user requests to join a private clan
+  if (!("error" in result) && "inviteId" in result) {
+    const io = req.app.get("io") as GameServer;
+    const clanInfo = await getClanById(req.params.id);
+    const admins = await ClanMemberModel.find({
+      clanId: req.params.id,
+      role: { $in: ["admin", "owner"] },
+    }).lean();
+    for (const admin of admins) {
+      await emitNotification(
+        io,
+        admin.userId,
+        "ClanInvite",
+        "Join Request",
+        `${req.authUser.username} has requested to join ${clanInfo?.name ?? "your clan"}`,
+      );
+    }
+  }
   res.send(result);
 };
 

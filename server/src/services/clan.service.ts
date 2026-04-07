@@ -88,10 +88,10 @@ async function populateClanInviteInfo(
 }
 
 /**
- * List all public clans
+ * List all clans
  */
-export async function listPublicClans(): Promise<ClanInfo[]> {
-  const docs = await ClanModel.find({ isPublic: true }).lean();
+export async function listClans(): Promise<ClanInfo[]> {
+  const docs = await ClanModel.find({}).lean();
   return Promise.all(docs.map((doc) => populateClanInfo(doc._id)));
 }
 

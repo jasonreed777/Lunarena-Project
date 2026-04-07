@@ -15,9 +15,9 @@ import type { APIResponse } from "../util/types.ts";
 const CLANS_API_URL = `/api/clans`;
 
 /**
- * Gets the list of all public clans
+ * Gets the list of all clans
  */
-export const listPublicClans = async (): APIResponse<ClanInfo[]> => {
+export const listClans = async (): APIResponse<ClanInfo[]> => {
   try {
     const res = await api.get<ClanInfo[] | ErrorMsg>(`${CLANS_API_URL}/list`);
     return res.data;

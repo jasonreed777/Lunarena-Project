@@ -65,6 +65,7 @@ interface JoinClanButtonProps {
   clanId: string;
   isPublic: boolean;
   compact?: boolean;
+  hasExistingRequest?: boolean;
   onActionComplete: () => void;
 }
 
@@ -72,10 +73,12 @@ export const JoinClanButton: React.FC<JoinClanButtonProps> = ({
   clanId,
   isPublic,
   compact,
+  hasExistingRequest,
   onActionComplete,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requested, setRequested] = useState(hasExistingRequest ?? false);
 
   const handleJoin = async () => {
     setLoading(true);
@@ -86,13 +89,30 @@ export const JoinClanButton: React.FC<JoinClanButtonProps> = ({
       setError(result.error);
       return;
     }
+    if (!isPublic && "inviteId" in result) {
+      setRequested(true);
+      return;
+    }
     onActionComplete();
   };
 
+  const label = requested
+    ? "Requested"
+    : loading
+      ? "Joining..."
+      : isPublic
+        ? "Join"
+        : "Request to Join";
+
   return (
     <ButtonRow compact={compact} onClick={(e) => e.stopPropagation()}>
-      <ActionButton color={COLORS.join} compact={compact} disabled={loading} onClick={handleJoin}>
-        {loading ? "Joining..." : isPublic ? "Join" : "Request to Join"}
+      <ActionButton
+        color={COLORS.join}
+        compact={compact}
+        disabled={loading || requested}
+        onClick={handleJoin}
+      >
+        {label}
       </ActionButton>
       {error && <ErrorText compact={compact}>{error}</ErrorText>}
     </ButtonRow>

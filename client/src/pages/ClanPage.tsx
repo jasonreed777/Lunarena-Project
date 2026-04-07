@@ -77,6 +77,12 @@ export const ClanPage: React.FC = () => {
   const hasNoClan = !("message" in userClan) && userClan.data === null;
   const hasClan = !("message" in userClan) && userClan.data !== null;
 
+  const pendingRequestClanIds = new Set(
+    !("message" in myInvites)
+      ? myInvites.filter((inv) => inv.type === "request").map((inv) => inv.clan.clanId)
+      : [],
+  );
+
   const clanId = hasClan && userClan.data ? userClan.data.clan.clanId : null;
   const gameList = useGameList({ clanId: clanId ?? undefined, limit: 10 }, !clanId) as GameInfo[];
   const userRole = hasClan && userClan.data ? userClan.data.role : null;
@@ -473,29 +479,70 @@ export const ClanPage: React.FC = () => {
         <Divider color={theme.text} style={{ marginBottom: 15 }} />
         {"message" in clanList ? (
           <EmptyState message={clanList.message} themeId={theme._id} />
-        ) : clanList.length === 0 ? (
+        ) : clanList.filter((c) => c.isPublic).length === 0 ? (
           <EmptyState message="No public clans yet" themeId={theme._id} />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-            {clanList.map((clan) => (
-              <FriendPill
-                key={clan.clanId}
-                to="/clan"
-                name={clan.name}
-                detail={`${clan.memberCount} members`}
-                color={clan.color}
-                themeId={theme._id}
-              >
-                {hasNoClan && (
-                  <JoinClanButton
-                    clanId={clan.clanId}
-                    isPublic={clan.isPublic}
-                    compact
-                    onActionComplete={handleActionComplete}
-                  />
-                )}
-              </FriendPill>
-            ))}
+            {clanList
+              .filter((c) => c.isPublic)
+              .map((clan) => (
+                <FriendPill
+                  key={clan.clanId}
+                  to="/clan"
+                  name={clan.name}
+                  detail={`${clan.memberCount} members`}
+                  color={clan.color}
+                  themeId={theme._id}
+                >
+                  {hasNoClan && (
+                    <JoinClanButton
+                      clanId={clan.clanId}
+                      isPublic={clan.isPublic}
+                      hasExistingRequest={pendingRequestClanIds.has(clan.clanId)}
+                      compact
+                      onActionComplete={handleActionComplete}
+                    />
+                  )}
+                </FriendPill>
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Private Clans */}
+      <div style={{ marginBottom: 30 }}>
+        <Typography.Subtitle style={{ color: theme.secondaryText }}>
+          Private Clans
+        </Typography.Subtitle>
+        <Divider color={theme.text} style={{ marginBottom: 15 }} />
+        {"message" in clanList ? (
+          <EmptyState message={clanList.message} themeId={theme._id} />
+        ) : clanList.filter((c) => !c.isPublic).length === 0 ? (
+          <EmptyState message="No private clans yet" themeId={theme._id} />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            {clanList
+              .filter((c) => !c.isPublic)
+              .map((clan) => (
+                <FriendPill
+                  key={clan.clanId}
+                  to="/clan"
+                  name={clan.name}
+                  detail={`${clan.memberCount} members`}
+                  color={clan.color}
+                  themeId={theme._id}
+                >
+                  {hasNoClan && (
+                    <JoinClanButton
+                      clanId={clan.clanId}
+                      isPublic={clan.isPublic}
+                      hasExistingRequest={pendingRequestClanIds.has(clan.clanId)}
+                      compact
+                      onActionComplete={handleActionComplete}
+                    />
+                  )}
+                </FriendPill>
+              ))}
           </div>
         )}
       </div>
