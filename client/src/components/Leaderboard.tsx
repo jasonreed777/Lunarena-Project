@@ -22,10 +22,11 @@ const Row = styled.div`
  * @param props Leaderboard props - includes user's name and total points
  * @returns
  */
-export const Leaderboard: React.FC<{ leaderboard: LeaderboardProps; theme: ColorTheme }> = ({
-  leaderboard,
-  theme,
-}) => {
+export const Leaderboard: React.FC<{
+  leaderboard: LeaderboardProps;
+  theme: ColorTheme;
+  clickable?: boolean;
+}> = ({ leaderboard, theme, clickable = true }) => {
   const navigate = useNavigate();
   const ranks: number[] = [];
   let currentRank = 0;
@@ -52,8 +53,12 @@ export const Leaderboard: React.FC<{ leaderboard: LeaderboardProps; theme: Color
             />
           )}
           <Typography.ProfileText
-            style={{ textWrap: "nowrap", overflow: "visible", cursor: "pointer" }}
-            onClick={() => navigate(`/profile/${row.username}`)}
+            style={{
+              textWrap: "nowrap",
+              overflow: "visible",
+              cursor: clickable ? "pointer" : "default",
+            }}
+            onClick={clickable ? () => navigate(`/profile/${row.username}`) : undefined}
           >
             {row.display || row.username}
           </Typography.ProfileText>

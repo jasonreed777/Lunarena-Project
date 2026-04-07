@@ -4,6 +4,7 @@ import type {
   ClanDetailInfo,
   ClanMemberInfo,
   ClanMemberPointsEntry,
+  ClanLeaderboardEntry,
   ClanInviteInfo,
   UserClanInfo,
   CreateClanPayload,
@@ -230,6 +231,18 @@ export const getClanLeaderboard = async (clanId: string): APIResponse<ClanMember
     const res = await api.get<ClanMemberPointsEntry[] | ErrorMsg>(
       `${CLANS_API_URL}/${clanId}/leaderboard`,
     );
+    return res.data;
+  } catch (error) {
+    return exceptionToErrorMsg(error);
+  }
+};
+
+/**
+ * Gets the cross-clan rankings
+ */
+export const getClanRankings = async (): APIResponse<ClanLeaderboardEntry[]> => {
+  try {
+    const res = await api.get<ClanLeaderboardEntry[] | ErrorMsg>(`${CLANS_API_URL}/rankings`);
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);

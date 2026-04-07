@@ -4,6 +4,7 @@ import {
   type ClanDetailInfo,
   type ClanMemberInfo,
   type ClanMemberPointsEntry,
+  type ClanLeaderboardEntry,
   type UserClanInfo,
   type ClanInviteInfo,
   type ClanRole,
@@ -796,5 +797,52 @@ export async function getClanMemberLeaderboard(
   );
 
   entries.sort((a, b) => b.pointsTotal - a.pointsTotal);
+  return entries;
+}
+
+/**
+ * Get cross-clan rankings — each clan's aggregated stats, sorted by total points
+ */
+export async function getClanLeaderboard(): Promise<ClanLeaderboardEntry[]> {
+  const clans = await ClanModel.find({}).lean<(ClanRecord & { _id: string })[]>();
+
+  const entries: ClanLeaderboardEntry[] = await Promise.all(
+    clans.map(async (clan) => {
+      const members = await ClanMemberModel.find({ clanId: clan._id }).lean<
+        (ClanMemberRecord & { _id: string })[]
+      >();
+
+      let totalPoints = 0;
+      let totalWins = 0;
+      let totalGamesPlayed = 0;
+
+      for (const member of members) {
+        const user = await UserModel.findById(member.userId).lean<
+          (UserRecord & { _id: string }) | null
+        >();
+        if (!user) continue;
+
+        const points = await UserPointsModel.findById(user.username).lean();
+        const gameStats = await UserGameStatsModel.findById(user.username).lean();
+
+        totalPoints += points?.pointsTotal ?? 0;
+        totalWins += gameStats?.winsTotal ?? 0;
+        totalGamesPlayed += gameStats?.gamesPlayedTotal ?? 0;
+      }
+
+      return {
+        clanId: clan._id,
+        name: clan.name,
+        color: clan.color,
+        pfp: clan.pfp,
+        memberCount: members.length,
+        totalPoints,
+        totalWins,
+        totalGamesPlayed,
+      };
+    }),
+  );
+
+  entries.sort((a, b) => b.totalPoints - a.totalPoints);
   return entries;
 }

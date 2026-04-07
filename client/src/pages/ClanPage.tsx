@@ -24,6 +24,7 @@ import useClanList from "../hooks/useClanList";
 import useUserClan from "../hooks/useUserClan";
 import useMyInvites from "../hooks/useMyInvites";
 import useClanLeaderboard from "../hooks/useClanLeaderboard";
+import useClanRankings from "../hooks/useClanRankings";
 import { createClan, getClanById, leaveClan } from "../services/clanService";
 import { updateProfile } from "../services/profileService";
 import { Leaderboard } from "../components/Leaderboard";
@@ -67,6 +68,9 @@ export const ClanPage: React.FC = () => {
   // Leave error
   const [leaveError, setLeaveError] = useState("");
 
+  // Clan rankings toggle
+  const [showClanRankings, setShowClanRankings] = useState(false);
+
   // Hooks
   const clanList = useClanList(refetchKey);
   const userClan = useUserClan(refetchKey);
@@ -89,6 +93,7 @@ export const ClanPage: React.FC = () => {
   const isAdminOrOwner = userRole === "admin" || userRole === "owner";
 
   const clanLeaderboard = useClanLeaderboard(clanId ?? undefined);
+  const clanRankings = useClanRankings(refetchKey);
 
   // Reset clan detail when clanId becomes null (render-time state adjustment)
   if (!clanId && clanDetail !== null) {
@@ -274,6 +279,9 @@ export const ClanPage: React.FC = () => {
             <Typography.Subtitle>Actions</Typography.Subtitle>
             <Divider color={theme.text} style={{ marginBottom: 20 }} />
             <div className="actions">
+              <Button color={theme.secondary} onClick={() => setShowClanRankings(true)}>
+                Clan Leaderboard
+              </Button>
               <Button color="#e01313" onClick={() => setShowLeaveConfirm(true)}>
                 Leave Clan
               </Button>
@@ -304,6 +312,46 @@ export const ClanPage: React.FC = () => {
           />
         )}
 
+        {/* Clan Leaderboard Dialog */}
+        {showClanRankings && (
+          <div className="manage-dialog-overlay" onClick={() => setShowClanRankings(false)}>
+            <div
+              className="manage-dialog"
+              style={{
+                backgroundColor: theme.primary,
+                color: theme.text,
+                maxHeight: "80vh",
+                overflowY: "auto",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className="manage-dialog-close" onClick={() => setShowClanRankings(false)}>
+                &times;
+              </button>
+              <Typography.PageTitle style={{ marginBottom: 20, fontSize: "1.5rem" }}>
+                Clan Leaderboard
+              </Typography.PageTitle>
+              {"message" in clanRankings ? (
+                <EmptyState message={clanRankings.message} themeId={theme._id} />
+              ) : clanRankings.length === 0 ? (
+                <EmptyState message="No clans yet" themeId={theme._id} />
+              ) : (
+                <Leaderboard
+                  leaderboard={clanRankings.map((entry) => ({
+                    username: entry.clanId,
+                    display: entry.name,
+                    pointsTotal: entry.totalPoints,
+                    gamesPlayedTotal: entry.totalGamesPlayed,
+                    achievementCount: entry.totalWins,
+                  }))}
+                  theme={theme}
+                  clickable={false}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Leave Clan Confirm Dialog */}
         {showLeaveConfirm && (
           <ConfirmDialog
@@ -331,6 +379,12 @@ export const ClanPage: React.FC = () => {
     <div className="clan-container" style={{ backgroundColor: theme.primary, color: theme.text }}>
       <Typography.PageTitle>Clans</Typography.PageTitle>
       <Divider color={theme.text} />
+
+      <div style={{ marginBottom: 20, marginTop: 15 }}>
+        <Button color={theme.secondary} onClick={() => setShowClanRankings(true)}>
+          Clan Leaderboard
+        </Button>
+      </div>
 
       {/* Pending Invites */}
       {hasNoClan && (
@@ -535,6 +589,46 @@ export const ClanPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Clan Leaderboard Dialog */}
+      {showClanRankings && (
+        <div className="manage-dialog-overlay" onClick={() => setShowClanRankings(false)}>
+          <div
+            className="manage-dialog"
+            style={{
+              backgroundColor: theme.primary,
+              color: theme.text,
+              maxHeight: "80vh",
+              overflowY: "auto",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="manage-dialog-close" onClick={() => setShowClanRankings(false)}>
+              &times;
+            </button>
+            <Typography.PageTitle style={{ marginBottom: 20, fontSize: "1.5rem" }}>
+              Clan Leaderboard
+            </Typography.PageTitle>
+            {"message" in clanRankings ? (
+              <EmptyState message={clanRankings.message} themeId={theme._id} />
+            ) : clanRankings.length === 0 ? (
+              <EmptyState message="No clans yet" themeId={theme._id} />
+            ) : (
+              <Leaderboard
+                leaderboard={clanRankings.map((entry) => ({
+                  username: entry.clanId,
+                  display: entry.name,
+                  pointsTotal: entry.totalPoints,
+                  gamesPlayedTotal: entry.totalGamesPlayed,
+                  achievementCount: entry.totalWins,
+                }))}
+                theme={theme}
+                clickable={false}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

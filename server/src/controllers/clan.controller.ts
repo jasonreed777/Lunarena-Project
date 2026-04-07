@@ -3,6 +3,7 @@ import {
   type ClanDetailInfo,
   type ClanMemberInfo,
   type ClanMemberPointsEntry,
+  type ClanLeaderboardEntry,
   type UserClanInfo,
   type ClanInviteInfo,
   zCreateClanPayload,
@@ -310,6 +311,13 @@ export const postCancelInvite: RestAPI<{ success: true }, { inviteId: string }> 
     return;
   }
   res.send(result);
+};
+
+/**
+ * GET /api/clans/rankings - Get cross-clan rankings
+ */
+export const getClanRankings: RestAPI<ClanLeaderboardEntry[]> = async (_req, res) => {
+  res.send(await clanService.getClanLeaderboard());
 };
 
 /**

@@ -117,6 +117,7 @@ app.use(
       "/clans",
       Router() //
         .get("/list", clan.getList)
+        .get("/rankings", clan.getClanRankings)
         .post("/current", requireAuth, clan.postCurrent)
         .post("/create", requireAuth, clan.postCreate)
         .post("/my-invites", requireAuth, clan.postMyInvites)

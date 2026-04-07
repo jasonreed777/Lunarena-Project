@@ -154,3 +154,17 @@ export interface ClanMemberPointsEntry {
   };
   profileBorderColor: string;
 }
+
+/**
+ * A single entry in the cross-clan rankings leaderboard
+ */
+export interface ClanLeaderboardEntry {
+  clanId: string;
+  name: string;
+  color: string;
+  pfp?: string;
+  memberCount: number;
+  totalPoints: number;
+  totalWins: number;
+  totalGamesPlayed: number;
+}
