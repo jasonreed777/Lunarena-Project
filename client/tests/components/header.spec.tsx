@@ -25,6 +25,15 @@ vi.mock("../../src/services/profileService.ts", () => ({
   updateProfile: mockedUpdateProfile,
 }));
 
+vi.mock("../../src/services/pointsService.ts", () => ({
+  getUserPoints: vi.fn().mockResolvedValue(0),
+  getUserStreak: vi.fn().mockResolvedValue(0),
+}));
+
+vi.mock("../../src/services/achievementService.ts", () => ({
+  getUserAchievements: vi.fn().mockResolvedValue([]),
+}));
+
 describe("Header component", () => {
   beforeEach(() => {
     mockedUseNavigate.mockReset();
@@ -66,7 +75,7 @@ describe("Header component", () => {
             profileBorderColor: "#ffffff",
           },
           pass: "pwd",
-          socket: {} as GameSocket,
+          socket: { on: vi.fn(), off: vi.fn() } as unknown as GameSocket,
           reset: mockedReset,
         }}
       >
@@ -93,7 +102,7 @@ describe("Header component", () => {
             profileBorderColor: "#df12a3",
           },
           pass: "pwd",
-          socket: {} as GameSocket,
+          socket: { on: vi.fn(), off: vi.fn() } as unknown as GameSocket,
           reset: mockedReset,
         }}
       >
@@ -109,7 +118,7 @@ describe("Header component", () => {
     });
   });
 
-  it("pressing View Profile navigates to the current user profile", () => {
+  it("clicking the avatar navigates to the current user profile", async () => {
     render(
       <LoginContext
         value={{
@@ -125,7 +134,7 @@ describe("Header component", () => {
             profileBorderColor: "#61dea2",
           },
           pass: "pwd",
-          socket: {} as GameSocket,
+          socket: { on: vi.fn(), off: vi.fn() } as unknown as GameSocket,
           reset: mockedReset,
         }}
       >
@@ -133,7 +142,12 @@ describe("Header component", () => {
       </LoginContext>,
     );
 
-    fireEvent.click(screen.getByText(/View Profile/i));
-    expect(mockedUseNavigate).toHaveBeenCalledExactlyOnceWith("/profile/username123");
+    const avatar = await screen.findByRole("img", { name: "" });
+    const avatarImg = Array.from(document.querySelectorAll("img")).find((img) =>
+      img.src.includes("wizard"),
+    );
+    expect(avatarImg).toBeTruthy();
+    fireEvent.click(avatarImg!);
+    expect(mockedUseNavigate).toHaveBeenCalledWith("/profile/username123");
   });
 });

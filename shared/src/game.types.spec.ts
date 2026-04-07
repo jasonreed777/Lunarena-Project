@@ -3,13 +3,14 @@ import { zGuessMove, zNimMove } from "./game.types.ts";
 
 describe("zNimMove", () => {
   it("accepts valid inputs", () => {
+    expect(zNimMove.safeParse(0)).toStrictEqual({ success: true, data: 0 });
     expect(zNimMove.safeParse(1)).toStrictEqual({ success: true, data: 1 });
     expect(zNimMove.safeParse(2)).toStrictEqual({ success: true, data: 2 });
     expect(zNimMove.safeParse(3)).toStrictEqual({ success: true, data: 3 });
   });
 
   it("rejects invalid inputs", () => {
-    expect(zNimMove.safeParse(0)).toMatchObject({ success: false });
+    expect(zNimMove.safeParse(-1)).toMatchObject({ success: false });
     expect(zNimMove.safeParse(4)).toMatchObject({ success: false });
     expect(zNimMove.safeParse(null)).toMatchObject({ success: false });
   });
