@@ -75,7 +75,14 @@ export default function Header() {
   const [profileBorderColor, setProfileBorderColor] = useState("#888888");
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
-  const { notifications, count, dismissOne, dismissAll } = useSocketsForNotification();
+  const {
+    notifications,
+    count,
+    dismissOne,
+    dismissAll,
+    enabled: notificationsEnabled,
+    setEnabled: setNotificationsEnabled,
+  } = useSocketsForNotification();
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -219,68 +226,73 @@ export default function Header() {
         onClick={() => handleThemeToggle()}
         hover
       />
-      <div style={{ position: "relative" }} ref={notificationRef}>
-        <div className="notification-bell" onClick={() => setShowNotifications(!showNotifications)}>
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={theme.text}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      {notificationsEnabled && (
+        <div style={{ position: "relative" }} ref={notificationRef}>
+          <div
+            className="notification-bell"
+            onClick={() => setShowNotifications(!showNotifications)}
           >
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
-          {count > 0 && <span className="notification-badge">{count > 99 ? "99+" : count}</span>}
-        </div>
-        <div
-          style={{
-            display: showNotifications ? "block" : "none",
-            backgroundColor: theme.navBar,
-          }}
-          className="notification-menu"
-        >
-          {notifications.length > 0 && (
-            <div className="notification-clear-all" onClick={() => dismissAll()}>
-              <Typography.Code>Clear all</Typography.Code>
-            </div>
-          )}
-          {notifications.length === 0 ? (
-            <div className="notification-empty">
-              <Typography.Code>No notifications</Typography.Code>
-            </div>
-          ) : (
-            notifications.map((n) => (
-              <div
-                key={n.notificationId}
-                className="notification-item"
-                onClick={() => handleNotificationClick(n)}
-              >
-                <button
-                  className="notification-dismiss"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void dismissOne(n.notificationId);
-                  }}
-                >
-                  &times;
-                </button>
-                {n.header && (
-                  <div className="notification-item-header">
-                    <Typography.Code>{n.header}</Typography.Code>
-                  </div>
-                )}
-                <div className="notification-item-message">
-                  <Typography.Code>{n.message}</Typography.Code>
-                </div>
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke={theme.text}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            {count > 0 && <span className="notification-badge">{count > 99 ? "99+" : count}</span>}
+          </div>
+          <div
+            style={{
+              display: showNotifications ? "block" : "none",
+              backgroundColor: theme.navBar,
+            }}
+            className="notification-menu"
+          >
+            {notifications.length > 0 && (
+              <div className="notification-clear-all" onClick={() => dismissAll()}>
+                <Typography.Code>Clear all</Typography.Code>
               </div>
-            ))
-          )}
+            )}
+            {notifications.length === 0 ? (
+              <div className="notification-empty">
+                <Typography.Code>No notifications</Typography.Code>
+              </div>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n.notificationId}
+                  className="notification-item"
+                  onClick={() => handleNotificationClick(n)}
+                >
+                  <button
+                    className="notification-dismiss"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void dismissOne(n.notificationId);
+                    }}
+                  >
+                    &times;
+                  </button>
+                  {n.header && (
+                    <div className="notification-item-header">
+                      <Typography.Code>{n.header}</Typography.Code>
+                    </div>
+                  )}
+                  <div className="notification-item-message">
+                    <Typography.Code>{n.message}</Typography.Code>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <div style={{ position: "relative" }}>
         <DefaultIcon
           src="/assets/icons/settings.svg"
@@ -296,6 +308,44 @@ export default function Header() {
           }}
           className="menu-container"
         >
+          <div
+            onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+            style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}
+          >
+            <Typography.Code>Notifications</Typography.Code>
+            <div
+              style={{
+                width: 32,
+                height: 18,
+                borderRadius: 9,
+                backgroundColor: notificationsEnabled ? "#4caf50" : "rgba(128,128,128,0.4)",
+                position: "relative",
+                transition: "background-color 0.2s",
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  backgroundColor: "#fff",
+                  position: "absolute",
+                  top: 2,
+                  left: notificationsEnabled ? 16 : 2,
+                  transition: "left 0.2s",
+                }}
+              />
+            </div>
+          </div>
+          <hr
+            style={{
+              border: "none",
+              borderTop: `1px solid ${theme.text}`,
+              opacity: 0.3,
+              margin: "4px 0",
+            }}
+          />
           <div
             onClick={async () => {
               await updateProfile(user.username, {
