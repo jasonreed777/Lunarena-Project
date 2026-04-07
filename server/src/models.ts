@@ -364,4 +364,5 @@ export interface NotificationRecord {
   header: string | null;
   message: string;
   sentAt: Date;
+  metadata?: { username?: string };
 }

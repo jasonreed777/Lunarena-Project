@@ -17,6 +17,7 @@ import { Avatar } from "./Avatar.tsx";
 import { getUserPoints, getUserStreak } from "../services/pointsService.ts";
 import { getUserAchievements } from "../services/achievementService.ts";
 import useSocketsForNotification from "../hooks/useSocketsForNotification.ts";
+import type { NotificationInfo } from "@gamenite/shared";
 
 /**
  * Container which houses all elements.
@@ -156,6 +157,21 @@ export default function Header() {
     window.localStorage.setItem(THEME_KEY, newTheme);
   }, [setTheme, theme._id]);
 
+  const handleNotificationClick = async (notification: NotificationInfo) => {
+    switch (notification.type) {
+      case "DM":
+        navigate("/messages", { state: { username: notification.metadata.username } });
+        break;
+      case "FriendRequest":
+        navigate(`/profile/${notification.metadata.username}`);
+        break;
+      case "ClanInvite":
+        navigate("/clan");
+        break;
+    }
+    await dismissOne(notification.notificationId);
+  };
+
   return (
     <Container id="header" theme={theme}>
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -241,8 +257,17 @@ export default function Header() {
               <div
                 key={n.notificationId}
                 className="notification-item"
-                onClick={() => dismissOne(n.notificationId)}
+                onClick={() => handleNotificationClick(n)}
               >
+                <button
+                  className="notification-dismiss"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void dismissOne(n.notificationId);
+                  }}
+                >
+                  &times;
+                </button>
                 {n.header && (
                   <div className="notification-item-header">
                     <Typography.Code>{n.header}</Typography.Code>

@@ -19,17 +19,20 @@ export async function fetchNotifications(userId: RecordId) {
  * @param type the type of notification
  * @param header the header string if any
  * @param message the main message body for the notification
+ * @param metadata optional metadata to attach to the notification
  */
 export async function createNotification({
   userId,
   type,
   header,
   message,
+  metadata,
 }: {
   userId: RecordId;
   type: NotificationType;
   header: string | null;
   message: string;
+  metadata?: object;
 }): Promise<
   { success: true; data: HydratedDocument<NotificationRecord> } | { success: false; error: string }
 > {
@@ -43,6 +46,7 @@ export async function createNotification({
     header,
     message,
     sentAt: new Date(),
+    metadata,
   });
   return { success: true, data: notification };
 }

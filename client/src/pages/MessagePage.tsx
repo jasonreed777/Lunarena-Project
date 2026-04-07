@@ -20,7 +20,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 export const MessagePage: React.FC = () => {
   const { chatId } = useParams();
   const location = useLocation();
-  const targetUsername = location.state as string | null;
+  const targetUsername = location.state?.username as string | null;
   const [chatList, setChatList] = React.useState<DMChatOverview[]>([]);
   const [selected, setSelected] = React.useState<DMChatOverview>();
   const [fetchedMessages, setFetchedMessages] = React.useState<MessageInfo[]>([]);

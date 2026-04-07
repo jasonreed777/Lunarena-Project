@@ -48,7 +48,8 @@ export const socketSendMessage: SocketAPI = (socket, io) => async (body) => {
           participant,
           "DM",
           "New Message",
-          `New message received from ${sender.username}`,
+          `${sender.display} sent you a message`,
+          { username: sender.username },
         );
       }
     }
