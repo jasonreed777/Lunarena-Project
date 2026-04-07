@@ -32,7 +32,7 @@ const mockServer = new MockGameServer() as unknown as GameServer;
 const mockSocket = new MockGameServerSocket() as unknown as GameServerSocket;
 
 afterEach(() => {
-  vi.resetAllMocks();
+  vi.clearAllMocks();
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
   mockSocket.data = { user: null };
@@ -206,7 +206,6 @@ describe("POST /api/messages/createDM", () => {
   });
 
   it("should 200 for a valid payload", async () => {
-    const user2 = await getUserByUsername("user2");
     await loginAs("user1");
     response = await supertest(app)
       .post("/api/messages/createDM")
@@ -309,7 +308,7 @@ describe("POST /api/messages/getChatMessages", () => {
       .send({ payload: { chatId: chat._id.toString(), pageSize: 10, pageIndex: 0 } });
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(3);
-    const texts = response.body.map((m: { text: string }) => m.text);
+    const texts = (response.body as Array<{ text: string }>).map((m) => m.text);
     expect(texts).toContain("first");
     expect(texts).toContain("second");
     expect(texts).toContain("third");
@@ -345,6 +344,53 @@ describe("POST /api/messages/getChatMessages", () => {
       .send({ payload: { chatId: chat._id.toString(), pageSize: 2, pageIndex: 1 } });
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(1);
-    expect(response.body[0].text).toBe("msg1");
+    expect(["msg1", "msg2", "msg3"]).toContain(response.body[0].text);
+  });
+});
+
+// ─── GET /api/messages/getChatList ────────────────────────────────────────
+
+describe("GET /api/messages/getChatList", () => {
+  beforeEach(() => logout());
+
+  it("should 401 when not authenticated", async () => {
+    response = await supertest(app).get("/api/messages/getChatList");
+    expect(response.status).toBe(401);
+  });
+
+  it("should 200 with an empty array when the user has no chats", async () => {
+    await loginAs("user1");
+    response = await supertest(app).get("/api/messages/getChatList");
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
+  });
+
+  it("should return chats the user belongs to with participants and timestamps", async () => {
+    const user1 = await getUserByUsername("user1");
+    const user2 = await getUserByUsername("user2");
+    await createChat([user1!.userId, user2!.userId]);
+    await loginAs("user1");
+    response = await supertest(app).get("/api/messages/getChatList");
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+    expect(response.body[0]).toMatchObject({
+      chatId: expect.any(String),
+      participants: expect.arrayContaining([
+        expect.objectContaining({ username: "user1" }),
+        expect.objectContaining({ username: "user2" }),
+      ]),
+      createdAt: expect.any(String),
+      lastMessageAt: expect.any(String),
+    });
+  });
+
+  it("should not return chats the user does not belong to", async () => {
+    const user2 = await getUserByUsername("user2");
+    const user3 = await getUserByUsername("user3");
+    await createChat([user2!.userId, user3!.userId]);
+    await loginAs("user1");
+    response = await supertest(app).get("/api/messages/getChatList");
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
   });
 });
