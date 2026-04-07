@@ -13,7 +13,8 @@ export async function getChats(user: RecordId) {
     .sort({ updatedAt: -1 })
     .lean();
 }
-
+// Lock is needed to avoid the race condition where two calls see that a chat doesn't exist then both create one
+let lockPromise: Promise<void> | null = null;
 /**
  * Creates a new chat
  * @param participants in the chat
@@ -22,16 +23,38 @@ export async function createChat(participants: RecordId[]) {
   if (new Set(participants).size !== participants.length) {
     throw new Error("duplicate participants");
   }
-  if (
-    await DMChatModel.exists({ participants: { $all: participants, $size: participants.length } })
-  ) {
+  while (lockPromise) {
+    await lockPromise;
+  }
+  let resolveLock: () => void = () => {};
+  lockPromise = new Promise((resolve) => {
+    resolveLock = resolve;
+  });
+
+  let alreadyExists = false;
+  try {
+    const exists = await DMChatModel.exists({
+      participants: { $all: participants, $size: participants.length },
+    });
+    if (exists) {
+      alreadyExists = true;
+    } else {
+      return await DMChatModel.create({
+        participants,
+        createdAt: new Date(),
+        lastMessageAt: new Date(),
+      });
+    }
+  } catch (err) {
+    throw Error("Could not create chat");
+  } finally {
+    resolveLock();
+    lockPromise = null;
+  }
+  if (alreadyExists) {
     throw new Error("Chat for these participants already exists");
   }
-  return await DMChatModel.create({
-    participants,
-    createdAt: new Date(),
-    lastMessageAt: new Date(),
-  });
+  throw Error("Could not create chat");
 }
 
 /**

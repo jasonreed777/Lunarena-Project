@@ -9,10 +9,9 @@ import { getProfilePicture } from "../util/utils";
 import { Avatar } from "../components/Avatar";
 import { ChatBox } from "../components/ChatBox";
 import { chatCreate, getChatList, getChatMessages } from "../services/dmService.ts";
-import { friendsList } from "../services/friendshipService.ts";
 import useLoginContext from "../hooks/useLoginContext.ts";
 import useSocketsForDM from "../hooks/useSocketsForDM.ts";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 /**
  * A direct messaging page with messages from friends.
@@ -20,6 +19,8 @@ import { useParams, useNavigate } from "react-router-dom";
  */
 export const MessagePage: React.FC = () => {
   const { chatId } = useParams();
+  const location = useLocation();
+  const targetUsername = location.state as string | null;
   const [chatList, setChatList] = React.useState<DMChatOverview[]>([]);
   const [selected, setSelected] = React.useState<DMChatOverview>();
   const [fetchedMessages, setFetchedMessages] = React.useState<MessageInfo[]>([]);
@@ -30,35 +31,35 @@ export const MessagePage: React.FC = () => {
   const { messages: socketMessages, handleMessageCreation } = useSocketsForDM();
 
   React.useEffect(() => {
-    // IIFE to handle getting and creating chats for friends
+    // IIFE to handle getting and creating chats
     (async () => {
-      const [chats, friends] = await Promise.all([getChatList(), friendsList()]);
-      if ("error" in chats || "error" in friends) {
+      const chats = await getChatList();
+      if ("error" in chats) {
         return;
       }
-      setChatList((existing) => [...existing, ...chats]);
-      // Make sure there is a chat created for every friend. If there isn't, send an add chat request
-      const promises = [];
-      for (const friend of friends) {
-        if (
-          !chats.some((chat) =>
-            chat.participants.some(
-              (participant) => participant.username === friend.friend.username,
-            ),
-          )
-        ) {
-          promises.push(chatCreate([friend.friend.username]));
-        }
-      }
-      if (promises.length > 0) {
-        await Promise.all(promises);
-        const chatsUpdated = await getChatList();
-        if (!("error" in chatsUpdated)) {
-          setChatList(chatsUpdated);
+      setChatList(chats);
+
+      // If navigated here with a target username, find or create that chat and go to it
+      if (targetUsername) {
+        const existing = chats.find((c) =>
+          c.participants.some((p) => p.username === targetUsername),
+        );
+        if (existing) {
+          navigate(`/messages/${existing.chatId}`, { replace: true });
+        } else {
+          await chatCreate([targetUsername]);
+          const freshChats = await getChatList();
+          if (!("error" in freshChats)) {
+            setChatList(freshChats);
+            const newChat = freshChats.find((c) =>
+              c.participants.some((p) => p.username === targetUsername),
+            );
+            if (newChat) navigate(`/messages/${newChat.chatId}`, { replace: true });
+          }
         }
       }
     })();
-  }, []);
+  }, [navigate, targetUsername]);
 
   // Load messages when a chat is selected
   React.useEffect(() => {
