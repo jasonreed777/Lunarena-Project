@@ -332,17 +332,6 @@ export const ClanPage: React.FC = () => {
       <Typography.PageTitle>Clans</Typography.PageTitle>
       <Divider color={theme.text} />
 
-      {/* Your Clan */}
-      <div style={{ marginBottom: 30 }}>
-        <Typography.Subtitle style={{ color: theme.secondaryText }}>Your Clan</Typography.Subtitle>
-        <Divider color={theme.text} style={{ marginBottom: 15 }} />
-        {"message" in userClan ? (
-          <EmptyState message={userClan.message} themeId={theme._id} />
-        ) : (
-          <EmptyState message="You are not in a clan" themeId={theme._id} />
-        )}
-      </div>
-
       {/* Pending Invites */}
       {hasNoClan && (
         <div style={{ marginBottom: 30 }}>
