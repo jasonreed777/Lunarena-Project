@@ -145,6 +145,8 @@ export interface ClanMemberPointsEntry {
   display: string;
   role: ClanRole;
   pointsTotal: number;
+  gamesPlayedTotal: number;
+  achievementCount: number;
   pfp: {
     type: "upload" | "avatar";
     uploadId?: string;

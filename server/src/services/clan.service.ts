@@ -26,6 +26,8 @@ import {
   UserModel,
   UserPointsModel,
   UserProfileModel,
+  UserGameStatsModel,
+  UserAchievementModel,
 } from "../mongoose-models.ts";
 
 /**
@@ -777,12 +779,16 @@ export async function getClanMemberLeaderboard(
       const profile = await UserProfileModel.findOne({ username }).lean<
         (UserProfileRecord & { _id: string }) | null
       >();
+      const gameStats = await UserGameStatsModel.findById(username).lean();
+      const achievementCount = await UserAchievementModel.countDocuments({ username });
 
       return {
         username,
         display: user?.display ?? username,
         role: m.role as ClanRole,
         pointsTotal: pointsRecord?.pointsTotal ?? 0,
+        gamesPlayedTotal: gameStats?.gamesPlayedTotal ?? 0,
+        achievementCount,
         pfp: profile?.pfp ?? { type: "avatar", avatarId: "wizard" },
         profileBorderColor: profile?.profileBorderColor ?? "#888888",
       };

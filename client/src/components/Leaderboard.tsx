@@ -60,6 +60,8 @@ export const Leaderboard: React.FC<{ leaderboard: LeaderboardProps; theme: Color
           <Divider color={theme.secondaryText} />
           <Typography.Code style={{ textWrap: "nowrap" }}>
             {row.pointsTotal === 1 ? "1 Point" : `${row.pointsTotal} Points`}
+            {row.gamesPlayedTotal !== undefined && ` · ${row.gamesPlayedTotal} Games`}
+            {row.achievementCount !== undefined && ` · ${row.achievementCount} Awards`}
           </Typography.Code>
         </Row>
       ))}
