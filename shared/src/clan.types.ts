@@ -145,10 +145,26 @@ export interface ClanMemberPointsEntry {
   display: string;
   role: ClanRole;
   pointsTotal: number;
+  gamesPlayedTotal: number;
+  achievementCount: number;
   pfp: {
     type: "upload" | "avatar";
     uploadId?: string;
     avatarId?: string;
   };
   profileBorderColor: string;
+}
+
+/**
+ * A single entry in the cross-clan rankings leaderboard
+ */
+export interface ClanLeaderboardEntry {
+  clanId: string;
+  name: string;
+  color: string;
+  pfp?: string;
+  memberCount: number;
+  totalPoints: number;
+  totalWins: number;
+  totalGamesPlayed: number;
 }

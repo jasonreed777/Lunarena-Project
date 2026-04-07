@@ -48,7 +48,26 @@ export const getById: RestAPI<GameInfo, { id: string }> = async (req, res) => {
  * games, sorted in reverse chronological order by creation.
  */
 export const getList: RestAPI<GameInfo[]> = async (req, res) => {
-  res.send(await getGames());
+  const query = z
+    .object({
+      clanId: z.string().optional(),
+      userId: z.string().optional(),
+      limit: z.coerce.number().int().positive().optional(),
+      status: z.enum(["waiting", "active", "done"]).optional(),
+    })
+    .safeParse(req.query);
+
+  if (!query.success) {
+    res.status(400).send({ error: "Invalid query parameters" });
+    return;
+  }
+
+  const result = await getGames(query.data);
+  if ("error" in result) {
+    res.status(400).send(result);
+    return;
+  }
+  res.send(result);
 };
 
 /**

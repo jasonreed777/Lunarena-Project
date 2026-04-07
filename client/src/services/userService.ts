@@ -66,11 +66,11 @@ export const signupUser = async (user: UserAuth): APIResponse<SafeUserInfo> => {
 /**
  * Searches for users by username or display name.
  */
-export const searchUsers = async (query: string): APIResponse<SafeUserInfo[]> => {
+export const searchUsers = async (query: string, clanId?: string): APIResponse<SafeUserInfo[]> => {
   try {
-    const res = await api.get<SafeUserInfo[] | ErrorMsg>(`${USER_API_URL}/search`, {
-      params: { q: query },
-    });
+    const params: Record<string, string> = { q: query };
+    if (clanId) params.clanId = clanId;
+    const res = await api.get<SafeUserInfo[] | ErrorMsg>(`${USER_API_URL}/search`, { params });
     return res.data;
   } catch (error) {
     return exceptionToErrorMsg(error);

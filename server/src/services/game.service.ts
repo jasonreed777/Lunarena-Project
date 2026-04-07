@@ -6,7 +6,7 @@ import { type GameServicer } from "../games/gameServiceManager.ts";
 import { nimGameService } from "../games/nim.ts";
 import { guessGameService } from "../games/guess.ts";
 import { type GameViewUpdates, type UserWithId } from "../types.ts";
-import { GameModel } from "../mongoose-models.ts";
+import { ClanMemberModel, GameModel } from "../mongoose-models.ts";
 import { updateProfile } from "./profile.service.ts";
 import { awardPoints } from "./points.service.ts";
 import { checkWinAchievements } from "./achievement.service.ts";
@@ -138,15 +138,56 @@ export async function startGame(gameId: string, user: UserWithId): Promise<GameV
   return views;
 }
 
+export interface GameListFilter {
+  clanId?: string;
+  userId?: string;
+  limit?: number;
+  status?: "waiting" | "active" | "done";
+}
+
 /**
- * Get a list of all games
+ * Get a list of games, optionally filtered by clan or user
  *
+ * @param filter - optional filters (clanId, userId, limit)
  * @returns a list of game summaries, ordered reverse chronologically
  */
-export async function getGames(): Promise<GameInfo[]> {
-  const docs = await GameModel.find({}, { _id: 1 }).lean();
-  const ids = docs.map((d) => d._id);
-  const unsorted = await Promise.all(ids.map(populateGameInfo));
+export async function getGames(
+  filter: GameListFilter = {},
+): Promise<GameInfo[] | { error: string }> {
+  if (filter.clanId && filter.userId) {
+    return { error: "Cannot filter by both clanId and userId" };
+  }
+
+  const query: Record<string, unknown> = {};
+
+  if (filter.clanId) {
+    const members = await ClanMemberModel.find({ clanId: filter.clanId }, { userId: 1 }).lean();
+    const memberIds = members.map((m) => m.userId);
+    if (memberIds.length === 0) return [];
+    query.players = { $in: memberIds };
+  }
+
+  if (filter.userId) {
+    query.players = filter.userId;
+  }
+
+  if (filter.status === "done") {
+    query.done = true;
+  } else if (filter.status === "active") {
+    query.done = false;
+    query.state = { $ne: null };
+  } else if (filter.status === "waiting") {
+    query.done = false;
+    query.state = null;
+  }
+
+  let dbQuery = GameModel.find(query, { _id: 1 }).sort({ createdAt: -1 });
+  if (filter.limit) {
+    dbQuery = dbQuery.limit(filter.limit);
+  }
+
+  const docs = await dbQuery.lean();
+  const unsorted = await Promise.all(docs.map((d) => populateGameInfo(d._id)));
 
   return unsorted.toSorted((game1, game2) => game2.createdAt.getTime() - game1.createdAt.getTime());
 }

@@ -147,7 +147,13 @@ export type DailyPoints = {
 /**
  * Leaderboard props used for various leaderboards in GameNite.
  */
-export type LeaderboardProps = { username: string; display: string; pointsTotal: number }[];
+export type LeaderboardProps = {
+  username: string;
+  display: string;
+  pointsTotal: number;
+  gamesPlayedTotal?: number;
+  achievementCount?: number;
+}[];
 
 /**
  * Maps a color to the top three trophy spots (gold, silver, bronze)

@@ -65,6 +65,7 @@ interface JoinClanButtonProps {
   clanId: string;
   isPublic: boolean;
   compact?: boolean;
+  hasExistingRequest?: boolean;
   onActionComplete: () => void;
 }
 
@@ -72,10 +73,12 @@ export const JoinClanButton: React.FC<JoinClanButtonProps> = ({
   clanId,
   isPublic,
   compact,
+  hasExistingRequest,
   onActionComplete,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requested, setRequested] = useState(hasExistingRequest ?? false);
 
   const handleJoin = async () => {
     setLoading(true);
@@ -86,13 +89,30 @@ export const JoinClanButton: React.FC<JoinClanButtonProps> = ({
       setError(result.error);
       return;
     }
+    if (!isPublic && "inviteId" in result) {
+      setRequested(true);
+      return;
+    }
     onActionComplete();
   };
 
+  const label = requested
+    ? "Requested"
+    : loading
+      ? "Joining..."
+      : isPublic
+        ? "Join"
+        : "Request to Join";
+
   return (
     <ButtonRow compact={compact} onClick={(e) => e.stopPropagation()}>
-      <ActionButton color={COLORS.join} compact={compact} disabled={loading} onClick={handleJoin}>
-        {loading ? "Joining..." : isPublic ? "Join" : "Request to Join"}
+      <ActionButton
+        color={COLORS.join}
+        compact={compact}
+        disabled={loading || requested}
+        onClick={handleJoin}
+      >
+        {label}
       </ActionButton>
       {error && <ErrorText compact={compact}>{error}</ErrorText>}
     </ButtonRow>
@@ -207,9 +227,14 @@ export const KickButton: React.FC<KickButtonProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  const handleKick = async () => {
-    if (!window.confirm(`Are you sure you want to kick ${username}?`)) return;
+  const handleClick = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
     setLoading(true);
     setError(null);
     const result = await kickMember(clanId, username);
@@ -223,8 +248,14 @@ export const KickButton: React.FC<KickButtonProps> = ({
 
   return (
     <ButtonRow compact={compact} onClick={(e) => e.stopPropagation()}>
-      <ActionButton color={COLORS.kick} compact={compact} disabled={loading} onClick={handleKick}>
-        {loading ? "Kicking..." : "Kick"}
+      <ActionButton
+        color={COLORS.kick}
+        compact={compact}
+        disabled={loading}
+        onClick={handleClick}
+        onBlur={() => setConfirming(false)}
+      >
+        {loading ? "Kicking..." : confirming ? "Sure?" : "Kick"}
       </ActionButton>
       {error && <ErrorText compact={compact}>{error}</ErrorText>}
     </ButtonRow>

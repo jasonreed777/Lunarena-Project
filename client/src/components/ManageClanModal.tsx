@@ -1,14 +1,16 @@
-import type { ClanDetailInfo, ClanInfo, ClanRole } from "@gamenite/shared";
+import type { ClanDetailInfo, ClanInfo, ClanRole, SafeUserInfo } from "@gamenite/shared";
 import type { ColorTheme } from "../util/types";
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import * as Typography from "../libs/Typography";
 import { InviteResponseButtons, CancelInviteButton } from "./ClanActionButtons";
 import { Divider } from "./Divider";
 import { EmptyState } from "./EmptyState";
 import { FriendPill } from "./FriendPill";
-import { InputWithLabel } from "./Input";
+import { InputWithLabel, StyledInput } from "./Input";
 import { TranslucentButton as Button } from "./Buttons";
+import ConfirmDialog from "./ConfirmDialog";
 import { inviteUser, transferOwnership, updateClan } from "../services/clanService";
+import { searchUsers } from "../services/userService";
 import useClanInvites from "../hooks/useClanInvites";
 
 /**
@@ -38,11 +40,15 @@ const ManageClanModal: React.FC<{
   // Transfer ownership form
   const [transferUsername, setTransferUsername] = useState("");
   const [transferError, setTransferError] = useState("");
+  const [showTransferConfirm, setShowTransferConfirm] = useState(false);
 
   const [settingsInitialized, setSettingsInitialized] = useState(false);
 
-  // Invite user form
-  const [inviteUsername, setInviteUsername] = useState("");
+  // Invite user search
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteSearchResults, setInviteSearchResults] = useState<SafeUserInfo[]>([]);
+  const [hasInviteSearched, setHasInviteSearched] = useState(false);
+  const inviteDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState("");
 
@@ -66,35 +72,56 @@ const ManageClanModal: React.FC<{
       setEditError(result.error);
       return;
     }
-    setSettingsInitialized(false);
+    setShowManage(false);
     handleActionComplete();
   };
 
   const handleTransfer = async () => {
     if (!clan.clanId || !transferUsername.trim()) return;
-    if (!window.confirm(`Transfer ownership to ${transferUsername}? This cannot be undone.`))
-      return;
     setTransferError("");
     const result = await transferOwnership(clan.clanId, transferUsername.trim());
     if ("error" in result) {
+      setShowTransferConfirm(false);
       setTransferError(result.error);
       return;
     }
     setTransferUsername("");
+    setShowTransferConfirm(false);
     handleActionComplete();
   };
 
-  const handleInviteUser = async () => {
-    if (!clan.clanId || !inviteUsername.trim()) return;
+  const doInviteSearch = useCallback((q: string) => {
+    if (q.trim().length === 0) {
+      setInviteSearchResults([]);
+      setHasInviteSearched(false);
+      return;
+    }
+    searchUsers(q.trim()).then((res) => {
+      if ("error" in res) return;
+      setInviteSearchResults(res);
+      setHasInviteSearched(true);
+    });
+  }, []);
+
+  const handleInviteSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInviteQuery(val);
     setInviteError("");
     setInviteSuccess("");
-    const result = await inviteUser(clan.clanId, inviteUsername.trim());
+    if (inviteDebounceRef.current) clearTimeout(inviteDebounceRef.current);
+    inviteDebounceRef.current = setTimeout(() => doInviteSearch(val), 300);
+  };
+
+  const handleInviteClick = async (username: string, display: string) => {
+    if (!clan.clanId) return;
+    setInviteError("");
+    setInviteSuccess("");
+    const result = await inviteUser(clan.clanId, username);
     if ("error" in result) {
       setInviteError(result.error);
       return;
     }
-    setInviteSuccess(`Invited ${inviteUsername}`);
-    setInviteUsername("");
+    setInviteSuccess(`Invited ${display}`);
     handleActionComplete();
   };
 
@@ -110,191 +137,244 @@ const ManageClanModal: React.FC<{
   }, [clanDetail, settingsInitialized]);
 
   return (
-    <div className="manage-dialog-overlay" onClick={() => setShowManage(false)}>
-      <div
-        className="manage-dialog"
-        style={{
-          backgroundColor: theme.primary,
-          color: theme.text,
-          borderTop: `4px solid ${clan.color}`,
-          backgroundImage: `linear-gradient(${clan.color}22, transparent 200px)`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="manage-dialog-close" onClick={() => setShowManage(false)}>
-          &times;
-        </button>
+    <>
+      <div className="manage-dialog-overlay" onClick={() => setShowManage(false)}>
+        <div
+          className="manage-dialog"
+          style={{
+            backgroundColor: theme.primary,
+            color: theme.text,
+            borderTop: `4px solid ${clan.color}`,
+            backgroundImage: `linear-gradient(${clan.color}22, transparent 200px)`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button className="manage-dialog-close" onClick={() => setShowManage(false)}>
+            &times;
+          </button>
 
-        <Typography.PageTitle style={{ marginBottom: 20, fontSize: "1.5rem" }}>
-          Manage Clan
-        </Typography.PageTitle>
+          <Typography.PageTitle style={{ marginBottom: 20, fontSize: "1.5rem" }}>
+            Manage Clan
+          </Typography.PageTitle>
 
-        {/* Invite User */}
-        <div className="manage-subsection">
-          <Typography.Subtitle style={{ color: theme.secondaryText }}>
-            Invite User
-          </Typography.Subtitle>
-          <Divider color={theme.text} style={{ marginBottom: 15 }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <InputWithLabel
-              borderColor={theme.secondary}
-              label=""
-              value={inviteUsername}
-              onChange={(e) => setInviteUsername(e.target.value)}
-              placeholder="Enter username to invite"
-            />
-            <Button color={theme.secondary} onClick={handleInviteUser}>
-              Send Invite
-            </Button>
-            {inviteSuccess && (
-              <Typography.SmallText style={{ color: "#22c55e", margin: 0 }}>
-                {inviteSuccess}
-              </Typography.SmallText>
-            )}
-            {inviteError && (
-              <Typography.SmallText style={{ color: "#e01313", margin: 0 }}>
-                {inviteError}
-              </Typography.SmallText>
-            )}
-          </div>
-        </div>
-
-        {/* Pending Invites & Requests */}
-        <div className="manage-subsection">
-          <Typography.Subtitle style={{ color: theme.secondaryText }}>
-            Pending Invites & Requests
-          </Typography.Subtitle>
-          <Divider color={theme.text} style={{ marginBottom: 15 }} />
-          {"message" in clanInvites ? (
-            <EmptyState message={clanInvites.message} themeId={theme._id} />
-          ) : clanInvites.length === 0 ? (
-            <EmptyState message="No pending invites or requests" themeId={theme._id} />
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
-              {clanInvites.map((invite) => (
-                <FriendPill
-                  key={invite.inviteId}
-                  to={`/profile/${invite.user.username}`}
-                  name={invite.user.display}
-                  detail={invite.type === "invite" ? "Invited" : "Requested to join"}
-                  color={clan.color}
-                  themeId={theme._id}
-                >
-                  {invite.type === "request" ? (
-                    <InviteResponseButtons
-                      inviteId={invite.inviteId}
-                      type={invite.type}
-                      compact
-                      onActionComplete={handleActionComplete}
-                    />
-                  ) : (
-                    <CancelInviteButton
-                      inviteId={invite.inviteId}
-                      compact
-                      onActionComplete={handleActionComplete}
-                    />
-                  )}
-                </FriendPill>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Clan Settings */}
-        <div className="manage-subsection">
-          <Typography.Subtitle style={{ color: theme.secondaryText }}>
-            Clan Settings
-          </Typography.Subtitle>
-          <Divider color={theme.text} style={{ marginBottom: 15 }} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <InputWithLabel
-              borderColor={theme.secondary}
-              label="Clan Name"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              placeholder="Clan name (3-32 chars)"
-            />
-            <InputWithLabel
-              borderColor={theme.secondary}
-              label="Bio"
-              value={editBio}
-              onChange={(e) => setEditBio(e.target.value)}
-              placeholder="Describe your clan..."
-            />
-            <div>
-              <Typography.SmallText style={{ margin: 0, marginBottom: 4, opacity: 0.7 }}>
-                Color
-              </Typography.SmallText>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <input
-                  type="color"
-                  value={editColor}
-                  onChange={(e) => setEditColor(e.target.value)}
-                />
-                <span style={{ fontFamily: "'filson-pro', sans-serif" }}>{editColor}</span>
-              </div>
-            </div>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontFamily: "'filson-pro', sans-serif",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={editIsPublic}
-                onChange={(e) => setEditIsPublic(e.target.checked)}
-              />
-              Public Clan
-            </label>
-            {editError && (
-              <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
-                {editError}
-              </Typography.SmallText>
-            )}
-            <Button color={theme.secondary} onClick={handleUpdateClan}>
-              Save Changes
-            </Button>
-          </div>
-        </div>
-
-        {/* Transfer Ownership (owner only) */}
-        {role === "owner" && (
+          {/* Invite User */}
           <div className="manage-subsection">
             <Typography.Subtitle style={{ color: theme.secondaryText }}>
-              Transfer Ownership
+              Invite User
             </Typography.Subtitle>
             <Divider color={theme.text} style={{ marginBottom: 15 }} />
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <InputWithLabel
-                borderColor="#ef4444"
-                label=""
-                value={transferUsername}
-                onChange={(e) => setTransferUsername(e.target.value)}
-                placeholder="Enter new owner's username"
+              <StyledInput
+                borderColor={theme.secondary}
+                placeholder="Search users by name or username..."
+                value={inviteQuery}
+                onChange={handleInviteSearchChange}
               />
-              <Button color="#ef4444" onClick={handleTransfer}>
-                Transfer Ownership
-              </Button>
-              {transferError && (
-                <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
-                  {transferError}
+              {inviteSuccess && (
+                <Typography.SmallText style={{ color: "#22c55e", margin: 0 }}>
+                  {inviteSuccess}
                 </Typography.SmallText>
+              )}
+              {inviteError && (
+                <Typography.SmallText style={{ color: "#e01313", margin: 0 }}>
+                  {inviteError}
+                </Typography.SmallText>
+              )}
+              {hasInviteSearched && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  {inviteSearchResults.length === 0 ? (
+                    <EmptyState message="No users found" themeId={theme._id} />
+                  ) : (
+                    inviteSearchResults.map((u) => (
+                      <FriendPill
+                        key={u.username}
+                        to={`/profile/${u.username}`}
+                        name={u.display}
+                        detail={`@${u.username}`}
+                        color={clan.color}
+                        themeId={theme._id}
+                      >
+                        <Button
+                          color={theme.secondary}
+                          fitContent
+                          onClick={() => handleInviteClick(u.username, u.display)}
+                        >
+                          Invite
+                        </Button>
+                      </FriendPill>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           </div>
-        )}
+
+          {/* Pending Invites & Requests */}
+          <div className="manage-subsection">
+            <Typography.Subtitle style={{ color: theme.secondaryText }}>
+              Pending Invites & Requests
+            </Typography.Subtitle>
+            <Divider color={theme.text} style={{ marginBottom: 15 }} />
+            {"message" in clanInvites ? (
+              <EmptyState message={clanInvites.message} themeId={theme._id} />
+            ) : clanInvites.length === 0 ? (
+              <EmptyState message="No pending invites or requests" themeId={theme._id} />
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                {clanInvites.map((invite) => (
+                  <FriendPill
+                    key={invite.inviteId}
+                    to={`/profile/${invite.user.username}`}
+                    name={invite.user.display}
+                    detail={invite.type === "invite" ? "Invited" : "Requested to join"}
+                    color={clan.color}
+                    themeId={theme._id}
+                  >
+                    {invite.type === "request" ? (
+                      <InviteResponseButtons
+                        inviteId={invite.inviteId}
+                        type={invite.type}
+                        compact
+                        onActionComplete={handleActionComplete}
+                      />
+                    ) : (
+                      <CancelInviteButton
+                        inviteId={invite.inviteId}
+                        compact
+                        onActionComplete={handleActionComplete}
+                      />
+                    )}
+                  </FriendPill>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Clan Settings */}
+          <div className="manage-subsection">
+            <Typography.Subtitle style={{ color: theme.secondaryText }}>
+              Clan Settings
+            </Typography.Subtitle>
+            <Divider color={theme.text} style={{ marginBottom: 15 }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <InputWithLabel
+                borderColor={theme.secondary}
+                label="Clan Name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Clan name (3-32 chars)"
+              />
+              <InputWithLabel
+                borderColor={theme.secondary}
+                label="Bio"
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Describe your clan..."
+              />
+              <div>
+                <Typography.SmallText style={{ margin: 0, marginBottom: 4, opacity: 0.7 }}>
+                  Color
+                </Typography.SmallText>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <input
+                    type="color"
+                    value={editColor}
+                    onChange={(e) => setEditColor(e.target.value)}
+                  />
+                  <span style={{ fontFamily: "'filson-pro', sans-serif" }}>{editColor}</span>
+                </div>
+              </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontFamily: "'filson-pro', sans-serif",
+                  cursor: "pointer",
+                }}
+              >
+                <span className="clan-toggle">
+                  <input
+                    type="checkbox"
+                    checked={editIsPublic}
+                    onChange={(e) => setEditIsPublic(e.target.checked)}
+                  />
+                  <span className="clan-toggle-slider" />
+                </span>
+                Public Clan
+              </label>
+              {editError && (
+                <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
+                  {editError}
+                </Typography.SmallText>
+              )}
+              <Button color={theme.secondary} onClick={handleUpdateClan}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+
+          {/* Transfer Ownership (owner only) */}
+          {role === "owner" && (
+            <div className="manage-subsection">
+              <Typography.Subtitle style={{ color: theme.secondaryText }}>
+                Transfer Ownership
+              </Typography.Subtitle>
+              <Divider color={theme.text} style={{ marginBottom: 15 }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <InputWithLabel
+                  borderColor="#ef4444"
+                  label=""
+                  value={transferUsername}
+                  onChange={(e) => setTransferUsername(e.target.value)}
+                  placeholder="Enter new owner's username"
+                />
+                <Button
+                  color="#ef4444"
+                  onClick={() => {
+                    if (!transferUsername.trim()) return;
+                    setShowTransferConfirm(true);
+                  }}
+                >
+                  Transfer Ownership
+                </Button>
+                {transferError && (
+                  <Typography.SmallText style={{ color: "#ff6b6b", margin: 0 }}>
+                    {transferError}
+                  </Typography.SmallText>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {showTransferConfirm && (
+        <ConfirmDialog
+          message={`Transfer ownership to ${transferUsername}? This cannot be undone.`}
+          confirmLabel="Transfer"
+          confirmColor="#ef4444"
+          onConfirm={handleTransfer}
+          onCancel={() => setShowTransferConfirm(false)}
+          backgroundColor={theme.primary}
+          textColor={theme.text}
+        />
+      )}
+    </>
   );
 };
 export default ManageClanModal;

@@ -4,6 +4,7 @@ import {
   type ClanDetailInfo,
   type ClanMemberInfo,
   type ClanMemberPointsEntry,
+  type ClanLeaderboardEntry,
   type UserClanInfo,
   type ClanInviteInfo,
   type ClanRole,
@@ -26,6 +27,8 @@ import {
   UserModel,
   UserPointsModel,
   UserProfileModel,
+  UserGameStatsModel,
+  UserAchievementModel,
 } from "../mongoose-models.ts";
 
 /**
@@ -88,10 +91,10 @@ async function populateClanInviteInfo(
 }
 
 /**
- * List all public clans
+ * List all clans
  */
-export async function listPublicClans(): Promise<ClanInfo[]> {
-  const docs = await ClanModel.find({ isPublic: true }).lean();
+export async function listClans(): Promise<ClanInfo[]> {
+  const docs = await ClanModel.find({}).lean();
   return Promise.all(docs.map((doc) => populateClanInfo(doc._id)));
 }
 
@@ -243,6 +246,12 @@ export async function joinClan(
       joinedAt: now,
     });
 
+    // Clean up pending invites for this user to this clan
+    await ClanInviteModel.updateMany(
+      { userId: user.userId, clanId, status: "pending" },
+      { status: "rejected" },
+    );
+
     return {
       clan: await populateClanInfo(clanId),
       role: "member",
@@ -285,14 +294,21 @@ export async function leaveClan(
   }
 
   if (membership.role === "owner") {
-    // Owner must transfer ownership or disband
     const memberCount = await ClanMemberModel.countDocuments({ clanId });
     if (memberCount > 1) {
-      return { error: "You must transfer ownership before leaving" };
+      // Auto-transfer: prefer admins, then oldest member
+      // MongoDB string sort: "admin" < "member" alphabetically, so admins come first
+      const successor = await ClanMemberModel.findOne({ clanId, userId: { $ne: user.userId } })
+        .sort({ role: 1, joinedAt: 1 })
+        .lean();
+      if (successor) {
+        await ClanMemberModel.findByIdAndUpdate(successor._id, { role: "owner" });
+      }
+    } else {
+      // Last member leaving - disband clan
+      await ClanModel.findByIdAndDelete(clanId);
+      await ClanInviteModel.deleteMany({ clanId });
     }
-    // Last member leaving - disband clan
-    await ClanModel.findByIdAndDelete(clanId);
-    await ClanInviteModel.deleteMany({ clanId });
   }
 
   await ClanMemberModel.findByIdAndDelete(membership._id);
@@ -442,6 +458,12 @@ async function acceptInviteInternal(
 
   await ClanInviteModel.findByIdAndUpdate(inviteId, { status: "accepted" });
 
+  // Reject other pending invites for this user to the same clan
+  await ClanInviteModel.updateMany(
+    { userId: user.userId, clanId: invite.clanId, status: "pending", _id: { $ne: inviteId } },
+    { status: "rejected" },
+  );
+
   return {
     clan: await populateClanInfo(invite.clanId),
     role: "member",
@@ -481,6 +503,12 @@ async function acceptJoinRequestInternal(
 
   await ClanInviteModel.findByIdAndUpdate(inviteId, { status: "accepted" });
 
+  // Reject other pending invites/requests for this user to the same clan
+  await ClanInviteModel.updateMany(
+    { userId: invite.userId, clanId: invite.clanId, status: "pending", _id: { $ne: inviteId } },
+    { status: "rejected" },
+  );
+
   return {
     inviteId,
     clan: await populateClanInfo(invite.clanId),
@@ -489,6 +517,13 @@ async function acceptJoinRequestInternal(
     invitedBy: null,
     createdAt: new Date(invite.createdAt),
   };
+}
+
+/**
+ * Look up a raw invite record by ID (used by controller for notifications)
+ */
+export async function getInviteById(inviteId: string) {
+  return ClanInviteModel.findById(inviteId).lean();
 }
 
 /**
@@ -573,9 +608,20 @@ export async function getClanInvites(
   }
 
   const invites = await ClanInviteModel.find({ clanId, status: "pending" }).lean();
-  const clanInfo = await populateClanInfo(clanId);
 
-  return Promise.all(invites.map((inv) => populateClanInviteInfo(inv, clanInfo)));
+  // Safety net: auto-reject invites for users who already joined a clan
+  const validInvites = [];
+  for (const inv of invites) {
+    const existing = await ClanMemberModel.findOne({ userId: inv.userId }).lean();
+    if (existing) {
+      await ClanInviteModel.findByIdAndUpdate(inv._id, { status: "rejected" });
+    } else {
+      validInvites.push(inv);
+    }
+  }
+
+  const clanInfo = await populateClanInfo(clanId);
+  return Promise.all(validInvites.map((inv) => populateClanInviteInfo(inv, clanInfo)));
 }
 
 /**
@@ -734,12 +780,16 @@ export async function getClanMemberLeaderboard(
       const profile = await UserProfileModel.findOne({ username }).lean<
         (UserProfileRecord & { _id: string }) | null
       >();
+      const gameStats = await UserGameStatsModel.findById(username).lean();
+      const achievementCount = await UserAchievementModel.countDocuments({ username });
 
       return {
         username,
         display: user?.display ?? username,
         role: m.role as ClanRole,
         pointsTotal: pointsRecord?.pointsTotal ?? 0,
+        gamesPlayedTotal: gameStats?.gamesPlayedTotal ?? 0,
+        achievementCount,
         pfp: profile?.pfp ?? { type: "avatar", avatarId: "wizard" },
         profileBorderColor: profile?.profileBorderColor ?? "#888888",
       };
@@ -747,5 +797,52 @@ export async function getClanMemberLeaderboard(
   );
 
   entries.sort((a, b) => b.pointsTotal - a.pointsTotal);
+  return entries;
+}
+
+/**
+ * Get cross-clan rankings — each clan's aggregated stats, sorted by total points
+ */
+export async function getClanLeaderboard(): Promise<ClanLeaderboardEntry[]> {
+  const clans = await ClanModel.find({}).lean<(ClanRecord & { _id: string })[]>();
+
+  const entries: ClanLeaderboardEntry[] = await Promise.all(
+    clans.map(async (clan) => {
+      const members = await ClanMemberModel.find({ clanId: clan._id }).lean<
+        (ClanMemberRecord & { _id: string })[]
+      >();
+
+      let totalPoints = 0;
+      let totalWins = 0;
+      let totalGamesPlayed = 0;
+
+      for (const member of members) {
+        const user = await UserModel.findById(member.userId).lean<
+          (UserRecord & { _id: string }) | null
+        >();
+        if (!user) continue;
+
+        const points = await UserPointsModel.findById(user.username).lean();
+        const gameStats = await UserGameStatsModel.findById(user.username).lean();
+
+        totalPoints += points?.pointsTotal ?? 0;
+        totalWins += gameStats?.winsTotal ?? 0;
+        totalGamesPlayed += gameStats?.gamesPlayedTotal ?? 0;
+      }
+
+      return {
+        clanId: clan._id,
+        name: clan.name,
+        color: clan.color,
+        pfp: clan.pfp,
+        memberCount: members.length,
+        totalPoints,
+        totalWins,
+        totalGamesPlayed,
+      };
+    }),
+  );
+
+  entries.sort((a, b) => b.totalPoints - a.totalPoints);
   return entries;
 }

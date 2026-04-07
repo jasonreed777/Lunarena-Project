@@ -1,6 +1,6 @@
 import { type SafeUserInfo, type UserUpdateRequest } from "@gamenite/shared";
 import { getUserByUsername, createAuthAccount } from "./auth.service.ts";
-import { UserModel } from "../mongoose-models.ts";
+import { UserModel, ClanMemberModel } from "../mongoose-models.ts";
 
 /**
  * Retrieves a single user from the database.
@@ -65,13 +65,25 @@ export async function getUsersByUsername(usernames: string[]): Promise<SafeUserI
 /**
  * Searches for users whose username or display name matches the query (case-insensitive).
  */
-export async function searchUsers(query: string, limit: number): Promise<SafeUserInfo[]> {
+export async function searchUsers(
+  query: string,
+  limit: number,
+  clanId?: string,
+): Promise<SafeUserInfo[]> {
   const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-  const docs = await UserModel.find({
+
+  const filter: Record<string, unknown> = {
     $or: [{ username: regex }, { display: regex }],
-  })
-    .limit(limit)
-    .lean();
+  };
+
+  if (clanId) {
+    const members = await ClanMemberModel.find({ clanId }, { userId: 1 }).lean();
+    const memberIds = members.map((m) => m.userId);
+    if (memberIds.length === 0) return [];
+    filter._id = { $in: memberIds };
+  }
+
+  const docs = await UserModel.find(filter).limit(limit).lean();
   return Promise.all(docs.map((doc) => populateSafeUserInfo(doc._id.toString())));
 }
 

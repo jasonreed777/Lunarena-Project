@@ -121,7 +121,7 @@ endpoints in `server/src/app.ts`.
 
 | Endpoint                     | Method | Description                                      |
 | ---------------------------- | ------ | ------------------------------------------------ |
-| `/list`                      | GET    | List all public clans                            |
+| `/list`                      | GET    | List all clans                                   |
 | `/current`                   | POST   | Get current user's clan membership               |
 | `/create`                    | POST   | Create a new clan                                |
 | `/my-invites`                | POST   | Get current user's pending clan invites          |

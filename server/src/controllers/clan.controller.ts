@@ -3,6 +3,7 @@ import {
   type ClanDetailInfo,
   type ClanMemberInfo,
   type ClanMemberPointsEntry,
+  type ClanLeaderboardEntry,
   type UserClanInfo,
   type ClanInviteInfo,
   zCreateClanPayload,
@@ -19,12 +20,13 @@ import { z } from "zod";
 import { emitNotification } from "./notification.controller.ts";
 import { getClanById } from "../services/clan.service.ts";
 import { getUserByUsername } from "../services/auth.service.ts";
+import { ClanMemberModel } from "../mongoose-models.ts";
 
 /**
- * GET /api/clans/list - List all public clans
+ * GET /api/clans/list - List all clans
  */
 export const getList: RestAPI<ClanInfo[]> = async (_req, res) => {
-  res.send(await clanService.listPublicClans());
+  res.send(await clanService.listClans());
 };
 
 /**
@@ -81,6 +83,24 @@ export const postJoin: RestAPI<UserClanInfo | ClanInviteInfo, { id: string }> = 
   res,
 ) => {
   const result = await clanService.joinClan(req.authUser, req.params.id, new Date());
+  // Notify admins/owners when a user requests to join a private clan
+  if (!("error" in result) && "inviteId" in result) {
+    const io = req.app.get("io") as GameServer;
+    const clanInfo = await getClanById(req.params.id);
+    const admins = await ClanMemberModel.find({
+      clanId: req.params.id,
+      role: { $in: ["admin", "owner"] },
+    }).lean();
+    for (const admin of admins) {
+      await emitNotification(
+        io,
+        admin.userId,
+        "ClanInvite",
+        "Join Request",
+        `${req.authUser.username} has requested to join ${clanInfo?.name ?? "your clan"}`,
+      );
+    }
+  }
   res.send(result);
 };
 
@@ -107,6 +127,20 @@ export const postKick: RestAPI<{ success: true }, { id: string }> = async (req, 
     req.params.id,
     body.data.payload.username,
   );
+  if (!("error" in result)) {
+    const receiver = await getUserByUsername(body.data.payload.username);
+    if (receiver) {
+      const clanInfo = await getClanById(req.params.id);
+      const io = req.app.get("io") as GameServer;
+      await emitNotification(
+        io,
+        receiver.userId,
+        "ClanInvite",
+        "Removed from Clan",
+        `You were removed from clan ${clanInfo?.name ?? "Unknown"} by ${req.authUser.username}`,
+      );
+    }
+  }
   res.send(result);
 };
 
@@ -166,6 +200,8 @@ export const postRespondInvite: RestAPI<
     return;
   }
 
+  // Look up the invite before responding so we know who to notify
+  const invite = await clanService.getInviteById(req.params.inviteId);
   const result = await clanService.respondToInvite(
     req.authUser,
     req.params.inviteId,
@@ -174,6 +210,30 @@ export const postRespondInvite: RestAPI<
   if (result === null) {
     res.status(404).send({ error: "Invite not found" });
     return;
+  }
+  if (!("error" in result) && invite) {
+    const io = req.app.get("io") as GameServer;
+    const clanInfo = await getClanById(invite.clanId);
+    const clanName = clanInfo?.name ?? "Unknown";
+
+    if (invite.type === "request") {
+      // Admin accepted/rejected a join request → notify the requester
+      const header =
+        body.data.payload.action === "accept" ? "Join Request Accepted" : "Join Request Rejected";
+      const message =
+        body.data.payload.action === "accept"
+          ? `Your request to join ${clanName} has been accepted!`
+          : `Your request to join ${clanName} has been rejected.`;
+      await emitNotification(io, invite.userId, "ClanInvite", header, message);
+    } else if (invite.type === "invite" && invite.invitedBy) {
+      // User accepted/rejected an invite → notify the inviter
+      const header = body.data.payload.action === "accept" ? "Invite Accepted" : "Invite Declined";
+      const message =
+        body.data.payload.action === "accept"
+          ? `${req.authUser.username} accepted your invite to ${clanName}!`
+          : `${req.authUser.username} declined your invite to ${clanName}.`;
+      await emitNotification(io, invite.invitedBy, "ClanInvite", header, message);
+    }
   }
   res.send(result);
 };
@@ -220,6 +280,21 @@ export const postUpdateRole: RestAPI<ClanMemberInfo, { id: string }> = async (re
     body.data.payload.username,
     body.data.payload.role,
   );
+  if (!("error" in result)) {
+    const receiver = await getUserByUsername(body.data.payload.username);
+    if (receiver) {
+      const clanInfo = await getClanById(req.params.id);
+      const io = req.app.get("io") as GameServer;
+      const action = body.data.payload.role === "admin" ? "promoted to Admin" : "changed to Member";
+      await emitNotification(
+        io,
+        receiver.userId,
+        "ClanInvite",
+        "Role Updated",
+        `You have been ${action} in ${clanInfo?.name ?? "Unknown"} by ${req.authUser.username}`,
+      );
+    }
+  }
   res.send(result);
 };
 
@@ -236,6 +311,13 @@ export const postCancelInvite: RestAPI<{ success: true }, { inviteId: string }> 
     return;
   }
   res.send(result);
+};
+
+/**
+ * GET /api/clans/rankings - Get cross-clan rankings
+ */
+export const getClanRankings: RestAPI<ClanLeaderboardEntry[]> = async (_req, res) => {
+  res.send(await clanService.getClanLeaderboard());
 };
 
 /**
@@ -268,5 +350,19 @@ export const postTransfer: RestAPI<{ success: true }, { id: string }> = async (r
     req.params.id,
     body.data.payload.newOwnerUsername,
   );
+  if (!("error" in result)) {
+    const receiver = await getUserByUsername(body.data.payload.newOwnerUsername);
+    if (receiver) {
+      const clanInfo = await getClanById(req.params.id);
+      const io = req.app.get("io") as GameServer;
+      await emitNotification(
+        io,
+        receiver.userId,
+        "ClanInvite",
+        "Ownership Transferred",
+        `${req.authUser.username} has transferred ownership of ${clanInfo?.name ?? "Unknown"} to you`,
+      );
+    }
+  }
   res.send(result);
 };

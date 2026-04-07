@@ -17,7 +17,7 @@ import { TranslucentButton as Button } from "../components/Buttons.tsx";
 export default function Home() {
   const { theme } = React.useContext(ThemeContext);
   const threadList = useThreadList(4);
-  const gameList = useGameList(4);
+  const gameList = useGameList({ limit: 4 });
   const user = useLoginContext().user;
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = React.useState<LeaderboardProps>([]);

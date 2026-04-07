@@ -22,31 +22,51 @@ const Row = styled.div`
  * @param props Leaderboard props - includes user's name and total points
  * @returns
  */
-export const Leaderboard: React.FC<{ leaderboard: LeaderboardProps; theme: ColorTheme }> = ({
-  leaderboard,
-  theme,
-}) => {
+export const Leaderboard: React.FC<{
+  leaderboard: LeaderboardProps;
+  theme: ColorTheme;
+  clickable?: boolean;
+}> = ({ leaderboard, theme, clickable = true }) => {
   const navigate = useNavigate();
+  const ranks: number[] = [];
+  let currentRank = 0;
+  for (let i = 0; i < leaderboard.length; i++) {
+    if (i === 0) {
+      ranks.push(0);
+    } else if (leaderboard[i].pointsTotal === leaderboard[i - 1].pointsTotal) {
+      ranks.push(ranks[i - 1]);
+    } else {
+      currentRank = ranks[i - 1] + 1;
+      ranks.push(currentRank);
+    }
+  }
+
   return (
     <Container>
       {leaderboard.map((row, index) => (
-        <Row>
-          {index <= 2 && (
+        <Row key={row.username}>
+          {ranks[index] <= 2 && (
             <Trophy
               src="/assets/icons/leaderboard.svg"
-              color={TrophyColorMap[index]}
+              color={TrophyColorMap[ranks[index]]}
               hover={false}
             />
           )}
           <Typography.ProfileText
-            style={{ textWrap: "nowrap", overflow: "visible", cursor: "pointer" }}
-            onClick={() => navigate(`/profile/${row.username}`)}
+            style={{
+              textWrap: "nowrap",
+              overflow: "visible",
+              cursor: clickable ? "pointer" : "default",
+            }}
+            onClick={clickable ? () => navigate(`/profile/${row.username}`) : undefined}
           >
             {row.display || row.username}
           </Typography.ProfileText>
           <Divider color={theme.secondaryText} />
           <Typography.Code style={{ textWrap: "nowrap" }}>
             {row.pointsTotal === 1 ? "1 Point" : `${row.pointsTotal} Points`}
+            {row.gamesPlayedTotal !== undefined && ` · ${row.gamesPlayedTotal} Games`}
+            {row.achievementCount !== undefined && ` · ${row.achievementCount} Awards`}
           </Typography.Code>
         </Row>
       ))}
