@@ -34,6 +34,7 @@ export interface GameListParams {
   clanId?: string;
   userId?: string;
   limit?: number;
+  status?: "waiting" | "active" | "done";
 }
 
 /**

@@ -17,11 +17,12 @@ export default function useGameList(
   const clanId = params?.clanId;
   const userId = params?.userId;
   const limit = params?.limit;
+  const status = params?.status;
 
   useEffect(() => {
     if (skip) return;
-    gameList({ clanId, userId, limit }).then(setGames);
-  }, [clanId, userId, limit, skip]);
+    gameList({ clanId, userId, limit, status }).then(setGames);
+  }, [clanId, userId, limit, status, skip]);
 
   if (skip || !games) return { message: "Loading..." };
   if ("error" in games) return { message: `Error: ${games.error}` };

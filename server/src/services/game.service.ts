@@ -142,6 +142,7 @@ export interface GameListFilter {
   clanId?: string;
   userId?: string;
   limit?: number;
+  status?: "waiting" | "active" | "done";
 }
 
 /**
@@ -168,6 +169,16 @@ export async function getGames(
 
   if (filter.userId) {
     query.players = filter.userId;
+  }
+
+  if (filter.status === "done") {
+    query.done = true;
+  } else if (filter.status === "active") {
+    query.done = false;
+    query.state = { $ne: null };
+  } else if (filter.status === "waiting") {
+    query.done = false;
+    query.state = null;
   }
 
   let dbQuery = GameModel.find(query, { _id: 1 }).sort({ createdAt: -1 });

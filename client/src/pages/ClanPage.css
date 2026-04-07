@@ -18,7 +18,8 @@ div.clan-container {
   display: grid;
   width: 100%;
   overflow: hidden;
-  grid-template-columns: 2fr 3fr 1fr;
+  grid-template-columns: 1.5fr 2fr 2fr;
+  gap: 10px;
 }
 
 .member-list {
@@ -28,15 +29,28 @@ div.clan-container {
   gap: 10px;
 }
 
-.leaderboard-container {
+.leaderboard-actions-row {
+  display: flex;
+  gap: 30px;
   padding-bottom: 20px;
 }
+
+.leaderboard-container {
+  flex: 1;
+}
 .leaderboard {
-  width: 50%;
+  width: 100%;
+}
+
+.actions-container {
+  flex-shrink: 0;
+  min-width: 280px;
 }
 
 .actions {
-  padding: 0 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .stats {

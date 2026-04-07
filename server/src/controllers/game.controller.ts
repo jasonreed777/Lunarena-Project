@@ -53,6 +53,7 @@ export const getList: RestAPI<GameInfo[]> = async (req, res) => {
       clanId: z.string().optional(),
       userId: z.string().optional(),
       limit: z.coerce.number().int().positive().optional(),
+      status: z.enum(["waiting", "active", "done"]).optional(),
     })
     .safeParse(req.query);
 

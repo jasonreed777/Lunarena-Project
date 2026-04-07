@@ -28,6 +28,7 @@ import useClanRankings from "../hooks/useClanRankings";
 import { createClan, getClanById, leaveClan } from "../services/clanService";
 import { updateProfile } from "../services/profileService";
 import { Leaderboard } from "../components/Leaderboard";
+import GameSummaryView from "../components/GameSummaryView";
 
 // Keep this type export so ClanPill.tsx (which imports it) doesn't break.
 type Statistics = {
@@ -89,6 +90,10 @@ export const ClanPage: React.FC = () => {
 
   const clanId = hasClan && userClan.data ? userClan.data.clan.clanId : null;
   const gameList = useGameList({ clanId: clanId ?? undefined, limit: 10 }, !clanId) as GameInfo[];
+  const activeGames = useGameList(
+    { clanId: clanId ?? undefined, limit: 10, status: "active" },
+    !clanId,
+  );
   const userRole = hasClan && userClan.data ? userClan.data.role : null;
   const isAdminOrOwner = userRole === "admin" || userRole === "owner";
 
@@ -181,18 +186,43 @@ export const ClanPage: React.FC = () => {
           {clan.memberCount} members · {clan.isPublic ? "Public" : "Private"} · Your role: {role}
         </Typography.SmallText>
 
-        {/* Points Leaderboard */}
-        <div className="leaderboard-container">
-          <Typography.Subtitle>Leaderboard</Typography.Subtitle>
-          <Divider color={theme.text} style={{ marginBottom: 20 }} />
-          <div className="leaderboard">
-            {"message" in clanLeaderboard ? (
-              <EmptyState message={clanLeaderboard.message} themeId={theme._id} />
-            ) : clanLeaderboard.length === 0 ? (
-              <EmptyState message="No points earned yet" themeId={theme._id} />
-            ) : (
-              <Leaderboard leaderboard={clanLeaderboard} theme={theme} />
-            )}
+        {/* Leaderboard + Actions Row */}
+        <div className="leaderboard-actions-row">
+          <div className="leaderboard-container">
+            <Typography.Subtitle>Leaderboard</Typography.Subtitle>
+            <Divider color={theme.text} style={{ marginBottom: 20 }} />
+            <div className="leaderboard">
+              {"message" in clanLeaderboard ? (
+                <EmptyState message={clanLeaderboard.message} themeId={theme._id} />
+              ) : clanLeaderboard.length === 0 ? (
+                <EmptyState message="No points earned yet" themeId={theme._id} />
+              ) : (
+                <Leaderboard leaderboard={clanLeaderboard} theme={theme} />
+              )}
+            </div>
+          </div>
+
+          <div className="actions-container">
+            <Typography.Subtitle>Actions</Typography.Subtitle>
+            <Divider color={theme.text} style={{ marginBottom: 20 }} />
+            <div className="actions">
+              <Button color={theme.secondary} onClick={() => setShowClanRankings(true)}>
+                Clan Leaderboard
+              </Button>
+              <Button color="#e01313" onClick={() => setShowLeaveConfirm(true)}>
+                Leave Clan
+              </Button>
+              {leaveError && (
+                <Typography.SmallText style={{ color: "#e01313", margin: 0, marginTop: 8 }}>
+                  {leaveError}
+                </Typography.SmallText>
+              )}
+              {isAdminOrOwner && (
+                <Button color="#43b9c6" onClick={() => setShowManage(true)}>
+                  Manage Clan
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -251,6 +281,21 @@ export const ClanPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Active Games */}
+          <div className="recently-played">
+            <Typography.Subtitle>Active Games</Typography.Subtitle>
+            <Divider color={theme.text} style={{ marginBottom: 10 }} />
+            <div className="recently-played-list clan-info-column">
+              {"message" in activeGames ? (
+                <EmptyState message="No active games" themeId={theme._id} />
+              ) : (
+                activeGames.map((game, index) => (
+                  <GameSummaryView key={game.gameId} gameInfo={game} theme={theme} index={index} />
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Recently Played */}
           <div className="recently-played">
             <Typography.Subtitle>Recently Played</Typography.Subtitle>
@@ -270,30 +315,6 @@ export const ClanPage: React.FC = () => {
                     timeAgo={game.createdAt}
                   />
                 ))
-              )}
-            </div>
-          </div>
-
-          {/* Clan Actions */}
-          <div className="actions-container">
-            <Typography.Subtitle>Actions</Typography.Subtitle>
-            <Divider color={theme.text} style={{ marginBottom: 20 }} />
-            <div className="actions">
-              <Button color={theme.secondary} onClick={() => setShowClanRankings(true)}>
-                Clan Leaderboard
-              </Button>
-              <Button color="#e01313" onClick={() => setShowLeaveConfirm(true)}>
-                Leave Clan
-              </Button>
-              {leaveError && (
-                <Typography.SmallText style={{ color: "#e01313", margin: 0, marginTop: 8 }}>
-                  {leaveError}
-                </Typography.SmallText>
-              )}
-              {isAdminOrOwner && (
-                <Button color="#43b9c6" onClick={() => setShowManage(true)}>
-                  Manage Clan
-                </Button>
               )}
             </div>
           </div>
