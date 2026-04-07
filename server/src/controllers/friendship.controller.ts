@@ -60,6 +60,7 @@ export const postRequest: RestAPI<FriendshipInfo> = async (req, res) => {
       "FriendRequest",
       "New friend request",
       `${req.authUser.username} wants to be your friend!`,
+      { username: req.authUser.username },
     );
   }
   res.send(result);

@@ -12,14 +12,21 @@ import {
  * Sends a notification to a client via web socket
  * Call this from other socket controllers
  */
-export async function emitNotification(
+export async function emitNotification<T extends NotificationType>(
   io: GameServer,
   receiverUserId: RecordId,
-  type: NotificationType,
+  type: T,
   header: string | null,
   message: string,
+  metadata?: Extract<NotificationInfo, { type: T }>["metadata"],
 ) {
-  const result = await createNotification({ userId: receiverUserId, type, header, message });
+  const result = await createNotification({
+    userId: receiverUserId,
+    type,
+    header,
+    message,
+    metadata,
+  });
   if (result.success) {
     const notification = result.data;
     io.to(receiverUserId).emit("notification", {
@@ -28,7 +35,8 @@ export async function emitNotification(
       header: notification.header,
       message: notification.message,
       sentAt: notification.sentAt,
-    });
+      metadata,
+    } as NotificationInfo);
   }
 }
 
@@ -39,13 +47,17 @@ export async function emitNotification(
 export const getNotifications: RestAPI<NotificationInfo[]> = async (req, res) => {
   const notifications = await fetchNotifications(req.authUser.userId);
   res.send(
-    notifications.map((notification) => ({
-      notificationId: notification._id.toString(),
-      type: notification.type,
-      header: notification.header,
-      message: notification.message,
-      sentAt: notification.sentAt,
-    })),
+    notifications.map(
+      (notification) =>
+        ({
+          notificationId: notification._id.toString(),
+          type: notification.type,
+          header: notification.header,
+          message: notification.message,
+          sentAt: notification.sentAt,
+          metadata: notification.metadata,
+        }) as NotificationInfo,
+    ),
   );
 };
 

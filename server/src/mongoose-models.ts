@@ -346,6 +346,7 @@ export const NotificationModel = mongoose.model<NotificationRecord>(
       header: String,
       message: String,
       sentAt: Date,
+      metadata: { type: Schema.Types.Mixed },
     },
     opts,
   ).index({

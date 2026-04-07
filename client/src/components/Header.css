@@ -92,6 +92,7 @@ p {
 }
 
 .notification-item {
+  position: relative;
   padding: 10px 12px;
   border-bottom: 1px solid rgba(128, 128, 128, 0.15);
   cursor: pointer;
@@ -103,6 +104,34 @@ p {
 
 .notification-item:hover {
   opacity: 0.8;
+}
+
+.notification-dismiss {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.notification-dismiss:hover {
+  opacity: 1;
+  background: rgba(128, 128, 128, 0.5);
+}
+
+.notification-item:hover .notification-dismiss {
+  display: block;
 }
 
 .notification-item-header {

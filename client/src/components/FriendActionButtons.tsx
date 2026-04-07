@@ -1,5 +1,6 @@
 import styled from "@emotion/styled";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useFriendshipStatus from "../hooks/useFriendshipStatus";
 import { hexToRGB } from "../util/utils";
 
@@ -10,6 +11,7 @@ const COLORS = {
   remove: "#ef4444",
   pending: "#6b7280",
   cancel: "#f59e0b",
+  message: "#3b82f6",
 } as const;
 
 const ButtonRow = styled.div<{ compact?: boolean }>`
@@ -75,6 +77,7 @@ export const FriendActionButtons: React.FC<FriendActionButtonsProps> = ({
   compact,
   onActionComplete,
 }) => {
+  const navigate = useNavigate();
   const state = useFriendshipStatus(targetUsername);
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -149,6 +152,14 @@ export const FriendActionButtons: React.FC<FriendActionButtonsProps> = ({
           </ActionButton>
         </>
       )}
+
+      <ActionButton
+        color={COLORS.message}
+        compact={compact}
+        onClick={() => navigate("/messages", { state: { username: targetUsername } })}
+      >
+        Message
+      </ActionButton>
 
       {state.status === "friends" && (
         <ActionButton
