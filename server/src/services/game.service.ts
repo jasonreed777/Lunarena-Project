@@ -39,7 +39,11 @@ function getTutorialBotMove(gameType: GameKey, state: unknown): unknown {
   if (gameType === "nim") {
     const nimState = state as NimState;
     // Only take 1 object if there is 5 or less remaining. Allows user to practice more strategy and not have bot end game abruptly
-    if (nimState.remaining <= 5) {
+    if (nimState.remaining === 4) {
+      return 3;
+    } else if (nimState.remaining === 3) {
+      return 2;
+    } else if (nimState.remaining === 2 || nimState.remaining === 1) {
       return 1;
     }
     // The bot takes a random valid number of sticks, between 1 and either 3 or the number of remaining sticks (if less than 3)
