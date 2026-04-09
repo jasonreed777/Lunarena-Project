@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { type GameInfo, type GameKey, type TaggedGameView } from "@gamenite/shared";
+import {
+  type GameInfo,
+  type GameKey,
+  type TaggedGameView,
+  type NimState,
+  type GuessState,
+} from "@gamenite/shared";
 import { createChat } from "./game-chat.service.ts";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type GameServicer } from "../games/gameServiceManager.ts";
@@ -11,6 +17,9 @@ import { updateProfile } from "./profile.service.ts";
 import { awardPoints } from "./points.service.ts";
 import { checkWinAchievements } from "./achievement.service.ts";
 import { recordWin, recordGamePlayed } from "./game-stats.service.ts";
+import { getUserByUsername } from "./auth.service.ts";
+
+const TUTORIAL_BOT_USERNAME = "tutorialbot";
 
 /**
  * The service interface for individual games
@@ -19,6 +28,33 @@ export const gameServices: { [key in GameKey]: GameServicer } = {
   nim: nimGameService,
   guess: guessGameService,
 };
+
+/**
+ * Get the tutorial bot's move for a given game state
+ * @param gameType type of game the bot is playing
+ * @param state state of the game
+ * @returns the tutorial bot's move
+ */
+function getTutorialBotMove(gameType: GameKey, state: unknown): unknown {
+  if (gameType === "nim") {
+    const nimState = state as NimState;
+    // Only take 1 object if there is 5 or less remaining. Allows user to practice more strategy and not have bot end game abruptly
+    if (nimState.remaining <= 5) {
+      return 1;
+    }
+    // The bot takes a random valid number of sticks, between 1 and either 3 or the number of remaining sticks (if less than 3)
+    const maxTake = Math.min(3, nimState.remaining);
+    // The bot strategy is not optimized, just random valid moves, to make the tutorial more approachable for beginners
+    return Math.floor(Math.random() * maxTake) + 1;
+  }
+
+  if (gameType === "guess") {
+    // Just select random number from 1-100
+    return Math.floor(Math.random() * 100) + 1;
+  }
+
+  throw new Error(`No tutorial bot move defined for game type ${gameType}`);
+}
 
 /**
  * Expand a stored game
@@ -47,15 +83,30 @@ async function populateGameInfo(gameId: string): Promise<GameInfo> {
  * @param user - Initial player in the game's waiting room
  * @param type - Game key
  * @param createdAt - Creation time for this game
+ * @param isTutorial - Whether this game is a tutorial (includes a bot player and awards no points)
  * @returns the new game's info object
  */
 export async function createGame(
   user: UserWithId,
   type: GameKey,
   createdAt: Date,
+  isTutorial: boolean = false,
 ): Promise<GameInfo> {
   const chat = await createChat(createdAt);
   const gameId = randomUUID().toString();
+  let players = [user.userId];
+  let botPlayerIndex: number | null = null;
+  let state: unknown = undefined;
+  if (isTutorial) {
+    const bot = await getUserByUsername(TUTORIAL_BOT_USERNAME);
+    if (!bot) throw new Error("Tutorial bot user not found");
+
+    players = [user.userId, bot.userId];
+    botPlayerIndex = 1;
+    // Tutorial games skip waiting room state
+    state = gameServices[type].create(players).state;
+  }
+
   await GameModel.create({
     _id: gameId,
     type,
@@ -63,7 +114,10 @@ export async function createGame(
     chat: chat.chatId,
     createdAt: createdAt.toISOString(),
     createdBy: user.userId,
-    players: [user.userId],
+    players,
+    isTutorial,
+    botPlayerIndex,
+    state,
   });
   return populateGameInfo(gameId);
 }
@@ -198,7 +252,11 @@ export async function getGames(
  */
 export interface GameUpdateResult {
   views: GameViewUpdates;
-  moveDescription: string;
+  // Changed to moveLogs to handle showing bot moves in tutorial games
+  moveLogs: {
+    user: UserWithId;
+    moveDescription: string;
+  }[];
   chatId: string;
 }
 
@@ -208,7 +266,7 @@ export interface GameUpdateResult {
  * @param gameId - Ostensible game id
  * @param user - Authenticated user
  * @param move - Unsanitized game move
- * @returns the view updates and move description to send to players and watchers
+ * @returns the view updates and move descriptions to send to players and watchers
  * @throws if the game id or move is not valid
  */
 export async function updateGame(
@@ -221,20 +279,67 @@ export async function updateGame(
   if (!game.state) {
     throw new Error(`user ${user.username} made a move in game of that hadn't started`);
   }
+
   const players = game.players;
   const playerIndex = players.findIndex((userId) => userId === user.userId);
   if (playerIndex < 0) {
     throw new Error(`user ${user.username} made a move in a game they weren't playing`);
   }
-  const result = gameServices[game.type].update(game.state, move, playerIndex, players);
+
+  let result = gameServices[game.type].update(game.state, move, playerIndex, players);
   if (!result) throw new Error(`user ${user.username} made an invalid move in ${game.type}`);
+
+  const moveLogs: {
+    user: UserWithId;
+    moveDescription: string;
+  }[] = [
+    {
+      user,
+      moveDescription: result.moveDescription,
+    },
+  ];
+
+  const isBotTurn =
+    game.isTutorial &&
+    !result.done &&
+    game.botPlayerIndex !== null &&
+    ((game.type === "nim" && (result.state as NimState).nextPlayer === game.botPlayerIndex) ||
+      (game.type === "guess" &&
+        (result.state as GuessState).guesses[game.botPlayerIndex] === null));
+
+  if (isBotTurn) {
+    const botMove = getTutorialBotMove(game.type, result.state);
+    const botResult = gameServices[game.type].update(
+      result.state,
+      botMove,
+      game.botPlayerIndex!,
+      players,
+    );
+
+    if (!botResult) {
+      throw new Error(`tutorial bot made an invalid move in ${game.type}`);
+    }
+
+    const bot = await getUserByUsername(TUTORIAL_BOT_USERNAME);
+    if (!bot) {
+      throw new Error("Tutorial bot user not found while logging move");
+    }
+
+    moveLogs.push({
+      user: bot,
+      moveDescription: botResult.moveDescription,
+    });
+
+    result = botResult;
+  }
 
   await GameModel.findByIdAndUpdate(gameId, {
     state: result.state,
     done: game.done || result.done,
   });
+
   // If the game just transitioned to done, award points to the winner
-  if (!game.done && result.done && result.winnerIndex !== undefined) {
+  if (!game.isTutorial && !game.done && result.done && result.winnerIndex !== undefined) {
     for (const playerUserId of players) {
       const player = await populateSafeUserInfo(playerUserId);
       await recordGamePlayed(player.username, game.type);
@@ -250,7 +355,7 @@ export async function updateGame(
 
   return {
     views: result.views,
-    moveDescription: result.moveDescription,
+    moveLogs,
     chatId: game.chat,
   };
 }

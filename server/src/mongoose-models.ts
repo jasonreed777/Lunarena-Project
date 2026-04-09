@@ -140,6 +140,8 @@ export const GameModel = mongoose.model<GameRecord & { _id: string }>(
       players: [String],
       createdAt: String,
       createdBy: String,
+      isTutorial: Boolean,
+      botPlayerIndex: { type: Number, default: null },
     },
     opts,
   ),
