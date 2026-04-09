@@ -27,10 +27,15 @@ const authDb = mongoClient.db("GameNiteAuth");
 
 // Use a trivial hasher — bcrypt at the default cost factor adds ~100 ms per user creation.
 setupAuth(authDb, {
-  // eslint-disable-next-line @typescript-eslint/require-await
-  hash: async (password) => password,
-  // eslint-disable-next-line @typescript-eslint/require-await
-  verify: async ({ password, hash }) => password === hash,
+  hash: async (password) => {
+    // dummy await to satisfy async property
+    await Promise.resolve();
+    return password;
+  },
+  verify: async ({ password, hash }) => {
+    await Promise.resolve();
+    return password === hash;
+  },
 });
 
 await mongoose.connect(URI);

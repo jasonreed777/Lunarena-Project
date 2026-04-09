@@ -1,20 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import supertest, { type Response } from "supertest";
+import type { Request, Response as ExpressResponse, NextFunction } from "express";
 import { app } from "../src/app.ts";
 import { getUserByUsername } from "../src/services/auth.service.ts";
 
 const testAuth = vi.hoisted(() => ({ user: null as { userId: string; username: string } | null }));
 
 vi.mock("../src/middleware/auth.middleware.ts", () => ({
-  requireAuth: vi.fn((req, res, next) => {
+  requireAuth: vi.fn((req: Request, res: ExpressResponse, next: NextFunction) => {
     if (!testAuth.user) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       res.status(401).send({ error: "Not authenticated" });
       return;
     }
     req.authUser = testAuth.user;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     next();
   }),
 }));

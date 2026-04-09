@@ -19,10 +19,15 @@ beforeAll(async () => {
   // Use a trivial hasher in tests — bcrypt at the default cost factor adds ~100 ms
   // per user creation, which multiplies across every beforeEach reset.
   setupAuth(authDb, {
-    // eslint-disable-next-line @typescript-eslint/require-await
-    hash: async (password) => password,
-    // eslint-disable-next-line @typescript-eslint/require-await
-    verify: async ({ password, hash }) => password === hash,
+    hash: async (password) => {
+      // dummy await to satisfy async property
+      await Promise.resolve();
+      return password;
+    },
+    verify: async ({ password, hash }) => {
+      await Promise.resolve();
+      return password === hash;
+    },
   });
 });
 

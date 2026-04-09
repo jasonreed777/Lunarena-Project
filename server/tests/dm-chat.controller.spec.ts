@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import supertest, { type Response } from "supertest";
-import type { GameServer, GameServerSocket } from "../src/types.ts";
+import type { Request, Response as ExpressResponse, NextFunction } from "express";
+import type { GameServer, GameServerSocket, SocketData } from "../src/types.ts";
 import { logSocketError } from "../src/controllers/socket.controller.ts";
 import { socketJoin, socketSendMessage } from "../src/controllers/dm-chat-controller.ts";
 import { createChat, sendMessage } from "../src/services/dm-chat.service.ts";
@@ -33,9 +34,7 @@ const mockSocket = new MockGameServerSocket() as unknown as GameServerSocket;
 
 afterEach(() => {
   vi.clearAllMocks();
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  mockSocket.data = { user: null };
+  mockSocket.data = { user: null } as unknown as SocketData;
 });
 
 beforeEach(async () => {
@@ -163,14 +162,12 @@ const testAuth = vi.hoisted(() => ({
 }));
 
 vi.mock("../src/middleware/auth.middleware.ts", () => ({
-  requireAuth: vi.fn((req, res, next) => {
+  requireAuth: vi.fn((req: Request, res: ExpressResponse, next: NextFunction) => {
     if (!testAuth.user) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       res.status(401).send({ error: "Not authenticated" });
       return;
     }
     req.authUser = testAuth.user;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     next();
   }),
 }));

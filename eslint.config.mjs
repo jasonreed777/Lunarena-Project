@@ -38,6 +38,7 @@ export default defineConfig([
             "**/*.config.mjs",
             "**/*.{spec,test}.{ts,tsx}",
             "**/tests/**/*.{ts,tsx}",
+            "**/src/test-server.ts",
           ],
           includeInternal: true,
         },

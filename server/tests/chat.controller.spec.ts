@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { GameServer, GameServerSocket } from "../src/types.ts";
+import type { GameServer, GameServerSocket, SocketData } from "../src/types.ts";
 import { logSocketError } from "../src/controllers/socket.controller.ts";
 import { socketJoin } from "../src/controllers/game-chat.controller.ts";
 import { createChat } from "../src/services/game-chat.service.ts";
@@ -47,9 +47,7 @@ const mockSocket = new MockGameServerSocket() as unknown as GameServerSocket;
 afterEach(() => {
   vi.resetAllMocks();
   // Reset socket user after each test
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  mockSocket.data = { user: null };
+  mockSocket.data = { user: null } as unknown as SocketData;
 });
 
 beforeEach(async () => {
