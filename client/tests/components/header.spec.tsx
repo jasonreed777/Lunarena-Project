@@ -142,7 +142,7 @@ describe("Header component", () => {
       </LoginContext>,
     );
 
-    const avatar = await screen.findByRole("img", { name: "" });
+    await screen.findByRole("img", { name: "" });
     const avatarImg = Array.from(document.querySelectorAll("img")).find((img) =>
       img.src.includes("wizard"),
     );

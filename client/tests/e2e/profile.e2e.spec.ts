@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { logInUser, resetDB } from "./testUtils.ts";
 
 let page1: Page;
