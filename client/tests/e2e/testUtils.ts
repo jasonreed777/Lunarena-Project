@@ -1,4 +1,12 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type APIRequestContext } from "@playwright/test";
+
+/**
+ * Reset the server's in-memory database back to its default state.
+ * Call this in beforeEach to get a clean slate for each test.
+ */
+export async function resetDB(request: APIRequestContext) {
+  await request.post("http://localhost:8000/api/testing/reset");
+}
 
 /**
  * Log a user in with a username and password, and wait for successful

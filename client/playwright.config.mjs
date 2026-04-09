@@ -39,9 +39,11 @@ export default defineConfig({
     {
       name: "Server",
       cwd: "..",
-      command: "npm run dev -w=server",
-      reuseExistingServer: !process.env.CI,
-      url: "http://localhost:8000",
+      command: "npm run dev:e2e -w=server",
+      // Never reuse an existing server — E2E tests need the in-memory test server,
+      // not a dev server connected to a real database.
+      reuseExistingServer: false,
+      url: "http://localhost:8000/api/auth/get-session",
     },
   ],
 });

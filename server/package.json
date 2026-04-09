@@ -9,6 +9,7 @@
     "prettier:fix": "prettier --ignore-path ../.gitignore --write .",
     "test": "vitest run --coverage",
     "dev": "nodemon --watch src --exec node ./src/server.ts",
+    "dev:e2e": "node ./src/test-server.ts",
     "start": "MODE=production node ./src/server.ts",
     "vitest": "vitest"
   },

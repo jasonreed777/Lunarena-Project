@@ -69,9 +69,10 @@ export default function App() {
       socket?.connect();
       // Username pulled from socket on server side, join string is placeholder, needed for notifications and dms
       socket?.emit("dmChatJoin", "join");
-    } else {
-      socket?.disconnect();
     }
+    return () => {
+      socket?.disconnect();
+    };
   }, [auth]);
 
   useEffect(() => {
