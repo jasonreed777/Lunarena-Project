@@ -19,13 +19,23 @@ import { logSocketError } from "./socket.controller.ts";
  * starts with one player, the user who made the POST request.
  */
 export const postCreate: RestAPI<GameInfo> = async (req, res) => {
-  const body = z.object({ payload: zGameKey }).safeParse(req.body);
+  const body = z
+    .object({
+      payload: zGameKey,
+      isTutorial: z.boolean().optional(),
+    })
+    .safeParse(req.body);
   if (!body.success) {
     res.status(400).send({ error: "Poorly-formed request" });
     return;
   }
 
-  const game = await createGame(req.authUser, body.data.payload, new Date());
+  const game = await createGame(
+    req.authUser,
+    body.data.payload,
+    new Date(),
+    body.data.isTutorial ?? false,
+  );
   res.send(game);
 };
 
@@ -160,15 +170,21 @@ export const socketMakeMove: SocketAPI = (socket, io) => async (body) => {
   try {
     const { gameId, move } = zGameMakeMovePayload.parse(body);
     const user = socket.data.user;
-    const { views, moveDescription, chatId } = await updateGame(gameId, user, move);
+    const { views, moveLogs, chatId } = await updateGame(gameId, user, move);
     sendViewUpdates(io, gameId, views);
 
-    // Store the move description suffix and broadcast to the chat room
     const now = new Date();
-    const moveLogPayload = await addMoveLogToChat(chatId, moveDescription, user, now);
 
-    // Broadcast the move log to the chat room
-    io.to(chatId).emit("chatMoveLog", moveLogPayload);
+    for (const moveLog of moveLogs) {
+      const moveLogPayload = await addMoveLogToChat(
+        chatId,
+        moveLog.moveDescription,
+        moveLog.user,
+        now,
+      );
+
+      io.to(chatId).emit("chatMoveLog", moveLogPayload);
+    }
   } catch (err) {
     logSocketError(socket, err);
   }
