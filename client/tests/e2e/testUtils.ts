@@ -1,5 +1,10 @@
 import { expect, type Page } from "@playwright/test";
 
+const gameNameById: Record<string, string> = {
+  nim: "Nim",
+  guess: "Number Guesser",
+};
+
 /**
  * Log a user in with a username and password, and wait for successful
  * post-login redirect to the home page
@@ -82,7 +87,7 @@ export async function createAndLoadGame(
   const topGame = page2.getByRole("listitem").first();
   await expect(topGame).toBeVisible();
 
-  await topGame.getByText("Nim", { exact: true }).click();
+  await topGame.getByText(gameNameById[gameId], { exact: true }).click();
   // Join waiting room for the game created by user1
   const joinGameButton = page2.getByRole("button", { name: "Join Game" });
   await expect(joinGameButton).toBeVisible({ timeout: 10000 });

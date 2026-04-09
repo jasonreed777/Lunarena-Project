@@ -19,10 +19,8 @@ test.afterEach(async () => {
 });
 
 test.describe("Chat in the context of a Nim game", () => {
-  let username1: string;
-
   test.beforeEach(async () => {
-    username1 = await createAndLoadGame(page1, page2, "nim", true, false);
+    await createAndLoadGame(page1, page2, "nim", true, false);
   });
 
   test("avoids race conditions", async () => {
@@ -47,13 +45,12 @@ test.describe("Chat in the context of a Nim game", () => {
 
     // By leaving the page and coming back, we erase the messages delivered via websockets, and
     // have to go back to the database to ask what messages exist
-    await page2.getByRole("link", { name: "Games" }).click();
-    await expect(page2.getByRole("listitem").filter({ hasText: username1 })).toHaveCount(1);
-    await page2
-      .getByRole("listitem")
-      .filter({ hasText: username1 })
-      .getByRole("link", { name: /^A game of.+/ })
-      .click();
+    await page2.getByRole("link", { name: /^Games$/ }).click();
+    await expect(page2).toHaveURL(/\/games$/);
+
+    const topGame = page2.getByRole("listitem").first();
+    await expect(topGame).toBeVisible();
+    await topGame.getByText("Nim", { exact: true }).click();
 
     for (let i = 0; i < 10; i += 1) {
       // Based on how we expect the race condition in chat.service.ts to work, *one* of the messages
