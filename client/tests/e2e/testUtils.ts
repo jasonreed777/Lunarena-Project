@@ -99,12 +99,11 @@ export async function createAndLoadGame(
   // Join waiting room for the game created by user1
   const joinGameButton = page2.getByRole("button", { name: "Join Game" });
   await expect(joinGameButton).toBeVisible({ timeout: 10000 });
-  await joinGameButton.click();
-
   if (doAssess) {
     await expect(page1.getByText("waiting for game to begin")).toBeVisible();
     await expect(page2.getByText("waiting for game to begin")).toBeVisible();
   }
+  await joinGameButton.click();
 
   if (doAssess) {
     await expect(page1.getByText("you are player #1")).toBeVisible();
