@@ -13,6 +13,8 @@ import type { FriendshipRecord, GameRecord, ThreadRecord } from "./models.ts";
 import { createChat } from "./services/game-chat.service.ts";
 import { createUser, updateUser } from "./services/user.service.ts";
 
+const TUTORIAL_BOT_USERNAME = "tutorialbot";
+
 /** Reset stored games with example data. */
 async function resetStoredGames() {
   const user0id = (await getUserByUsername("user0"))!.userId;
@@ -30,6 +32,8 @@ async function resetStoredGames() {
       players: [user2id, user3id],
       createdAt: new Date("2025-04-21").toISOString(),
       createdBy: user2id,
+      isTutorial: false,
+      botPlayerIndex: null,
     },
     [randomUUID().toString()]: {
       type: "guess",
@@ -39,6 +43,8 @@ async function resetStoredGames() {
       players: [user1id, user0id, user3id, user2id],
       createdAt: recently.toISOString(),
       createdBy: user1id,
+      isTutorial: false,
+      botPlayerIndex: null,
     },
     [randomUUID().toString()]: {
       type: "nim",
@@ -47,6 +53,8 @@ async function resetStoredGames() {
       players: [user1id],
       createdAt: new Date().toISOString(),
       createdBy: user1id,
+      isTutorial: false,
+      botPlayerIndex: null,
     },
   };
 
@@ -118,11 +126,13 @@ async function resetStoredUsers() {
   await createUser("user1", "pwd1111");
   await createUser("user2", "pwd2222");
   await createUser("user3", "pwd3333");
+  await createUser(TUTORIAL_BOT_USERNAME, "pwdBot");
 
   await updateUser("user0", { display: "The Knight Of Games" });
   await updateUser("user1", { display: "Yāo" });
   await updateUser("user2", { display: "Sénior Dos" });
   await updateUser("user3", { display: "Frau Drei" });
+  await updateUser(TUTORIAL_BOT_USERNAME, { display: "Tutorial Bot" });
 }
 
 /** Reset stored friendships with example data */
