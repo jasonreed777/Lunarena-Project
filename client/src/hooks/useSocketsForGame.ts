@@ -39,6 +39,8 @@ export default function useSocketsForGame(gameId: string, initialPlayers: SafeUs
       if (!view) return;
       if (userPlayerIndex >= 0 && !view.forPlayer) return;
       setView(view);
+      // Triggers a profile update to refresh points and achievements in header/profile
+      window.dispatchEvent(new Event("profile-updated"));
     };
 
     socket.on("gameWatched", handleWatched);

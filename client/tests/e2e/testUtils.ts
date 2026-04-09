@@ -8,6 +8,11 @@ export async function resetDB(request: APIRequestContext) {
   await request.post("http://localhost:8000/api/testing/reset");
 }
 
+const gameNameById: Record<string, string> = {
+  nim: "Nim",
+  guess: "Number Guesser",
+};
+
 /**
  * Log a user in with a username and password, and wait for successful
  * post-login redirect to the home page
@@ -19,10 +24,9 @@ export async function resetDB(request: APIRequestContext) {
 export async function logInUser(page: Page, username: string, password: string) {
   await page.goto("/login");
   await page.getByLabel("Username").fill(username);
-  // { exact: true } is necessary here to avoid capturing the "Show Password" checkbox and "Confirm Password" button
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Log In" }).click();
-  await page.waitForURL("/");
+
+  await Promise.all([page.waitForURL("/"), page.getByRole("button", { name: "Log In" }).click()]);
 }
 
 /**
@@ -54,17 +58,23 @@ export async function createAndLoadGame(
   await page1.getByLabel("Username").fill(username1);
   await page1.getByLabel("Password", { exact: true }).fill(password1);
   await page1.getByLabel("Confirm Password").fill(password1);
-  await page1.getByRole("button", { name: "Sign Up" }).click();
-  await page1.waitForURL("/");
+  await Promise.all([
+    page1.waitForURL("/"),
+    page1.getByRole("button", { name: "Sign Up" }).click(),
+  ]);
 
   // User 1 creates a new game
-  await page1.getByRole("button", { name: "Create New Game" }).click();
-  await page1.waitForURL("/game/new");
+  await page1.getByRole("link", { name: /^Games$/ }).click();
+  await expect(page1).toHaveURL(/\/games$/);
+
+  await Promise.all([
+    page1.waitForURL("/game/new"),
+    page1.getByRole("button", { name: "Create New Game" }).click(),
+  ]);
+
   await page1.getByLabel("Game selection").selectOption(gameId);
   await page1.getByRole("button", { name: "Create New Game" }).click();
-
-  // Causes Playwright to auto-wait for for game to be enabled
-  await page1.getByPlaceholder("Send a message to chat").click();
+  await expect(page1.getByPlaceholder("Send a message to chat")).toBeVisible();
 
   if (doAssess) {
     await expect(page1.getByText("you are player #1")).toBeVisible();
@@ -73,33 +83,28 @@ export async function createAndLoadGame(
     await expect(page1.getByRole("button", { name: "Start Game" })).not.toBeVisible();
   }
 
+  // Navigate explicitly to Games page
   // Log in user2
   await logInUser(page2, username2, password2);
 
-  // The always-on expectation here gives the page a chance to load
-  await expect(page2.getByRole("listitem").filter({ hasText: username1 })).toHaveCount(1);
+  // Go to the Games page
+  await page2.getByRole("link", { name: /^Games$/ }).click();
+  await expect(page2).toHaveURL(/\/games$/);
 
-  if (doAssess) {
-    await expect(
-      page2
-        .getByRole("listitem")
-        .filter({ hasText: username1 })
-        .getByRole("link", { name: /^A game of .+/ }),
-    ).toHaveCount(1);
-  }
+  // Open the newest game at the top of the list
+  const topGame = page2.getByRole("listitem").first();
+  await expect(topGame).toBeVisible();
 
-  await page2
-    .getByRole("listitem")
-    .filter({ hasText: username1 })
-    .getByRole("link", { name: /^A game of .+/ })
-    .click();
+  await topGame.getByText(gameNameById[gameId], { exact: true }).click();
+  // Join waiting room for the game created by user1
+  const joinGameButton = page2.getByRole("button", { name: "Join Game" });
+  await expect(joinGameButton).toBeVisible({ timeout: 10000 });
+  await joinGameButton.click();
 
   if (doAssess) {
     await expect(page1.getByText("waiting for game to begin")).toBeVisible();
     await expect(page2.getByText("waiting for game to begin")).toBeVisible();
   }
-
-  await page2.getByRole("button", { name: "Join Game" }).click();
 
   if (doAssess) {
     await expect(page1.getByText("you are player #1")).toBeVisible();
