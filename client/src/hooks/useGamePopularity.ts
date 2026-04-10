@@ -1,7 +1,8 @@
-import type { Game, GameInfo } from "@gamenite/shared";
+import type { Game, GameInfo, GameKey } from "@gamenite/shared";
 import { useEffect, useState } from "react";
 import { gameList } from "../services/gameService.ts";
 import type { LeaderboardProps } from "../util/types.ts";
+import { gameNames } from "../util/consts.ts";
 
 // parses each game in the game list and records the total number of plays alongisde the name
 const getRankingsForGameList = (gameList: GameInfo[]): Record<Game, number> => {
@@ -21,7 +22,7 @@ const getRankingsForGameList = (gameList: GameInfo[]): Record<Game, number> => {
 const parseRankings = (dummy: Record<Game, number>): LeaderboardProps => {
   const parsed = Object.entries(dummy).sort((a, b) => b[1] - a[1]);
   return parsed.map(([key, value]) => ({
-    name: key,
+    name: gameNames[key as GameKey],
     pointsTotal: value,
   }));
 };
