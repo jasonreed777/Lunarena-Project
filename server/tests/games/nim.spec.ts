@@ -85,17 +85,13 @@ describe(`Nim's describeMove() logic`, () => {
   it("Should describe taking tokens with remaining", () => {
     const prevState = { remaining: 5, nextPlayer: 0 };
     const newState = { remaining: 3, nextPlayer: 1 };
-    expect(nimLogic.describeMove(prevState, newState, 2, 0)).toBe(
-      " took two tokens, leaving 3",
-    );
+    expect(nimLogic.describeMove(prevState, newState, 2, 0)).toBe(" took two tokens, leaving 3");
   });
 
   it("Should describe taking three tokens", () => {
     const prevState = { remaining: 10, nextPlayer: 0 };
     const newState = { remaining: 7, nextPlayer: 1 };
-    expect(nimLogic.describeMove(prevState, newState, 3, 0)).toBe(
-      " took three tokens, leaving 7",
-    );
+    expect(nimLogic.describeMove(prevState, newState, 3, 0)).toBe(" took three tokens, leaving 7");
   });
 });
 

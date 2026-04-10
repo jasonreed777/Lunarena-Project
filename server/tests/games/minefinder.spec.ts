@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import {
-  mineFinderLogic,
-  generateMineBoard,
-  getStatus,
-} from "../../src/games/minefinder.ts";
+import { mineFinderLogic, generateMineBoard, getStatus } from "../../src/games/minefinder.ts";
 import type { MineFinderState } from "@gamenite/shared";
 
 afterEach(() => {
@@ -113,13 +109,31 @@ describe("getStatus", () => {
   });
 
   it("should return 'playing' on easy when only one mine is clicked", () => {
-    const state = boardWithMines(3, 3, [[0, 0], [1, 1], [2, 2]], "easy");
+    const state = boardWithMines(
+      3,
+      3,
+      [
+        [0, 0],
+        [1, 1],
+        [2, 2],
+      ],
+      "easy",
+    );
     state.clicked[0][0] = true;
     expect(getStatus(state)).toBe("playing");
   });
 
   it("should return 'lost' on easy when two mines are clicked", () => {
-    const state = boardWithMines(3, 3, [[0, 0], [1, 1], [2, 2]], "easy");
+    const state = boardWithMines(
+      3,
+      3,
+      [
+        [0, 0],
+        [1, 1],
+        [2, 2],
+      ],
+      "easy",
+    );
     state.clicked[0][0] = true;
     state.clicked[1][1] = true;
     expect(getStatus(state)).toBe("lost");
@@ -159,9 +173,11 @@ describe("mineFinderLogic.update", () => {
 
   it("should accept a valid cell click", () => {
     const state = boardWithMines(3, 3, [[2, 2]]);
-    const result = mineFinderLogic.update(state, [0, 0], 0);
+    const result = mineFinderLogic.update(state, [0, 0], 0) as MineFinderState & {
+      state: "started";
+    };
     expect(result).not.toBeNull();
-    expect(result!.clicked[0][0]).toBe(true);
+    expect(result.clicked[0][0]).toBe(true);
   });
 
   it("should reject clicking an already-clicked cell", () => {
@@ -201,12 +217,14 @@ describe("mineFinderLogic.update", () => {
   it("should flood-fill when clicking a cell with zero neighboring bombs", () => {
     // 3x3 board with mine only at [2,2]
     const state = boardWithMines(3, 3, [[2, 2]]);
-    const result = mineFinderLogic.update(state, [0, 0], 0);
+    const result = mineFinderLogic.update(state, [0, 0], 0) as MineFinderState & {
+      state: "started";
+    };
     expect(result).not.toBeNull();
     // [0,0] has 0 neighbor bombs → should flood to reveal adjacent non-mine cells
-    expect(result!.clicked[0][0]).toBe(true);
-    expect(result!.clicked[0][1]).toBe(true);
-    expect(result!.clicked[1][0]).toBe(true);
+    expect(result.clicked[0][0]).toBe(true);
+    expect(result.clicked[0][1]).toBe(true);
+    expect(result.clicked[1][0]).toBe(true);
   });
 });
 

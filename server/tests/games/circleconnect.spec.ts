@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  circleconnectLogic,
-  generatePuzzle,
-} from "../../src/games/circleconnect.ts";
+import { circleconnectLogic, generatePuzzle } from "../../src/games/circleconnect.ts";
 import type { CircleConnectState, GridPosition } from "@gamenite/shared";
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -100,12 +97,7 @@ describe("generatePuzzle", () => {
     // Use a random that always returns 0 — this makes path growth fail quickly
     // because growPath always picks the same neighbor, causing many short paths
     // that can't merge down to the target count on a large grid with many pairs
-    let calls = 0;
-    const badRandom = () => {
-      calls++;
-      // Return 0 to force worst-case path growth
-      return 0;
-    };
+    const badRandom = () => 0;
     // Request a difficult configuration that's unlikely to succeed with random=0
     const puzzle = generatePuzzle(9, 8, badRandom);
     // Should still produce a valid puzzle via fallback
@@ -279,9 +271,7 @@ describe("circleconnectLogic.update", () => {
 
   it("should reject an invalid pairId", () => {
     const state = makeUnsolvedState();
-    expect(
-      circleconnectLogic.update(state, { pairId: 5, path: [] }, 0),
-    ).toBeNull();
+    expect(circleconnectLogic.update(state, { pairId: 5, path: [] }, 0)).toBeNull();
   });
 
   it("should accept a valid path connecting markers", () => {
@@ -316,12 +306,28 @@ describe("circleconnectLogic.update", () => {
     const state: CircleConnectState = {
       gridSize: 3,
       markers: [
-        { id: 0, positions: [{ row: 0, col: 0 }, { row: 0, col: 2 }] },
-        { id: 1, positions: [{ row: 2, col: 0 }, { row: 2, col: 2 }] },
+        {
+          id: 0,
+          positions: [
+            { row: 0, col: 0 },
+            { row: 0, col: 2 },
+          ],
+        },
+        {
+          id: 1,
+          positions: [
+            { row: 2, col: 0 },
+            { row: 2, col: 2 },
+          ],
+        },
       ],
       paths: [
         // Pair 0 already has a path through the middle
-        [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }],
+        [
+          { row: 0, col: 0 },
+          { row: 0, col: 1 },
+          { row: 0, col: 2 },
+        ],
         [],
       ],
       moveCount: 1,
@@ -341,8 +347,20 @@ describe("circleconnectLogic.update", () => {
     const state: CircleConnectState = {
       gridSize: 4,
       markers: [
-        { id: 0, positions: [{ row: 0, col: 0 }, { row: 0, col: 3 }] },
-        { id: 1, positions: [{ row: 0, col: 1 }, { row: 3, col: 0 }] },
+        {
+          id: 0,
+          positions: [
+            { row: 0, col: 0 },
+            { row: 0, col: 3 },
+          ],
+        },
+        {
+          id: 1,
+          positions: [
+            { row: 0, col: 1 },
+            { row: 3, col: 0 },
+          ],
+        },
       ],
       paths: [[], []],
       moveCount: 0,
@@ -431,7 +449,13 @@ describe("circleconnectLogic.describeMove", () => {
     const result = circleconnectLogic.describeMove(
       makeUnsolvedState(),
       makeUnsolvedState(),
-      { pairId: 0, path: [{ row: 0, col: 0 }, { row: 0, col: 1 }] },
+      {
+        pairId: 0,
+        path: [
+          { row: 0, col: 0 },
+          { row: 0, col: 1 },
+        ],
+      },
       0,
     );
     expect(result).toBe(" drew a path for pair 1");
