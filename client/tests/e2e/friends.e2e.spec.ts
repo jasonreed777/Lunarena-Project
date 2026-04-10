@@ -1,16 +1,18 @@
 import { expect, test, type BrowserContext, type Page } from "playwright/test";
-import { createAccount } from "./testUtils";
+import { createAccount, resetDB } from "./testUtils";
 
 let userContext1: BrowserContext;
 let userContext2: BrowserContext;
 let page1: Page;
 let page2: Page;
 
-test.beforeEach(async ({ browser }) => {
+test.beforeEach(async ({ browser, request }) => {
   userContext1 = await browser.newContext();
   userContext2 = await browser.newContext();
   page1 = await userContext1.newPage();
   page2 = await userContext2.newPage();
+
+  await resetDB(request);
 });
 
 test.afterEach(async () => {
