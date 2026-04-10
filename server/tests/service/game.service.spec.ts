@@ -48,6 +48,12 @@ describe("createGame", () => {
     expect(game.type).toBe("nim");
   });
 
+  it("should throw when creating a tutorial for a single-player game type", async () => {
+    await expect(createGame(user0, "minesweeper", new Date(), true)).rejects.toThrow(
+      "single-player game and does not support tutorials",
+    );
+  });
+
   it("should create a tutorial guess game with bot player and active status", async () => {
     const game = await createGame(user0, "guess", new Date(), true);
     expect(game.status).toBe("active");
@@ -60,6 +66,13 @@ describe("createGame", () => {
 describe("joinGame", () => {
   it("should throw when joining a nonexistent game", async () => {
     return expect(joinGame("nonexistent-id", user0)).rejects.toThrow("joining invalid game");
+  });
+
+  it("should throw when joining a daily game", async () => {
+    // Create a game and mark it as daily
+    const game = await createGame(user0, "nim", new Date());
+    await GameModel.findByIdAndUpdate(game.gameId, { isDaily: true });
+    return expect(joinGame(game.gameId, user1)).rejects.toThrow("cannot join a daily game");
   });
 
   it("should throw when joining a game that already started", async () => {

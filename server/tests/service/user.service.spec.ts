@@ -1,6 +1,32 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { describe, it, expect, vi } from "vitest";
 
+describe("populateSafeUserInfo", () => {
+  it("should throw if given an invalid user id", async () => {
+    vi.resetModules();
+
+    vi.doMock("../../src/services/auth.service.ts", () => ({
+      getUserByUsername: vi.fn(),
+      createAuthAccount: vi.fn(),
+    }));
+
+    vi.doMock("../../src/mongoose-models.ts", () => ({
+      UserModel: {
+        findById: vi.fn().mockReturnValue({
+          lean: vi.fn().mockResolvedValue(null),
+        }),
+      },
+      ClanMemberModel: {},
+    }));
+
+    const { populateSafeUserInfo } = await import("../../src/services/user.service.ts");
+
+    await expect(populateSafeUserInfo("nonexistent-id")).rejects.toThrow(
+      "Failed to find user nonexistent-id",
+    );
+  });
+});
+
 describe("createUser", () => {
   it("should return an error if user already exists", async () => {
     vi.resetModules();

@@ -51,6 +51,40 @@ describe(`Guessing game's isDone() logic`, () => {
   });
 });
 
+describe(`Guessing game's describeMove() logic`, () => {
+  it("Should reveal the secret when all players have guessed", () => {
+    const prevState = { secret: 44, guesses: [10, null] };
+    const newState = { secret: 44, guesses: [10, 50] };
+    expect(guessLogic.describeMove(prevState, newState, 50, 1)).toBe(
+      ` guessed 50 — the secret was 44!`,
+    );
+  });
+
+  it("Should say 'made a guess' when not all players have guessed", () => {
+    const prevState = { secret: 44, guesses: [null, null, null] };
+    const newState = { secret: 44, guesses: [10, null, null] };
+    expect(guessLogic.describeMove(prevState, newState, 10, 0)).toBe(` made a guess`);
+  });
+});
+
+describe(`Guessing game's winnerIndex() logic`, () => {
+  it("Should return undefined if not all players have guessed", () => {
+    expect(guessLogic.winnerIndex!({ secret: 50, guesses: [10, null] }, 2)).toBeUndefined();
+  });
+
+  it("Should return the index of the closest guesser", () => {
+    expect(guessLogic.winnerIndex!({ secret: 50, guesses: [40, 60, 55] }, 3)).toBe(2);
+  });
+
+  it("Should return the first closest player on a tie", () => {
+    expect(guessLogic.winnerIndex!({ secret: 50, guesses: [45, 55] }, 2)).toBe(0);
+  });
+
+  it("Should return exact match winner", () => {
+    expect(guessLogic.winnerIndex!({ secret: 50, guesses: [10, 50] }, 2)).toBe(1);
+  });
+});
+
 describe(`Guessing game's viewAs() logic`, () => {
   it("Should include only who has guessed for anonymous viewers, unless finished", () => {
     expect(guessLogic.viewAs({ secret: 44, guesses: [null, null, 33] }, -1)).toStrictEqual({

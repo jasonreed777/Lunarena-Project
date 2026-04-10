@@ -571,6 +571,25 @@ describe("respondToInvite", () => {
     expect("error" in result!).toBe(true);
     expect((result as { error: string }).error).toContain("Not authorized");
   });
+
+  it("should return error when accepting a join request if user already joined another clan", async () => {
+    // Create a private clan where user1 sends a join request
+    const privateClan = (await createTestClan(user0, {
+      name: "PrivateClan",
+      isPublic: false,
+    })) as ClanInfo;
+    const requestResult = (await joinClan(user1, privateClan.clanId, new Date())) as ClanInviteInfo;
+
+    // user1 joins a different public clan while the request is pending
+    const publicClan = (await createTestClan(user2, { name: "PublicClan" })) as ClanInfo;
+    await joinClan(user1, publicClan.clanId, new Date());
+
+    // Owner accepts the request → should fail because user1 already joined another clan
+    const result = await respondToInvite(user0, requestResult.inviteId, "accept");
+    expect(result).not.toBeNull();
+    expect("error" in result!).toBe(true);
+    expect((result as { error: string }).error).toBe("User has joined another clan");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -641,6 +660,21 @@ describe("getClanInvites", () => {
     const result = await getClanInvites(user0, clan.clanId);
     expect(Array.isArray(result)).toBe(true);
     expect((result as ClanInviteInfo[]).length).toBe(2);
+  });
+
+  it("should auto-reject invites for users who already joined a clan", async () => {
+    const clanA = (await createTestClan(user0, { name: "ClanA" })) as ClanInfo;
+    // Invite user1 to clanA
+    await inviteUser(user0, clanA.clanId, "user1", new Date());
+
+    // user1 joins a different clan before accepting
+    const clanB = (await createTestClan(user2, { name: "ClanB" })) as ClanInfo;
+    await joinClan(user1, clanB.clanId, new Date());
+
+    // getClanInvites should auto-reject user1's invite
+    const result = await getClanInvites(user0, clanA.clanId);
+    expect(Array.isArray(result)).toBe(true);
+    expect((result as ClanInviteInfo[]).length).toBe(0);
   });
 });
 
@@ -789,6 +823,43 @@ describe("updateMemberRole", () => {
     const result = await updateMemberRole(user1, clan.clanId, "user0", "member");
     expect("error" in result).toBe(true);
     expect((result as { error: string }).error).toContain("Cannot change owner's role");
+  });
+
+  it("should return error when a member tries to demote another member", async () => {
+    const clan = (await createTestClan(user0)) as ClanInfo;
+    await joinClan(user1, clan.clanId, new Date());
+    await joinClan(user2, clan.clanId, new Date());
+    // member tries to change another member's role to "member" (not admin, so skips the admin-only check)
+    const result = await updateMemberRole(user1, clan.clanId, "user2", "member");
+    expect("error" in result).toBe(true);
+    expect((result as { error: string }).error).toBe("Not authorized");
+  });
+
+  it("should return error when target username does not exist", async () => {
+    const clan = (await createTestClan(user0)) as ClanInfo;
+    const result = await updateMemberRole(user0, clan.clanId, "ghost_user", "admin");
+    expect("error" in result).toBe(true);
+    expect((result as { error: string }).error).toBe("User not found");
+  });
+
+  it("should return error when target user is not a member of the clan", async () => {
+    const clan = (await createTestClan(user0)) as ClanInfo;
+    // user1 exists but is not in the clan
+    const result = await updateMemberRole(user0, clan.clanId, "user1", "admin");
+    expect("error" in result).toBe(true);
+    expect((result as { error: string }).error).toBe("User is not a member of this clan");
+  });
+
+  it("should return error when admin tries to demote another admin", async () => {
+    const clan = (await createTestClan(user0)) as ClanInfo;
+    await joinClan(user1, clan.clanId, new Date());
+    await joinClan(user2, clan.clanId, new Date());
+    await updateMemberRole(user0, clan.clanId, "user1", "admin");
+    await updateMemberRole(user0, clan.clanId, "user2", "admin");
+    // admin1 tries to demote admin2
+    const result = await updateMemberRole(user1, clan.clanId, "user2", "member");
+    expect("error" in result).toBe(true);
+    expect((result as { error: string }).error).toBe("Only the owner can demote admins");
   });
 });
 

@@ -67,6 +67,49 @@ describe(`Nim's isDone() logic`, () => {
   });
 });
 
+describe(`Nim's describeMove() logic`, () => {
+  it("Should describe a forfeit move", () => {
+    const prevState = { remaining: 10, nextPlayer: 0 };
+    const newState = { remaining: 0, nextPlayer: 1, forfeited: true };
+    expect(nimLogic.describeMove(prevState, newState, 0, 0)).toBe(" forfeited the game");
+  });
+
+  it("Should describe taking the last token and losing", () => {
+    const prevState = { remaining: 1, nextPlayer: 0 };
+    const newState = { remaining: 0, nextPlayer: 1 };
+    expect(nimLogic.describeMove(prevState, newState, 1, 0)).toBe(
+      " took one token and lost the game",
+    );
+  });
+
+  it("Should describe taking tokens with remaining", () => {
+    const prevState = { remaining: 5, nextPlayer: 0 };
+    const newState = { remaining: 3, nextPlayer: 1 };
+    expect(nimLogic.describeMove(prevState, newState, 2, 0)).toBe(
+      " took two tokens, leaving 3",
+    );
+  });
+
+  it("Should describe taking three tokens", () => {
+    const prevState = { remaining: 10, nextPlayer: 0 };
+    const newState = { remaining: 7, nextPlayer: 1 };
+    expect(nimLogic.describeMove(prevState, newState, 3, 0)).toBe(
+      " took three tokens, leaving 7",
+    );
+  });
+});
+
+describe(`Nim's winnerIndex() logic`, () => {
+  it("Should return undefined when the game is not over", () => {
+    expect(nimLogic.winnerIndex!({ remaining: 5, nextPlayer: 0 }, 2)).toBeUndefined();
+  });
+
+  it("Should return nextPlayer as winner when remaining is 0", () => {
+    expect(nimLogic.winnerIndex!({ remaining: 0, nextPlayer: 1 }, 2)).toBe(1);
+    expect(nimLogic.winnerIndex!({ remaining: 0, nextPlayer: 0 }, 2)).toBe(0);
+  });
+});
+
 describe(`Nim's viewAs() logic`, () => {
   it("Should view games the same way regardless of who is viewing", () => {
     expect(nimLogic.viewAs({ remaining: 3, nextPlayer: 0 }, -1)).toStrictEqual({
