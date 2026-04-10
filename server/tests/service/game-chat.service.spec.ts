@@ -43,6 +43,16 @@ describe("game-chat.service", () => {
         moveLog: [],
       });
     });
+    it("should throw if created chat cannot be found afterward", async () => {
+      vi.spyOn(mongooseModels.GameChatModel, "create").mockResolvedValue({} as never);
+      vi.spyOn(mongooseModels.GameChatModel, "findById").mockReturnValue({
+        lean: vi.fn().mockResolvedValue(null),
+      } as never);
+
+      await expect(
+        gameChatService.createChat(new Date("2026-04-10T00:00:00.000Z")),
+      ).rejects.toThrow(/Failed to find chat/);
+    });
   });
 
   describe("forceChatById", () => {
