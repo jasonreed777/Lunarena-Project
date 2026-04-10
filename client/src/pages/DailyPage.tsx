@@ -146,7 +146,6 @@ export default function DailyPage() {
     return () => window.removeEventListener("focus", fetchAll);
   }, []);
 
-
   const handlePlay = async (gameType: DailyGameType) => {
     setLoading(gameType);
     const res = await getDailyGame(gameType);
@@ -192,7 +191,12 @@ export default function DailyPage() {
               const categoryColor = categoryColors[obj.category] ?? accentColor;
 
               return (
-                <ObjectiveCard key={obj.objectiveId} bg={theme.navBar} completed={obj.completed} isLight={isLight}>
+                <ObjectiveCard
+                  key={obj.objectiveId}
+                  bg={theme.navBar}
+                  completed={obj.completed}
+                  isLight={isLight}
+                >
                   <ObjectiveRow>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1 }}>
                       <span

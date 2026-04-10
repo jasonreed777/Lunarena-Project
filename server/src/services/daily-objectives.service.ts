@@ -31,7 +31,6 @@ interface ObjectiveDefinition {
 
 const GAME_TYPES = ["nim", "guess", "minesweeper", "circleconnect"] as const;
 
-
 const OBJECTIVE_CATALOG: ObjectiveDefinition[] = [
   // --- GAME ---
   {
@@ -181,7 +180,7 @@ export function selectDailyObjectives(dateStr: string): SelectedObjective[] {
   }
 
   const selected: SelectedObjective[] = [];
-  for (const category of categories) { 
+  for (const category of categories) {
     if (selected.length >= 3) break;
     const pool = byCategory.get(category)!;
 
