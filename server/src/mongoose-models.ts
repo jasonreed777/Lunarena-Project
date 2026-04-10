@@ -24,6 +24,7 @@ import type {
   DMChatMessageRecord,
   CommentVoteRecord,
   NotificationRecord,
+  DailyObjectiveProgressRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
@@ -380,3 +381,23 @@ export const DailyGameModel = mongoose.model<DailyGameRecord & { _id: string }>(
   "dailyGame",
   dailyGameSchema,
 );
+
+// DailyObjectiveProgress: tracks a user's progress on a single daily objective (_id = UUID)
+const dailyObjectiveProgressSchema = new Schema(
+  {
+    _id: String,
+    username: String,
+    date: String,
+    objectiveId: String,
+    target: Number,
+    current: Number,
+    completed: Boolean,
+    completedAt: String,
+    pointsAwarded: Boolean,
+  },
+  opts,
+);
+dailyObjectiveProgressSchema.index({ username: 1, date: 1, objectiveId: 1 }, { unique: true });
+export const DailyObjectiveProgressModel = mongoose.model<
+  DailyObjectiveProgressRecord & { _id: string }
+>("dailyObjectiveProgress", dailyObjectiveProgressSchema);

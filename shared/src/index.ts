@@ -25,3 +25,4 @@ export * from "./user-achievement.types.ts";
 export * from "./game-stats.types.ts";
 export * from "./notifications.types.ts";
 export * from "./daily.types.ts";
+export * from "./daily-objectives.types.ts";

@@ -4,6 +4,7 @@ import { populateSafeUserInfo } from "./user.service.ts";
 import { createComment, populateCommentInfo } from "./comment.service.ts";
 import { type UserWithId } from "../types.ts";
 import { ThreadModel } from "../mongoose-models.ts";
+import { eventBus } from "./eventBus.ts";
 
 /**
  * Expand a stored thread
@@ -70,6 +71,7 @@ export async function createThread(
     createdBy: user.userId,
     comments: [],
   });
+  eventBus.emitEvent("forumThreadCreated", { username: user.username, threadId: id });
   return populateThreadInfo(id);
 }
 
@@ -123,6 +125,11 @@ export async function addCommentToThread(
   const comment = await createComment(user, text, createdAt);
   await ThreadModel.findByIdAndUpdate(possibleThreadId, {
     $push: { comments: comment.commentId },
+  });
+  eventBus.emitEvent("forumCommentPosted", {
+    username: user.username,
+    threadId: possibleThreadId,
+    commentId: comment.commentId,
   });
   return populateThreadInfo(possibleThreadId);
 }

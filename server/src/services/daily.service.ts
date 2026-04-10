@@ -8,6 +8,7 @@ import type {
 import { DailyGameModel, GameModel } from "../mongoose-models.ts";
 import { createGame, getGameById } from "./game.service.ts";
 import { awardPoints } from "./points.service.ts";
+import { eventBus } from "./eventBus.ts";
 import { seededRandomForDaily } from "../games/seededRandom.ts";
 import { generateMineBoard } from "../games/minefinder.ts";
 import { generatePuzzle as generateCircleConnectPuzzle } from "../games/circleconnect.ts";
@@ -146,6 +147,8 @@ export async function markDailyCompleted(
   record.completedAt = now.toISOString();
   record.completionTimeMs = completionTimeMs;
   await record.save();
+
+  eventBus.emitEvent("dailyCompleted", { username, gameType, gameId, won });
 
   // Check if all dailies are completed for today
   const allRecords = await DailyGameModel.find({ username, date }).lean();

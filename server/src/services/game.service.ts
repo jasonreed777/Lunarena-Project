@@ -8,6 +8,7 @@ import {
   type MineFinderState,
 } from "@gamenite/shared";
 import { createChat } from "./game-chat.service.ts";
+import { eventBus } from "./eventBus.ts";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type GameServicer } from "../games/gameServiceManager.ts";
 import { nimGameService } from "../games/nim.ts";
@@ -363,6 +364,11 @@ export async function updateGame(
       for (const playerUserId of players) {
         const player = await populateSafeUserInfo(playerUserId);
         await recordGamePlayed(player.username, game.type);
+        eventBus.emitEvent("gameCompleted", {
+          username: player.username,
+          gameType: game.type,
+          gameId,
+        });
       }
 
       // Award win points if there's a winner
@@ -373,6 +379,7 @@ export async function updateGame(
         await awardPoints(winner.username, 1, "win", `Won ${game.type} game`, gameId);
         await recordWin(winner.username, game.type);
         await checkWinAchievements(winner.username, game.type);
+        eventBus.emitEvent("gameWon", { username: winner.username, gameType: game.type, gameId });
       }
     } catch {
       // Not failing game update if stats fail

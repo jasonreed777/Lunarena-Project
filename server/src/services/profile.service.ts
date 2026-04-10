@@ -111,6 +111,7 @@ export async function updateProfile(
   if (updates.profileBorderColor !== undefined) {
     profile.profileBorderColor = updates.profileBorderColor;
   }
+
   // If online presence is being updated, calculate time played based on the previous presence status and last active time
   if (updates.onlinePresence !== undefined) {
     if (previousOnlinePresence.status === "active" && updates.onlinePresence.status === "offline") {

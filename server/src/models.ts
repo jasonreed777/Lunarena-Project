@@ -370,6 +370,28 @@ export interface DailyGameRecord {
 }
 
 /**
+ * Tracks a user's progress on a single daily objective.
+ * - `username`: the user this progress belongs to
+ * - `date`: ISO date string (YYYY-MM-DD)
+ * - `objectiveId`: which objective this tracks
+ * - `target`: required count to complete
+ * - `current`: current progress count
+ * - `completed`: whether target has been met
+ * - `completedAt`: when the objective was completed
+ * - `pointsAwarded`: whether points have been given (prevents double-awarding)
+ */
+export interface DailyObjectiveProgressRecord {
+  username: string;
+  date: string;
+  objectiveId: string;
+  target: number;
+  current: number;
+  completed: boolean;
+  completedAt?: DateISO;
+  pointsAwarded: boolean;
+}
+
+/**
  * Represents a user's overall and per-game stats.
  * - `username`: the user these stats belong to
  * - `winsTotal`: total wins across all games
