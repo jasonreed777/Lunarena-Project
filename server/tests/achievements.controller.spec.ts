@@ -3,10 +3,6 @@ import type { Request, Response } from "express";
 import { getAchievementsByUsername } from "../src/controllers/achievement.controller.ts";
 import * as achievementService from "../src/services/achievement.service.ts";
 
-vi.mock("../../src/services/achievement.service.ts", () => ({
-  getUserAchievements: vi.fn(),
-}));
-
 function createMockResponse() {
   const res = {} as Response;
   res.status = vi.fn().mockReturnValue(res);
@@ -16,7 +12,7 @@ function createMockResponse() {
 
 describe("achievement.controller", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe("getAchievementsByUsername", () => {
@@ -33,7 +29,7 @@ describe("achievement.controller", () => {
         },
       ];
 
-      vi.mocked(achievementService.getUserAchievements).mockResolvedValue(achievements);
+      vi.spyOn(achievementService, "getUserAchievements").mockResolvedValue(achievements);
 
       await getAchievementsByUsername(req, res);
 
@@ -46,9 +42,11 @@ describe("achievement.controller", () => {
       const req = { params: { username: undefined } } as unknown as Request;
       const res = createMockResponse();
 
+      const serviceSpy = vi.spyOn(achievementService, "getUserAchievements");
+
       await getAchievementsByUsername(req, res);
 
-      expect(achievementService.getUserAchievements).not.toHaveBeenCalled();
+      expect(serviceSpy).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith({ error: "invalid username" });
     });
@@ -57,7 +55,7 @@ describe("achievement.controller", () => {
       const req = { params: { username: "user0" } } as unknown as Request;
       const res = createMockResponse();
 
-      vi.mocked(achievementService.getUserAchievements).mockRejectedValue(new Error("db failed"));
+      vi.spyOn(achievementService, "getUserAchievements").mockRejectedValue(new Error("db failed"));
 
       await getAchievementsByUsername(req, res);
 

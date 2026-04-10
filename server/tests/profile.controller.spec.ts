@@ -4,9 +4,19 @@ import {
   getByUsername,
   postByUsername,
   postUploadByUsername,
+  getUploadById,
 } from "../src/controllers/profile.controller.ts";
 import { getProfileByUsername } from "../src/services/profile.service.ts";
 import { createUser } from "../src/services/user.service.ts";
+import * as profileService from "../src/services/profile.service.ts";
+
+vi.mock("../src/services/profile.service.ts", async () => {
+  const actual = await vi.importActual("../src/services/profile.service.ts");
+  return {
+    ...actual,
+    getUploadedImage: vi.fn(),
+  };
+});
 
 afterEach(() => {
   vi.resetAllMocks();
@@ -148,6 +158,61 @@ describe("profile.controller", () => {
           }),
         }),
       );
+    });
+
+    it("should reject a bad upload request body", async () => {
+      await createUser("profileUser6", "pwd1111");
+
+      const req = {
+        params: { username: "profileUser6" },
+        authUser: { userId: "any-id", username: "profileUser6" },
+        body: {
+          contentType: 123,
+          data: "abc123base64",
+        },
+      } as unknown as Parameters<typeof postUploadByUsername>[0];
+
+      const res = makeRes() as unknown as Parameters<typeof postUploadByUsername>[1];
+
+      await postUploadByUsername(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith({ error: "Poorly-formed request" });
+    });
+
+    it("should reject upload when authUser does not match the route username", async () => {
+      await createUser("profileUser7", "pwd1111");
+
+      const req = {
+        params: { username: "profileUser7" },
+        authUser: { userId: "other-id", username: "differentUser" },
+        body: {
+          contentType: "image/png",
+          data: "abc123base64",
+        },
+      } as unknown as Parameters<typeof postUploadByUsername>[0];
+
+      const res = makeRes() as unknown as Parameters<typeof postUploadByUsername>[1];
+
+      await postUploadByUsername(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith({ error: "Invalid credentials" });
+    });
+
+    it("should return 404 if uploaded image does not exist", async () => {
+      vi.spyOn(profileService, "getUploadedImage").mockRejectedValue(new Error("not found"));
+
+      const req = {
+        params: { uploadId: "missing-upload" },
+      } as unknown as Parameters<typeof getUploadById>[0];
+
+      const res = makeRes() as unknown as Parameters<typeof getUploadById>[1];
+
+      await getUploadById(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith({ error: "Uploaded image not found" });
     });
   });
 });
