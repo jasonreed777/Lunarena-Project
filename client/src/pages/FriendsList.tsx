@@ -290,7 +290,10 @@ export default function FriendsList() {
         ) : friends.length === 0 ? (
           <EmptyState message="No friends yet" themeId={theme._id} />
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}
+            id="friends-list"
+          >
             {friends.map((friend) => (
               <FriendItem
                 {...friend}

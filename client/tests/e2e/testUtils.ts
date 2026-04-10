@@ -1,12 +1,4 @@
-import { expect, type Page, type APIRequestContext } from "@playwright/test";
-
-/**
- * Reset the server's in-memory database back to its default state.
- * Call this in beforeEach to get a clean slate for each test.
- */
-export async function resetDB(request: APIRequestContext) {
-  await request.post("http://localhost:8000/api/testing/reset");
-}
+import { expect, type Page } from "@playwright/test";
 
 const gameNameById: Record<string, string> = {
   nim: "Nim",
@@ -27,6 +19,15 @@ export async function logInUser(page: Page, username: string, password: string) 
   await page.getByLabel("Password", { exact: true }).fill(password);
 
   await Promise.all([page.waitForURL("/"), page.getByRole("button", { name: "Log In" }).click()]);
+}
+
+export async function createAccount(page: Page, username: string, password: string) {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Create New Account" }).click();
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByLabel("Confirm Password").fill(password);
+  await Promise.all([page.waitForURL("/"), page.getByRole("button", { name: "Sign Up" }).click()]);
 }
 
 /**
@@ -95,15 +96,16 @@ export async function createAndLoadGame(
   const topGame = page2.getByRole("listitem").first();
   await expect(topGame).toBeVisible();
 
-  await topGame.getByText(gameNameById[gameId], { exact: true }).click();
+  await topGame.getByText("Nim", { exact: true }).click();
   // Join waiting room for the game created by user1
   const joinGameButton = page2.getByRole("button", { name: "Join Game" });
   await expect(joinGameButton).toBeVisible({ timeout: 10000 });
+  await joinGameButton.click();
+
   if (doAssess) {
     await expect(page1.getByText("waiting for game to begin")).toBeVisible();
     await expect(page2.getByText("waiting for game to begin")).toBeVisible();
   }
-  await joinGameButton.click();
 
   if (doAssess) {
     await expect(page1.getByText("you are player #1")).toBeVisible();
