@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { describe, it, expect, vi } from "vitest";
 
 describe("populateSafeUserInfo", () => {

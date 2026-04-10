@@ -102,6 +102,12 @@ export default defineConfig([
           format: null,
         },
         {
+          // Allow MongoDB operators like $in, $regex, $set, etc.
+          selector: "objectLiteralProperty",
+          filter: { regex: "^\\$", match: true },
+          format: null,
+        },
+        {
           // Usually we want to stick with camelCase for global variables, but
           // some global items want to be PascalCase: `FooModel` in the server,
           // `AuthContext` and `ThreadPage` in the frontend, `MockGameServer`
@@ -146,6 +152,24 @@ export default defineConfig([
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/unbound-method": "off",
+      // Mocking modules requires object literal properties to match PascalCase export names
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          selector: "objectLiteralProperty",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "objectLiteralProperty",
+          modifiers: ["requiresQuotes"],
+          format: null,
+        },
+        {
+          selector: "objectLiteralProperty",
+          filter: { regex: "^(_id|\\$)", match: true },
+          format: null,
+        },
+      ],
     },
   },
   {
