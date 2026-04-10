@@ -4,6 +4,7 @@ import { z } from "zod";
 import { addMessageToChat, createMessage, forceChatById } from "../services/game-chat.service.ts";
 import { populateSafeUserInfo } from "../services/user.service.ts";
 import { logSocketError } from "./socket.controller.ts";
+import { eventBus } from "../services/eventBus.ts";
 
 /**
  * Handle a socket request to join a chat: send the connection the chat's
@@ -61,6 +62,7 @@ export const socketSendMessage: SocketAPI = (socket, io) => async (body) => {
     const now = new Date();
     const message = await createMessage(user, text, now);
     await addMessageToChat(chatId, user, message.messageId);
+    eventBus.emitEvent("gamechatMessageSent", { username: user.username, chatId });
 
     // Send the message to everyone, including the sender
     io.to(chatId).emit("chatNewMessage", { chatId, message });

@@ -111,6 +111,14 @@ export default function SideBarNav() {
         <Typography.NavBar>Games</Typography.NavBar>
       </MenuButton>
       <MenuButton
+        to="/daily"
+        className={navClass}
+        selected={pathname.includes("/daily")}
+        path="/daily"
+      >
+        <Typography.NavBar>Daily</Typography.NavBar>
+      </MenuButton>
+      <MenuButton
         to="/clan"
         className={navClass}
         selected={pathname.includes("/clan")}

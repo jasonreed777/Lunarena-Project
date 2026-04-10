@@ -8,6 +8,7 @@ import { castVote } from "../services/comment.service.ts";
 import { type ThreadInfo, type ThreadSummary, zCreateThreadMessage } from "@gamenite/shared";
 import { type RestAPI } from "../types.ts";
 import { z } from "zod";
+import { eventBus } from "../services/eventBus.ts";
 
 /**
  * Handle GET requests to `/api/thread/list`. Returns all threads in reverse
@@ -89,5 +90,9 @@ export const postCommentVote: RestAPI<{ success: true }, { commentId: string }> 
     return;
   }
 
+  eventBus.emitEvent("forumVoteCast", {
+    username: req.authUser.username,
+    commentId: req.params.commentId,
+  });
   res.status(200).send({ success: true });
 };

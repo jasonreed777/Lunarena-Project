@@ -197,7 +197,7 @@ export const ClanPage: React.FC = () => {
               ) : clanLeaderboard.length === 0 ? (
                 <EmptyState message="No points earned yet" themeId={theme._id} />
               ) : (
-                <Leaderboard leaderboard={clanLeaderboard} theme={theme} />
+                <Leaderboard leaderboard={clanLeaderboard} theme={theme} type="clan" />
               )}
             </div>
           </div>
@@ -367,6 +367,7 @@ export const ClanPage: React.FC = () => {
                   }))}
                   theme={theme}
                   clickable={false}
+                  type="clan"
                 />
               )}
             </div>
@@ -645,6 +646,7 @@ export const ClanPage: React.FC = () => {
                 }))}
                 theme={theme}
                 clickable={false}
+                type="clan"
               />
             )}
           </div>

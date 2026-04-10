@@ -468,7 +468,9 @@ export default function UpdateProfile() {
                         <div className="achievement-title">
                           {gameType === "guess"
                             ? "Number Guesser"
-                            : gameType.charAt(0).toUpperCase() + gameType.slice(1)}
+                            : gameType === "circleconnect"
+                              ? "Circle Connect"
+                              : gameType.charAt(0).toUpperCase() + gameType.slice(1)}
                         </div>
                         <div className="achievement-description">
                           <div>Wins: {stats.wins}</div>

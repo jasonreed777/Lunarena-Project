@@ -19,6 +19,7 @@ import { populateSafeUserInfo } from "../services/user.service.ts";
 import { z } from "zod";
 import { getUserByUsername } from "../services/auth.service.ts";
 import { emitNotification } from "./notification.controller.ts";
+import { eventBus } from "../services/eventBus.ts";
 
 /**
  * Handle a socket request to send a direct message: store the message and
@@ -30,6 +31,7 @@ export const socketSendMessage: SocketAPI = (socket, io) => async (body) => {
     const user = socket.data.user;
     const { chatId, text } = zNewMessageRequest.parse(body);
     const { chat, message: messageDoc } = await sendMessage(user.userId, text, chatId);
+    eventBus.emitEvent("dmMessageSent", { username: user.username, chatId });
     const sender = await populateSafeUserInfo(messageDoc.sender);
     const message: MessageInfo = {
       messageId: messageDoc._id.toString(),
@@ -94,7 +96,13 @@ export const chatCreate: RestAPI = async (req, res) => {
       }
       userIds.push(userWithId.userId);
     }
-    await createChat([req.authUser.userId, ...userIds]);
+    const chat = await createChat([req.authUser.userId, ...userIds]);
+    if (chat) {
+      eventBus.emitEvent("dmChatCreated", {
+        username: req.authUser.username,
+        chatId: chat._id.toString(),
+      });
+    }
     res.status(200).send();
   } catch (err) {
     res.status(400).send("error creating chat");

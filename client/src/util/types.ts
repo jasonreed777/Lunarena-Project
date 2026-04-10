@@ -148,7 +148,7 @@ export type DailyPoints = {
  * Leaderboard props used for various leaderboards in GameNite.
  */
 export type LeaderboardProps = {
-  username: string;
+  username?: string;
   display: string;
   pointsTotal: number;
   gamesPlayedTotal?: number;
@@ -170,6 +170,7 @@ export const TrophyColorMap: Record<number, string> = {
 export const PathColorMap: Record<string, string> = {
   "/": "#25808a",
   "/games": "#e05a35",
+  "/daily": "#3f6c92",
   "/clan": "#734189",
   "/forum": "#f7cd59",
   "/messages": "#298432",

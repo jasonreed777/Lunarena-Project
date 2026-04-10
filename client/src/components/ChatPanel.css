@@ -2,4 +2,6 @@ div.chat-container {
   display: grid;
   grid-template-rows: 1fr min-content;
   padding: 1rem;
+  min-height: 0;
+  overflow: hidden;
 }

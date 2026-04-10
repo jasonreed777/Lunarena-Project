@@ -22,6 +22,8 @@ import fallback from "./fallback.tsx";
 import NewThread from "./pages/NewThread.tsx";
 import TimeContextKeeper from "./components/UpdatingTimeContext.tsx";
 import { ClanPage } from "./pages/ClanPage.tsx";
+import DailyPage from "./pages/DailyPage.tsx";
+
 import { THEME_KEY, ThemeContext } from "./contexts/ThemeContext.ts";
 import { MessagePage } from "./pages/MessagePage.tsx";
 import NotFoundPage from "./pages/404Page.tsx";
@@ -121,6 +123,8 @@ export default function App() {
               <Route path="/forum/post/new" element={<NewThread />} />
               <Route path="/forum/post/:threadId" element={<ThreadPage />} />
               <Route path="/games" element={<GameList />} />
+              <Route path="/daily" element={<DailyPage />} />
+
               <Route path="/friends" element={<FriendsList />} />
               <Route path="/messages" element={<MessagePage />} />
               <Route path="/messages/:chatId" element={<MessagePage />} />
