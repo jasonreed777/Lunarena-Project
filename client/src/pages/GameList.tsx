@@ -71,7 +71,7 @@ export default function GameList() {
           </Button>
         </div>
         <div>
-          <Subtitle>Most Popular Games</Subtitle>
+          <Subtitle>Most Popular</Subtitle>
           <Divider color={theme.text} style={{ marginBottom: "20px" }} />
           <Leaderboard leaderboard={gamePopularityList.slice(0, 3)} theme={theme} type="games" />
         </div>
@@ -80,7 +80,7 @@ export default function GameList() {
             gameList.message
           ) : (
             <div>
-              <Subtitle>Recently Played Games</Subtitle>
+              <Subtitle>Recently Played</Subtitle>
               <Divider color={theme.text} style={{ marginBottom: "20px" }} />
               {gameList.map((game, index) => (
                 <GameSummaryView
