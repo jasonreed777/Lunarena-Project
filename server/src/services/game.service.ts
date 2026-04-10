@@ -5,19 +5,23 @@ import {
   type TaggedGameView,
   type NimState,
   type GuessState,
+  type MineFinderState,
 } from "@gamenite/shared";
 import { createChat } from "./game-chat.service.ts";
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type GameServicer } from "../games/gameServiceManager.ts";
 import { nimGameService } from "../games/nim.ts";
 import { guessGameService } from "../games/guess.ts";
+import { mineFinderGameService, getStatus as getMineFinderStatus } from "../games/minefinder.ts";
+import { circleconnectGameService } from "../games/circleconnect.ts";
 import { type GameViewUpdates, type UserWithId } from "../types.ts";
-import { ClanMemberModel, GameModel } from "../mongoose-models.ts";
+import { ClanMemberModel, DailyGameModel, GameModel } from "../mongoose-models.ts";
 import { updateProfile } from "./profile.service.ts";
 import { awardPoints } from "./points.service.ts";
 import { checkWinAchievements } from "./achievement.service.ts";
 import { recordWin, recordGamePlayed } from "./game-stats.service.ts";
 import { getUserByUsername } from "./auth.service.ts";
+import { markDailyCompleted } from "./daily.service.ts";
 
 const TUTORIAL_BOT_USERNAME = "tutorialbot";
 
@@ -27,6 +31,8 @@ const TUTORIAL_BOT_USERNAME = "tutorialbot";
 export const gameServices: { [key in GameKey]: GameServicer } = {
   nim: nimGameService,
   guess: guessGameService,
+  minesweeper: mineFinderGameService,
+  circleconnect: circleconnectGameService,
 };
 
 /**
@@ -57,7 +63,7 @@ function getTutorialBotMove(gameType: GameKey, state: unknown): unknown {
     return Math.floor(Math.random() * 100) + 1;
   }
 
-  throw new Error(`No tutorial bot move defined for game type ${gameType}`);
+  return null;
 }
 
 /**
@@ -102,6 +108,10 @@ export async function createGame(
   let botPlayerIndex: number | null = null;
   let state: unknown = undefined;
   if (isTutorial) {
+    // Single-player games don't support tutorial bots
+    if (gameServices[type].maxPlayers !== null && gameServices[type].maxPlayers <= 1) {
+      throw new Error(`${type} is a single-player game and does not support tutorials`);
+    }
     const bot = await getUserByUsername(TUTORIAL_BOT_USERNAME);
     if (!bot) throw new Error("Tutorial bot user not found");
 
@@ -151,6 +161,9 @@ export async function getGameById(gameId: string): Promise<GameInfo | null> {
 export async function joinGame(gameId: string, user: UserWithId): Promise<GameInfo> {
   const game = await GameModel.findById(gameId).lean();
   if (!game) throw new Error(`user ${user.username} joining invalid game`);
+  if (game.isDaily) {
+    throw new Error(`user ${user.username} cannot join a daily game`);
+  }
   if (game.state) {
     throw new Error(`user ${user.username} joining game that started`);
   }
@@ -216,7 +229,7 @@ export async function getGames(
     return { error: "Cannot filter by both clanId and userId" };
   }
 
-  const query: Record<string, unknown> = {};
+  const query: Record<string, unknown> = { isDaily: { $ne: true } };
 
   if (filter.clanId) {
     const members = await ClanMemberModel.find({ clanId: filter.clanId }, { userId: 1 }).lean();
@@ -313,28 +326,30 @@ export async function updateGame(
 
   if (isBotTurn) {
     const botMove = getTutorialBotMove(game.type, result.state);
-    const botResult = gameServices[game.type].update(
-      result.state,
-      botMove,
-      game.botPlayerIndex!,
-      players,
-    );
+    if (botMove !== null) {
+      const botResult = gameServices[game.type].update(
+        result.state,
+        botMove,
+        game.botPlayerIndex!,
+        players,
+      );
 
-    if (!botResult) {
-      throw new Error(`tutorial bot made an invalid move in ${game.type}`);
+      if (!botResult) {
+        throw new Error(`tutorial bot made an invalid move in ${game.type}`);
+      }
+
+      const bot = await getUserByUsername(TUTORIAL_BOT_USERNAME);
+      if (!bot) {
+        throw new Error("Tutorial bot user not found while logging move");
+      }
+
+      moveLogs.push({
+        user: bot,
+        moveDescription: botResult.moveDescription,
+      });
+
+      result = botResult;
     }
-
-    const bot = await getUserByUsername(TUTORIAL_BOT_USERNAME);
-    if (!bot) {
-      throw new Error("Tutorial bot user not found while logging move");
-    }
-
-    moveLogs.push({
-      user: bot,
-      moveDescription: botResult.moveDescription,
-    });
-
-    result = botResult;
   }
 
   await GameModel.findByIdAndUpdate(gameId, {
@@ -342,19 +357,42 @@ export async function updateGame(
     done: game.done || result.done,
   });
 
-  // If the game just transitioned to done, award points to the winner
-  if (!game.isTutorial && !game.done && result.done && result.winnerIndex !== undefined) {
-    for (const playerUserId of players) {
-      const player = await populateSafeUserInfo(playerUserId);
-      await recordGamePlayed(player.username, game.type);
+  // If the game just transitioned to done, handle completion
+  if (!game.isTutorial && !game.done && result.done) {
+    try {
+      for (const playerUserId of players) {
+        const player = await populateSafeUserInfo(playerUserId);
+        await recordGamePlayed(player.username, game.type);
+      }
+
+      // Award win points if there's a winner
+      if (result.winnerIndex !== undefined) {
+        const winnerUserId = players[result.winnerIndex];
+        const winner = await populateSafeUserInfo(winnerUserId);
+
+        await awardPoints(winner.username, 1, "win", `Won ${game.type} game`, gameId);
+        await recordWin(winner.username, game.type);
+        await checkWinAchievements(winner.username, game.type);
+      }
+    } catch {
+      // Not failing game update if stats fail
     }
 
-    const winnerUserId = players[result.winnerIndex];
-    const winner = await populateSafeUserInfo(winnerUserId);
-
-    await awardPoints(winner.username, 1, "win", `Won ${game.type} game`, gameId);
-    await recordWin(winner.username, game.type);
-    await checkWinAchievements(winner.username, game.type);
+    // Check if this is a daily game and mark it complete
+    const dailyRecord = await DailyGameModel.findOne({ gameId }).lean();
+    if (dailyRecord && !dailyRecord.completed) {
+      let won = result.winnerIndex !== undefined;
+      const gameState = result.state as Record<string, unknown>;
+      if (game.type === "minesweeper" && gameState.state === "started") {
+        won =
+          getMineFinderStatus(gameState as unknown as MineFinderState & { state: "started" }) ===
+          "won";
+      }
+      if (game.type === "circleconnect" && gameState.forfeited) {
+        won = false;
+      }
+      await markDailyCompleted(dailyRecord.username, dailyRecord.gameType, gameId, won);
+    }
   }
 
   return {

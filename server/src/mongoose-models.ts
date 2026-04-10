@@ -6,6 +6,7 @@ import type {
   ClanMemberRecord,
   ClanRecord,
   CommentRecord,
+  DailyGameRecord,
   FriendshipRecord,
   GameRecord,
   GameChatMessageRecord,
@@ -136,6 +137,7 @@ export const GameModel = mongoose.model<GameRecord & { _id: string }>(
       type: String,
       state: Schema.Types.Mixed,
       done: Boolean,
+      isDaily: Boolean,
       chat: String,
       players: [String],
       createdAt: String,
@@ -355,4 +357,26 @@ export const NotificationModel = mongoose.model<NotificationRecord>(
     userId: 1,
     sentAt: -1,
   }),
+);
+
+// DailyGame: tracks a user's daily game attempt (_id = UUID)
+const dailyGameSchema = new Schema(
+  {
+    _id: String,
+    username: String,
+    gameType: String,
+    date: String,
+    gameId: String,
+    completed: Boolean,
+    won: Boolean,
+    startedAt: String,
+    completedAt: String,
+    completionTimeMs: Number,
+  },
+  opts,
+);
+dailyGameSchema.index({ username: 1, gameType: 1, date: 1 }, { unique: true });
+export const DailyGameModel = mongoose.model<DailyGameRecord & { _id: string }>(
+  "dailyGame",
+  dailyGameSchema,
 );

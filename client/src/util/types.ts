@@ -170,6 +170,7 @@ export const TrophyColorMap: Record<number, string> = {
 export const PathColorMap: Record<string, string> = {
   "/": "#25808a",
   "/games": "#e05a35",
+  "/daily": "#3f6c92",
   "/clan": "#734189",
   "/forum": "#f7cd59",
   "/messages": "#298432",

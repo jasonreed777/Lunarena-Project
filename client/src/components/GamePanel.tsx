@@ -29,6 +29,30 @@ const gameInstructions: Record<string, { title: string; steps: string[] }> = {
       "The player with the closest guess wins.",
     ],
   },
+  circleconnect: {
+    title: "How to Play CircleConnect",
+    steps: [
+      "Pick a difficulty level.",
+      "Click and drag from a numbered circle to draw a path to its matching number.",
+      "Paths can only go up, down, left, or right (no diagonals).",
+      "Paths cannot cross or overlap with other paths.",
+      "Click on an existing path or circle to clear it and redraw.",
+      "Connect all pairs and fill every cell to solve the puzzle!",
+    ],
+  },
+  minesweeper: {
+    title: "How to Play Minesweeper",
+    steps: [
+      "Pick a difficulty level to generate the board.",
+      "Left-click a cell to reveal it.",
+      "Right-click a cell to place or remove a flag.",
+      "Revealed cells show the number of adjacent mines.",
+      "An empty cell (0 adjacent mines) automatically reveals its neighbors.",
+      "On Easy mode you can survive one mine, but a second is game over.",
+      "On Standard and Hard, hitting any mine means you lose!",
+      "Reveal all non-mine cells to win.",
+    ],
+  },
 };
 
 /**

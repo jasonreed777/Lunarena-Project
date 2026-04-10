@@ -75,6 +75,7 @@ export interface GameRecord {
   type: GameKey;
   state?: unknown;
   done: boolean;
+  isDaily?: boolean; // true for daily games — hidden from public lists and spectators
   chat: RecordId; // References Chat records
   players: RecordId[]; // References User records
   createdAt: DateISO;
@@ -342,6 +343,30 @@ export interface UserAchievementRecord {
 export interface PerGameTypeStats {
   wins: number;
   gamesPlayed: number;
+}
+
+/**
+ * Represents a daily game attempt for a user.
+ * - `username`: the user who played
+ * - `gameType`: which daily game ("minesweeper")
+ * - `date`: "YYYY-MM-DD" (UTC)
+ * - `gameId`: references the Game record
+ * - `completed`: whether the game finished
+ * - `won`: whether the user won
+ * - `startedAt`: when the attempt started
+ * - `completedAt`: when the attempt finished
+ * - `completionTimeMs`: time to complete in milliseconds
+ */
+export interface DailyGameRecord {
+  username: string;
+  gameType: string;
+  date: string;
+  gameId: RecordId;
+  completed: boolean;
+  won: boolean;
+  startedAt: DateISO;
+  completedAt?: DateISO;
+  completionTimeMs?: number;
 }
 
 /**

@@ -3,7 +3,12 @@ import { type GameKey } from "@gamenite/shared";
 export const gameNames: { [key in GameKey]: string } = {
   nim: "Nim",
   guess: "Number Guesser",
+  minesweeper: "Minesweeper",
+  circleconnect: "Circle Connect",
 };
+
+/** Single-player games that don't support tutorial (vs. bot) mode */
+export const singlePlayerGames: Set<GameKey> = new Set(["minesweeper", "circleconnect"]);
 
 // Avatars to choose from for profile pictures
 export const AVATARS = [

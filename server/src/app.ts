@@ -7,6 +7,7 @@ import * as gameChat from "./controllers/game-chat.controller.ts";
 import * as dmChat from "./controllers/dm-chat-controller.ts";
 import * as clan from "./controllers/clan.controller.ts";
 import * as friendship from "./controllers/friendship.controller.ts";
+import * as daily from "./controllers/daily.controller.ts";
 import * as game from "./controllers/game.controller.ts";
 import * as user from "./controllers/user.controller.ts";
 import * as thread from "./controllers/thread.controller.ts";
@@ -51,6 +52,8 @@ app.use(
       express
         .Router()
         .post("/create", requireAuth, game.postCreate)
+        .get("/daily/status", requireAuth, daily.getDailyStatus)
+        .get("/daily/:gameType", requireAuth, daily.getDailyGame)
         .get("/list", game.getList)
         .get("/:id", game.getById),
     )
