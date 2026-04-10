@@ -367,6 +367,7 @@ export const ClanPage: React.FC = () => {
                   }))}
                   theme={theme}
                   clickable={false}
+                  type="clan"
                 />
               )}
             </div>
@@ -645,6 +646,7 @@ export const ClanPage: React.FC = () => {
                 }))}
                 theme={theme}
                 clickable={false}
+                type="clan"
               />
             )}
           </div>

@@ -41,7 +41,8 @@ export default function Home() {
       .then((data: { username: string; display: string; pointsTotal: number }[]) => {
         setLeaderboard(
           data.map((item) => ({
-            name: item.display || item.username,
+            username: item.username,
+            display: item.display || item.username,
             pointsTotal: item.pointsTotal,
           })),
         );

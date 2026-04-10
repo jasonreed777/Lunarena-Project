@@ -25,7 +25,7 @@ const Row = styled.div`
 export const Leaderboard: React.FC<{
   leaderboard: LeaderboardProps;
   theme: ColorTheme;
-  type: "games" | "users";
+  type: "games" | "users" | "clan";
   clickable?: boolean;
 }> = ({ leaderboard, theme, clickable = true, type }) => {
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export const Leaderboard: React.FC<{
   return (
     <Container>
       {leaderboard.map((row, index) => (
-        <Row key={row.name}>
+        <Row key={index}>
           {ranks[index] <= 2 && (
             <Trophy
               src="/assets/icons/leaderboard.svg"
@@ -57,13 +57,13 @@ export const Leaderboard: React.FC<{
             style={{
               textWrap: "nowrap",
               overflow: "visible",
-              cursor: clickable && type === "users" ? "pointer" : "default",
+              cursor: clickable && type !== "games" ? "pointer" : "default",
             }}
             onClick={
-              clickable && type === "users" ? () => navigate(`/profile/${row.name}`) : undefined
+              clickable && type !== "games" ? () => navigate(`/profile/${row.username}`) : undefined
             }
           >
-            {row.name}
+            {row.display || row.username}
           </Typography.ProfileText>
           <Divider color={theme.secondaryText} />
           <Typography.Code style={{ textWrap: "nowrap" }}>

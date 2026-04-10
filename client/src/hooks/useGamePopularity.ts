@@ -22,7 +22,7 @@ const getRankingsForGameList = (gameList: GameInfo[]): Record<Game, number> => {
 const parseRankings = (dummy: Record<Game, number>): LeaderboardProps => {
   const parsed = Object.entries(dummy).sort((a, b) => b[1] - a[1]);
   return parsed.map(([key, value]) => ({
-    name: gameNames[key as GameKey],
+    display: gameNames[key as GameKey],
     pointsTotal: value,
   }));
 };
