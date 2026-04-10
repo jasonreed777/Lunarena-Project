@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type Page, type APIRequestContext } from "@playwright/test";
 
 /**
  * Reset the server's in-memory database back to its default state.
@@ -29,6 +29,14 @@ export async function logInUser(page: Page, username: string, password: string) 
   await Promise.all([page.waitForURL("/"), page.getByRole("button", { name: "Log In" }).click()]);
 }
 
+/**
+ * Creates a user account with a username and password, and waits for a successful
+ * post-login redirect to the home page
+ *
+ * @param page
+ * @param username
+ * @param password
+ */
 export async function createAccount(page: Page, username: string, password: string) {
   await page.goto("/login");
   await page.getByRole("button", { name: "Create New Account" }).click();
@@ -104,16 +112,15 @@ export async function createAndLoadGame(
   const topGame = page2.getByRole("listitem").first();
   await expect(topGame).toBeVisible();
 
-  await topGame.getByText("Nim", { exact: true }).click();
+  await topGame.getByText(gameNameById[gameId], { exact: true }).click();
   // Join waiting room for the game created by user1
   const joinGameButton = page2.getByRole("button", { name: "Join Game" });
   await expect(joinGameButton).toBeVisible({ timeout: 10000 });
-  await joinGameButton.click();
-
   if (doAssess) {
     await expect(page1.getByText("waiting for game to begin")).toBeVisible();
     await expect(page2.getByText("waiting for game to begin")).toBeVisible();
   }
+  await joinGameButton.click();
 
   if (doAssess) {
     await expect(page1.getByText("you are player #1")).toBeVisible();

@@ -216,6 +216,7 @@ test.describe("Remove a friend", () => {
     await expect(page2Locator).toHaveCount(1);
 
     // P1: Remove P2 as Friend
+    page1.on("dialog", (dialog) => dialog.accept());
     await page1.getByRole("button", { name: "Remove Friend" }).click();
     page1.on("dialog", (dialog) => dialog.accept());
 
