@@ -56,8 +56,15 @@ const TutorialLabel = styled.label<{ theme: ColorTheme }>`
 `;
 
 export default function NewGame() {
-  const { gameKey, isTutorial, handleInputChange, handleTutorialChange, err, handleSubmit } =
-    useNewGameForm();
+  const {
+    gameKey,
+    isTutorial,
+    tutorialAvailable,
+    handleInputChange,
+    handleTutorialChange,
+    err,
+    handleSubmit,
+  } = useNewGameForm();
   const { theme } = React.useContext(ThemeContext);
 
   return (
@@ -85,15 +92,17 @@ export default function NewGame() {
         ))}
       </Dropdown>
 
-      <TutorialLabel theme={theme}>
-        <input
-          type="checkbox"
-          checked={isTutorial}
-          onChange={handleTutorialChange}
-          style={{ accentColor: theme.text }}
-        />
-        <span>Play Tutorial vs. Bot?</span>
-      </TutorialLabel>
+      {tutorialAvailable && (
+        <TutorialLabel theme={theme}>
+          <input
+            type="checkbox"
+            checked={isTutorial}
+            onChange={handleTutorialChange}
+            style={{ accentColor: theme.text }}
+          />
+          <span>Play Tutorial vs. Bot?</span>
+        </TutorialLabel>
+      )}
 
       {err && <p className="error-message">{err}</p>}
 

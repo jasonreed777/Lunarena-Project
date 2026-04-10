@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Allowed reasons for awarding points
-export const zPointReasonType = z.enum(["win", "streak", "achievement"]);
+export const zPointReasonType = z.enum(["win", "streak", "achievement", "objective"]);
 
 export type PointReasonType = z.infer<typeof zPointReasonType>;
 

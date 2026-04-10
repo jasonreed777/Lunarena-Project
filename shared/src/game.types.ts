@@ -52,13 +52,24 @@ export * from "./games/nim.types.ts";
 import type { GuessView } from "./games/guess.types.ts";
 export * from "./games/guess.types.ts";
 
+import type { MineFinderView } from "./games/minefinder.types.ts";
+export * from "./games/minefinder.types.ts";
+
+import type { CircleConnectView } from "./games/circleconnect.types.ts";
+export * from "./games/circleconnect.types.ts";
+
 /**
  * A GameKey selects which game is being played. There needs to be exactly one
  * key for each game. See README.md for the operations that are required to
  * add a new game.
  */
 export type GameKey = z.infer<typeof zGameKey>;
-export const zGameKey = z.union([z.literal("nim"), z.literal("guess")]);
+export const zGameKey = z.union([
+  z.literal("nim"),
+  z.literal("guess"),
+  z.literal("minesweeper"),
+  z.literal("circleconnect"),
+]);
 
 /**
  * The TaggedGameView type allows the views for different game to be
@@ -67,9 +78,13 @@ export const zGameKey = z.union([z.literal("nim"), z.literal("guess")]);
  * Each game should have a tagged game view. The `type` should be the game's
  * GameKey, and the `view` should be the type of the games view.
  */
-export type TaggedGameView = { type: "nim"; view: NimView } | { type: "guess"; view: GuessView };
+export type TaggedGameView =
+  | { type: "nim"; view: NimView }
+  | { type: "guess"; view: GuessView }
+  | { type: "minesweeper"; view: MineFinderView }
+  | { type: "circleconnect"; view: CircleConnectView };
 
 /**
  * All supported games on GameNite. This may need to be modified as needed when new games are added/removed.
  */
-export type Game = "nim" | "guess" | "minesweeper";
+export type Game = "nim" | "guess" | "minesweeper" | "circleconnect";

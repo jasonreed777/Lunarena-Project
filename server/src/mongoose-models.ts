@@ -6,6 +6,7 @@ import type {
   ClanMemberRecord,
   ClanRecord,
   CommentRecord,
+  DailyGameRecord,
   FriendshipRecord,
   GameRecord,
   GameChatMessageRecord,
@@ -23,6 +24,7 @@ import type {
   DMChatMessageRecord,
   CommentVoteRecord,
   NotificationRecord,
+  DailyObjectiveProgressRecord,
 } from "./models.ts";
 
 const opts = { versionKey: false } as const;
@@ -136,6 +138,7 @@ export const GameModel = mongoose.model<GameRecord & { _id: string }>(
       type: String,
       state: Schema.Types.Mixed,
       done: Boolean,
+      isDaily: Boolean,
       chat: String,
       players: [String],
       createdAt: String,
@@ -356,3 +359,45 @@ export const NotificationModel = mongoose.model<NotificationRecord>(
     sentAt: -1,
   }),
 );
+
+// DailyGame: tracks a user's daily game attempt (_id = UUID)
+const dailyGameSchema = new Schema(
+  {
+    _id: String,
+    username: String,
+    gameType: String,
+    date: String,
+    gameId: String,
+    completed: Boolean,
+    won: Boolean,
+    startedAt: String,
+    completedAt: String,
+    completionTimeMs: Number,
+  },
+  opts,
+);
+dailyGameSchema.index({ username: 1, gameType: 1, date: 1 }, { unique: true });
+export const DailyGameModel = mongoose.model<DailyGameRecord & { _id: string }>(
+  "dailyGame",
+  dailyGameSchema,
+);
+
+// DailyObjectiveProgress: tracks a user's progress on a single daily objective (_id = UUID)
+const dailyObjectiveProgressSchema = new Schema(
+  {
+    _id: String,
+    username: String,
+    date: String,
+    objectiveId: String,
+    target: Number,
+    current: Number,
+    completed: Boolean,
+    completedAt: String,
+    pointsAwarded: Boolean,
+  },
+  opts,
+);
+dailyObjectiveProgressSchema.index({ username: 1, date: 1, objectiveId: 1 }, { unique: true });
+export const DailyObjectiveProgressModel = mongoose.model<
+  DailyObjectiveProgressRecord & { _id: string }
+>("dailyObjectiveProgress", dailyObjectiveProgressSchema);

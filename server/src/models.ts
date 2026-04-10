@@ -75,6 +75,7 @@ export interface GameRecord {
   type: GameKey;
   state?: unknown;
   done: boolean;
+  isDaily?: boolean; // true for daily games — hidden from public lists and spectators
   chat: RecordId; // References Chat records
   players: RecordId[]; // References User records
   createdAt: DateISO;
@@ -342,6 +343,52 @@ export interface UserAchievementRecord {
 export interface PerGameTypeStats {
   wins: number;
   gamesPlayed: number;
+}
+
+/**
+ * Represents a daily game attempt for a user.
+ * - `username`: the user who played
+ * - `gameType`: which daily game ("minesweeper")
+ * - `date`: "YYYY-MM-DD" (UTC)
+ * - `gameId`: references the Game record
+ * - `completed`: whether the game finished
+ * - `won`: whether the user won
+ * - `startedAt`: when the attempt started
+ * - `completedAt`: when the attempt finished
+ * - `completionTimeMs`: time to complete in milliseconds
+ */
+export interface DailyGameRecord {
+  username: string;
+  gameType: string;
+  date: string;
+  gameId: RecordId;
+  completed: boolean;
+  won: boolean;
+  startedAt: DateISO;
+  completedAt?: DateISO;
+  completionTimeMs?: number;
+}
+
+/**
+ * Tracks a user's progress on a single daily objective.
+ * - `username`: the user this progress belongs to
+ * - `date`: ISO date string (YYYY-MM-DD)
+ * - `objectiveId`: which objective this tracks
+ * - `target`: required count to complete
+ * - `current`: current progress count
+ * - `completed`: whether target has been met
+ * - `completedAt`: when the objective was completed
+ * - `pointsAwarded`: whether points have been given (prevents double-awarding)
+ */
+export interface DailyObjectiveProgressRecord {
+  username: string;
+  date: string;
+  objectiveId: string;
+  target: number;
+  current: number;
+  completed: boolean;
+  completedAt?: DateISO;
+  pointsAwarded: boolean;
 }
 
 /**

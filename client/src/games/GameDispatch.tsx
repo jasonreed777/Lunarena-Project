@@ -1,6 +1,8 @@
 import type { SafeUserInfo, TaggedGameView } from "@gamenite/shared";
 import NimGame from "./NimGame.tsx";
 import GuessGame from "./GuessGame.tsx";
+import MineFinderGame from "./MineFinderGame.tsx";
+import CircleConnectGame from "./CircleConnectGame.tsx";
 import { type JSX } from "react";
 import useLoginContext from "../hooks/useLoginContext.ts";
 
@@ -29,5 +31,9 @@ export default function GameDispatch({
       return <NimGame {...{ ...childProps, view: view.view }} />;
     case "guess":
       return <GuessGame {...{ ...childProps, view: view.view }} />;
+    case "minesweeper":
+      return <MineFinderGame {...{ ...childProps, view: view.view }} />;
+    case "circleconnect":
+      return <CircleConnectGame {...{ ...childProps, view: view.view }} />;
   }
 }

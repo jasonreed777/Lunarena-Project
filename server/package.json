@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/seedrandom": "^3.0.8",
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.18",
     "mongodb-memory-server": "^11.0.1",
@@ -29,6 +30,7 @@
     "express": "^5.2.1",
     "mongodb": "^7.1.0",
     "mongoose": "^8.15.0",
+    "seedrandom": "^3.0.5",
     "socket.io": "^4.8.1",
     "zod": "^4.3.6"
   }

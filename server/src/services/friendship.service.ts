@@ -2,6 +2,7 @@ import { type FriendInfo, type FriendRequestInfo, type FriendshipInfo } from "@g
 import { populateSafeUserInfo } from "./user.service.ts";
 import { type UserWithId } from "../types.ts";
 import { FriendshipModel, UserModel } from "../mongoose-models.ts";
+import { eventBus } from "./eventBus.ts";
 
 /**
  * Expand a stored friendship to FriendshipInfo
@@ -161,6 +162,7 @@ export async function sendFriendRequest(
     updatedAt: now,
   });
 
+  eventBus.emitEvent("friendRequestSent", { username: sender.username, receiverUsername });
   return populateFriendshipInfo(friendship._id);
 }
 
