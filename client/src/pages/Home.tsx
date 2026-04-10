@@ -13,11 +13,13 @@ import { Divider } from "../components/Divider.tsx";
 import type { LeaderboardProps } from "../util/types.ts";
 import { Leaderboard } from "../components/Leaderboard.tsx";
 import { TranslucentButton as Button } from "../components/Buttons.tsx";
+import useGamePopularity from "../hooks/useGamePopularity.ts";
 
 export default function Home() {
   const { theme } = React.useContext(ThemeContext);
   const threadList = useThreadList(4);
   const gameList = useGameList({ limit: 4 });
+  const gamePopularityList = useGamePopularity();
   const user = useLoginContext().user;
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = React.useState<LeaderboardProps>([]);
@@ -37,7 +39,12 @@ export default function Home() {
     fetch("/api/points/leaderboard")
       .then((res) => res.json())
       .then((data: { username: string; display: string; pointsTotal: number }[]) => {
-        setLeaderboard(data);
+        setLeaderboard(
+          data.map((item) => ({
+            name: item.display || item.username,
+            pointsTotal: item.pointsTotal,
+          })),
+        );
       })
       .catch(() => setLeaderboard([]));
   }, []);
@@ -51,7 +58,7 @@ export default function Home() {
             <Typography.Subtitle>Leaderboard</Typography.Subtitle>
             <Divider color={theme.text} style={{ marginBottom: "20px" }} />
             <div className="left-item" style={{ borderRight: `1px solid ${theme.secondaryText}` }}>
-              <Leaderboard leaderboard={leaderboard.slice(0, 3)} theme={theme} />
+              <Leaderboard leaderboard={leaderboard.slice(0, 3)} theme={theme} type="users" />
             </div>
           </div>
           <div>
@@ -104,6 +111,23 @@ export default function Home() {
                   key={thread.threadId.toString()}
                 />
               ))}
+            </div>
+          )}
+        </div>
+        <div className="row">
+          <div>
+            <Typography.Subtitle>Most Popular Games</Typography.Subtitle>
+            <Divider color={theme.text} style={{ marginBottom: "20px" }} />
+          </div>
+          {"message" in threadList ? (
+            <Typography.LargeParagraph>{threadList.message}</Typography.LargeParagraph>
+          ) : (
+            <div id="game-popularity-list" role="list">
+              <Leaderboard
+                leaderboard={gamePopularityList.slice(0, 3)}
+                theme={theme}
+                type="games"
+              />
             </div>
           )}
         </div>

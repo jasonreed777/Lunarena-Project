@@ -25,8 +25,9 @@ const Row = styled.div`
 export const Leaderboard: React.FC<{
   leaderboard: LeaderboardProps;
   theme: ColorTheme;
+  type: "games" | "users";
   clickable?: boolean;
-}> = ({ leaderboard, theme, clickable = true }) => {
+}> = ({ leaderboard, theme, clickable = true, type }) => {
   const navigate = useNavigate();
   const ranks: number[] = [];
   let currentRank = 0;
@@ -44,7 +45,7 @@ export const Leaderboard: React.FC<{
   return (
     <Container>
       {leaderboard.map((row, index) => (
-        <Row key={row.username}>
+        <Row key={row.name}>
           {ranks[index] <= 2 && (
             <Trophy
               src="/assets/icons/leaderboard.svg"
@@ -56,15 +57,19 @@ export const Leaderboard: React.FC<{
             style={{
               textWrap: "nowrap",
               overflow: "visible",
-              cursor: clickable ? "pointer" : "default",
+              cursor: clickable && type === "users" ? "pointer" : "default",
             }}
-            onClick={clickable ? () => navigate(`/profile/${row.username}`) : undefined}
+            onClick={
+              clickable && type === "users" ? () => navigate(`/profile/${row.name}`) : undefined
+            }
           >
-            {row.display || row.username}
+            {row.name}
           </Typography.ProfileText>
           <Divider color={theme.secondaryText} />
           <Typography.Code style={{ textWrap: "nowrap" }}>
-            {row.pointsTotal === 1 ? "1 Point" : `${row.pointsTotal} Points`}
+            {row.pointsTotal === 1
+              ? "1 Point"
+              : `${row.pointsTotal} ${type === "games" ? "Plays" : "Points"}`}
             {row.gamesPlayedTotal !== undefined && ` · ${row.gamesPlayedTotal} Games`}
             {row.achievementCount !== undefined && ` · ${row.achievementCount} Awards`}
           </Typography.Code>

@@ -148,8 +148,7 @@ export type DailyPoints = {
  * Leaderboard props used for various leaderboards in GameNite.
  */
 export type LeaderboardProps = {
-  username: string;
-  display: string;
+  name: string;
   pointsTotal: number;
   gamesPlayedTotal?: number;
   achievementCount?: number;
