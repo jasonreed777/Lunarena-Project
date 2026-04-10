@@ -120,16 +120,15 @@ describe("points.service", () => {
       } as never);
       // Get the user's daily points
       const result = await pointsService.getUserDailyPoints("testuser");
+      // Build expected dates the same way the service does (local midnight via setHours)
+      const day1 = new Date("2026-04-09T10:00:00.000Z");
+      day1.setHours(0, 0, 0, 0);
+      const day2 = new Date("2026-04-10T09:00:00.000Z");
+      day2.setHours(0, 0, 0, 0);
       // Combined points for 2026-04-09 should be 8, and points for 2026-04-10 should be 2
       expect(result).toEqual([
-        {
-          date: new Date("2026-04-09T04:00:00.000Z"),
-          points: 8,
-        },
-        {
-          date: new Date("2026-04-10T04:00:00.000Z"),
-          points: 2,
-        },
+        { date: day1, points: 8 },
+        { date: day2, points: 2 },
       ]);
     });
 
