@@ -89,7 +89,6 @@ const ALL_ACHIEVEMENTS: AchievementDefinition[] = [
   ...makeGameWinAchievements("guess", "Number Guesser"),
   ...makeGameWinAchievements("minesweeper", "Minesweeper"),
   ...makeGameWinAchievements("circleconnect", "Circle Connect"),
-
 ];
 
 /**
