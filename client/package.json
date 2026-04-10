@@ -9,7 +9,7 @@
     "prettier:fix": "prettier --ignore-path ../.gitignore --write .",
     "test": "npm-run-all test:*",
     "test:unit": "vitest run",
-    "atest:e2e": "playwright test",
+    "test:e2e": "playwright test",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "playwright": "playwright test --ui"
