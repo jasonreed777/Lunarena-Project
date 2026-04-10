@@ -78,7 +78,7 @@ export const FriendPill: React.FC<{
   }, [themeId, color]);
 
   return (
-    <OuterContainer customColor={rgb}>
+    <OuterContainer customColor={rgb} className="friend-pill">
       <NameLink to={to}>
         <Left>
           <Typography.ProfileText style={{ margin: 0 }}>{name}</Typography.ProfileText>

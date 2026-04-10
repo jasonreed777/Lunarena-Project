@@ -30,6 +30,23 @@ export async function logInUser(page: Page, username: string, password: string) 
 }
 
 /**
+ * Creates a user account with a username and password, and waits for a successful
+ * post-login redirect to the home page
+ *
+ * @param page
+ * @param username
+ * @param password
+ */
+export async function createAccount(page: Page, username: string, password: string) {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Create New Account" }).click();
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByLabel("Confirm Password").fill(password);
+  await Promise.all([page.waitForURL("/"), page.getByRole("button", { name: "Sign Up" }).click()]);
+}
+
+/**
  * Set up a test of two users joining and starting a 2+ player game
  *
  * @param page1 - A Page where we will attempt to create a *new* user. That user will initiate the game.
