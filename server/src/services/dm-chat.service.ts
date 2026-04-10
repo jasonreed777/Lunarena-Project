@@ -26,7 +26,7 @@ export async function createChat(participants: RecordId[]) {
   while (lockPromise) {
     await lockPromise;
   }
-  let resolveLock: () => void = () => {};
+  let resolveLock: () => void;
   lockPromise = new Promise((resolve) => {
     resolveLock = resolve;
   });
@@ -48,7 +48,7 @@ export async function createChat(participants: RecordId[]) {
   } catch (err) {
     throw Error("Could not create chat");
   } finally {
-    resolveLock();
+    resolveLock!();
     lockPromise = null;
   }
   if (alreadyExists) {

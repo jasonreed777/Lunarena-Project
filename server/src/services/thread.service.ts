@@ -88,6 +88,7 @@ export async function getThreadById(
 ): Promise<ThreadInfo | null> {
   const exists = await ThreadModel.exists({ _id: possibleThreadId });
   if (!exists) return null;
+
   return populateThreadInfo(possibleThreadId, requestingUserId);
 }
 

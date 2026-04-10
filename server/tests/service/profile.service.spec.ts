@@ -116,6 +116,11 @@ describe("updateProfile", () => {
     expect(profile.profileBorderColor).toBe("#ff0000");
   });
 
+  it("should update titleId", async () => {
+    const profile = await updateProfile(user0.username, { titleId: "champion" });
+    expect(profile.titleId).toBe("champion");
+  });
+
   describe("online presence transitions", () => {
     it("should set presence when transitioning from offline to active", async () => {
       const now = new Date().toISOString();

@@ -802,6 +802,7 @@ describe("Role and Transfer - deterministic coverage", () => {
 // ---------------------------------------------------------------------------
 
 import { ClanModel, ClanMemberModel, ClanInviteModel } from "../src/mongoose-models.ts";
+import * as clanServiceModule from "../src/services/clan.service.ts";
 
 async function freshClan(ownerUsername: string, opts: { isPublic?: boolean; name?: string } = {}) {
   await ClanModel.deleteMany({});
@@ -976,6 +977,45 @@ describe("Controller coverage - self-contained", () => {
     expect(Array.isArray(response.body)).toBe(true);
   });
 
+  it("respondInvite invite type with null invitedBy (line 228 false branch)", async () => {
+    const clanId = await freshClan("user0");
+    const user1 = await getUserByUsername("user1");
+
+    // Directly insert an invite with invitedBy=null — impossible via API but valid DB state
+    // This forces the `else if (invite.type === "invite" && invite.invitedBy)` false branch
+    const inviteId = randomUUID();
+    await ClanInviteModel.create({
+      _id: inviteId,
+      clanId,
+      userId: user1!.userId,
+      type: "invite",
+      invitedBy: null,
+      status: "pending",
+      createdAt: new Date(),
+    });
+
+    await loginAs("user1");
+    response = await supertest(app)
+      .post(`/api/clans/invites/${inviteId}/respond`)
+      .send({ payload: { action: "accept" } });
+    expect(response.status).toBe(200);
+  });
+
+  it("postTransfer with null clanInfo hits ?? 'Unknown' branch (line 363)", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    const spy = vi.spyOn(clanServiceModule, "getClanById").mockResolvedValueOnce(null);
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/transfer`)
+      .send({ payload: { newOwnerUsername: "user1" } });
+    expect(response.status).toBe(200);
+    spy.mockRestore();
+  });
+
   it("respondInvite reject path (invite type → Invite Declined)", async () => {
     const clanId = await freshClan("user0");
 
@@ -1004,6 +1044,46 @@ describe("Controller coverage - self-contained", () => {
       .post(`/api/clans/invites/${requestId}/respond`)
       .send({ payload: { action: "reject" } });
     expect(response.status).toBe(200);
+  });
+
+  it("postKick error path (no-notification branch, line 130 false)", async () => {
+    const clanId = await freshClan("user0");
+    // user1 is NOT in the clan, so kickMember returns error → notification block skipped
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/kick`)
+      .send({ payload: { username: "user1" } });
+    expect(response.status).toBe(200);
+    expect(response.body.error).toBeDefined();
+  });
+
+  it("postInvite error path (no-notification branch, line 164 false)", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+    // user1 is already a member → inviteUser returns error → notification block skipped
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/invite`)
+      .send({ payload: { username: "user1" } });
+    expect(response.status).toBe(200);
+    expect(response.body.error).toBeDefined();
+  });
+
+  it("postUpdateRole with null clanInfo hits ?? 'Unknown' branch (line 294)", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    // Make getClanById return null so the notification falls back to "Unknown"
+    const spy = vi.spyOn(clanServiceModule, "getClanById").mockResolvedValueOnce(null);
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/role`)
+      .send({ payload: { username: "user1", role: "admin" } });
+    expect(response.status).toBe(200);
+    spy.mockRestore();
   });
 
   it("postUpdateRole demote path (admin → member notification)", async () => {
