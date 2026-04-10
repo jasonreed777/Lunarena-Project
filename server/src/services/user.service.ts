@@ -1,6 +1,7 @@
 import { type SafeUserInfo, type UserUpdateRequest } from "@gamenite/shared";
 import { getUserByUsername, createAuthAccount } from "./auth.service.ts";
 import { UserModel, ClanMemberModel } from "../mongoose-models.ts";
+import { getProfileByUsername } from "./profile.service.ts";
 
 /**
  * Retrieves a single user from the database.
@@ -11,13 +12,25 @@ import { UserModel, ClanMemberModel } from "../mongoose-models.ts";
 export async function populateSafeUserInfo(userId: string): Promise<SafeUserInfo> {
   const doc = await UserModel.findById(userId).lean();
   if (!doc) throw new Error(`Failed to find user ${userId}`);
-  return {
-    username: doc.username,
-    display: doc.display,
-    createdAt: new Date(doc.createdAt),
-    pfp: doc.pfp,
-    profileBorderColor: doc.profileBorderColor || "#8d8d8d",
-  };
+
+  try {
+    const profile = await getProfileByUsername(doc.username);
+    return {
+      username: doc.username,
+      display: doc.display,
+      createdAt: new Date(doc.createdAt),
+      pfp: profile.pfp,
+      profileBorderColor: profile.profileBorderColor,
+    };
+  } catch (error) {
+    return {
+      username: doc.username,
+      display: doc.display,
+      createdAt: new Date(doc.createdAt),
+      pfp: doc.pfp,
+      profileBorderColor: doc.profileBorderColor || "#8d8d8d",
+    };
+  }
 }
 
 /**

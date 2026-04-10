@@ -1,5 +1,6 @@
 import type { SafeUserInfo } from "@gamenite/shared";
 import type { RGBColor } from "./types";
+import { AVATARS } from "./consts";
 
 /**
  * Turns a hexadecimal color into an "RGB" object.
@@ -54,7 +55,10 @@ export const darkenColor = (color: RGBColor): RGBColor => {
  */
 export const getProfilePicture = (user: SafeUserInfo) => {
   const { pfp } = user;
-  return pfp?.type === "avatar" ? pfp?.avatarId : pfp?.uploadId;
+  if (pfp?.type === "avatar") {
+    return AVATARS.find((a) => a.avatarId === pfp.avatarId)?.imageUrl;
+  }
+  return undefined;
 };
 
 /**

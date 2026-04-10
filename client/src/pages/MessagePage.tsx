@@ -12,6 +12,7 @@ import { chatCreate, getChatList, getChatMessages } from "../services/dmService.
 import useLoginContext from "../hooks/useLoginContext.ts";
 import useSocketsForDM from "../hooks/useSocketsForDM.ts";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { getUploadedImage } from "../services/profileService.ts";
 
 /**
  * A direct messaging page with messages from friends.
@@ -29,6 +30,24 @@ export const MessagePage: React.FC = () => {
   const { user } = useLoginContext();
   const navigate = useNavigate();
   const { messages: socketMessages, handleMessageCreation } = useSocketsForDM();
+  const [images, setImages] = React.useState<Record<string, string>>({});
+  const fetchedUsersRef = React.useRef<Set<string>>(new Set());
+
+  const loadProfilePicture = React.useCallback(async (u: SafeUserInfo) => {
+    if (!u.pfp || fetchedUsersRef.current.has(u.username)) return;
+    fetchedUsersRef.current.add(u.username);
+    if (u.pfp.type === "avatar") {
+      const picture = getProfilePicture(u);
+      if (picture) setImages((prev) => ({ ...prev, [u.username]: picture }));
+    } else {
+      const uploadId = u.pfp.uploadId;
+      if (!uploadId) return;
+      const response = await getUploadedImage(uploadId);
+      if (!("error" in response)) {
+        setImages((prev) => ({ ...prev, [u.username]: response.data }));
+      }
+    }
+  }, []);
 
   React.useEffect(() => {
     // IIFE to handle getting and creating chats
@@ -60,6 +79,11 @@ export const MessagePage: React.FC = () => {
       }
     })();
   }, [navigate, targetUsername]);
+
+  // Load images for all chat participants whenever the list changes
+  React.useEffect(() => {
+    chatList.forEach((chat) => chat.participants.forEach((p) => loadProfilePicture(p)));
+  }, [chatList, loadProfilePicture]);
 
   // Load messages when a chat is selected
   React.useEffect(() => {
@@ -117,11 +141,7 @@ export const MessagePage: React.FC = () => {
                   }}
                   onClick={() => navigate(`/messages/${chatInfo.chatId}`)}
                 >
-                  <Avatar
-                    src={getProfilePicture(otherUser)}
-                    size="small"
-                    border={{ color: color }}
-                  />
+                  <Avatar src={images[otherUser.username]} size="small" border={{ color: color }} />
                   <Typography.ProfileText>
                     {otherUser.display || otherUser.username}
                   </Typography.ProfileText>
@@ -144,7 +164,7 @@ export const MessagePage: React.FC = () => {
               height: "calc(100% - 110px)",
             }}
           >
-            <MessageList messages={allMessages} />
+            <MessageList messages={allMessages} images={images} onLoadImage={loadProfilePicture} />
             <ChatBox
               sendTo={
                 getOtherParticipant(user, selected)?.display ||

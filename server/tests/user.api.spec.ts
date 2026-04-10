@@ -29,8 +29,14 @@ function logout() {
 }
 
 let response: Response;
-const user1 = { username: "user1", display: "Yāo", profileBorderColor: "#8d8d8d" };
-const user2 = { username: "user2", display: "Sénior Dos", profileBorderColor: "#8d8d8d" };
+const defaultPfp = { type: "avatar", avatarId: "gamer" };
+const user1 = { username: "user1", display: "Yāo", profileBorderColor: "#ffffff", pfp: defaultPfp };
+const user2 = {
+  username: "user2",
+  display: "Sénior Dos",
+  profileBorderColor: "#ffffff",
+  pfp: defaultPfp,
+};
 
 beforeEach(() => logout());
 

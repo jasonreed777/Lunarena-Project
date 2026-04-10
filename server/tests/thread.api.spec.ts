@@ -51,7 +51,8 @@ describe("GET /api/thread/list", () => {
         createdAt: expect.anything(),
         display: "Yāo",
         username: "user1",
-        profileBorderColor: "#8d8d8d",
+        profileBorderColor: "#ffffff",
+        pfp: { type: "avatar", avatarId: "gamer" },
       },
     });
   });
@@ -82,7 +83,8 @@ describe("GET /api/thread/:id", () => {
         username: "user1",
         display: "Yāo",
         createdAt: expect.anything(),
-        profileBorderColor: "#8d8d8d",
+        profileBorderColor: "#ffffff",
+        pfp: { type: "avatar", avatarId: "gamer" },
       },
       createdAt: new Date("2025-04-02").toISOString(),
     });
@@ -118,7 +120,8 @@ describe("POST /api/thread/create", () => {
         username: "user2",
         display: expect.any(String),
         createdAt: expect.anything(),
-        profileBorderColor: "#8d8d8d",
+        profileBorderColor: "#ffffff",
+        pfp: { type: "avatar", avatarId: "gamer" },
       },
       comments: [],
     });
@@ -172,7 +175,8 @@ describe("POST /api/thread/:id/comment", () => {
           username: "user2",
           display: "Sénior Dos",
           createdAt: expect.anything(),
-          profileBorderColor: "#8d8d8d",
+          profileBorderColor: "#ffffff",
+          pfp: { type: "avatar", avatarId: "gamer" },
         },
         score: 0,
         userVoted: null,

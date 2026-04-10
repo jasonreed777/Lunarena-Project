@@ -6,18 +6,34 @@ import useTimeSince from "../hooks/useTimeSince.ts";
 import UserLink from "./UserLink.tsx";
 import * as Typography from "../libs/Typography.tsx";
 import { ThemeContext } from "../contexts/ThemeContext.ts";
-import { getProfilePicture } from "../util/utils.ts";
 import { Avatar } from "./Avatar.tsx";
+import type { SafeUserInfo } from "@gamenite/shared";
 
 interface MessageListProps {
   messages: ChatMessage[];
+  images: Record<string, string>;
+  onLoadImage: (u: SafeUserInfo) => void;
 }
 
-export default function MessageList({ messages }: MessageListProps) {
+export default function MessageList({ messages, images, onLoadImage }: MessageListProps) {
   const { user } = useLoginContext();
   const chatWindowRef = React.useRef<HTMLDivElement | null>(null);
   const timeSince = useTimeSince();
   const { theme } = React.useContext(ThemeContext);
+
+  React.useEffect(() => {
+    const usersToLoad = new Map<string, SafeUserInfo>();
+    for (const message of messages) {
+      if (
+        !("meta" in message) &&
+        message.createdBy &&
+        message.createdBy.username !== user.username
+      ) {
+        usersToLoad.set(message.createdBy.username, message.createdBy);
+      }
+    }
+    usersToLoad.forEach((u) => onLoadImage(u));
+  }, [messages, user, onLoadImage]);
 
   React.useEffect(() => {
     if (!chatWindowRef.current) return;
@@ -56,14 +72,7 @@ export default function MessageList({ messages }: MessageListProps) {
           if (user.username === message.createdBy.username) {
             return (
               <div key={message.messageId} className="chatMe" style={{ padding: "1rem" }}>
-                <div className={user.pfp ? "messageWithAvatar" : "messageInfo"}>
-                  {user.pfp && (
-                    <Avatar
-                      border={{ color: user.profileBorderColor || theme.text }}
-                      src={getProfilePicture(user)}
-                      size="small"
-                    />
-                  )}
+                <div className="messageInfo">
                   <Typography.ProfileText style={{ color: theme.text }}>You</Typography.ProfileText>{" "}
                   •{" "}
                   <Typography.SmallText className="chatSender">
@@ -87,7 +96,7 @@ export default function MessageList({ messages }: MessageListProps) {
             >
               <Avatar
                 border={{ color: createdBy.profileBorderColor || theme.text }}
-                src={getProfilePicture(createdBy)}
+                src={images[createdBy.username]}
                 size="medium"
               />
               <div>
