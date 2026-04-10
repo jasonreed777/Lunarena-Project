@@ -249,4 +249,20 @@ describe("POST /api/thread/comment/:commentId/vote", () => {
     expect(response.body.comments[0].score).toBe(-1);
     expect(response.body.comments[0].userVoted).toBe("downvote");
   });
+
+  it("should switch from downvote to upvote", async () => {
+    const commentId = await seedComment();
+    await loginAs("user1");
+    await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "downvote" });
+    response = await supertest(app)
+      .post(`/api/thread/comment/${commentId}/vote`)
+      .send({ payload: "upvote" });
+    expect(response.status).toBe(200);
+
+    response = await supertest(app).get("/api/thread/deadbeefdeadbeefdeadbeef");
+    expect(response.body.comments[0].score).toBe(-1);
+    expect(response.body.comments[0].userVoted).toBe("upvote");
+  });
 });
