@@ -43,13 +43,13 @@ jobs:
       - name: Linting
         run: npm run lint
 
-      - name: Install Playwright dependencies
-        run: npx playwright install --with-deps chromium
+      # - name: Install Playwright dependencies
+      #   run: npx playwright install --with-deps chromium
 
       # Temporarily disable tests so we can fix Style issues in short run
       # So new PRs and Commits should pass CI
-      # - name: Run tests
-      #   run: npm run test
+      - name: Run tests
+        run: npm run test
 
       - name: Build frontend
         run: npm run build -w=client

@@ -794,3 +794,234 @@ describe("Role and Transfer - deterministic coverage", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Deterministic controller coverage tests
+// Each test is self-contained (creates its own state within a single `it`),
+// because setup.ts resets users with new IDs between every `it`.
+// ---------------------------------------------------------------------------
+
+import { ClanModel, ClanMemberModel, ClanInviteModel } from "../src/mongoose-models.ts";
+
+async function freshClan(ownerUsername: string, opts: { isPublic?: boolean; name?: string } = {}) {
+  await ClanModel.deleteMany({});
+  await ClanMemberModel.deleteMany({});
+  await ClanInviteModel.deleteMany({});
+
+  await loginAs(ownerUsername);
+  const res = await supertest(app)
+    .post("/api/clans/create")
+    .send({
+      payload: {
+        name: opts.name ?? `Ctrl_${Date.now()}`,
+        color: "#abcdef",
+        isPublic: opts.isPublic ?? true,
+      },
+    });
+  return res.body.clanId as string;
+}
+
+describe("Controller coverage - self-contained", () => {
+  it("postKick success path", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/kick`)
+      .send({ payload: { username: "user1" } });
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  it("postInvite + respondInvite (invite type) success paths", async () => {
+    const clanId = await freshClan("user0");
+
+    // Owner invites user1
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/invite`)
+      .send({ payload: { username: "user1" } });
+    expect(response.status).toBe(200);
+    expect(response.body.inviteId).toBeDefined();
+    const inviteId = response.body.inviteId;
+
+    // user1 accepts
+    await loginAs("user1");
+    response = await supertest(app)
+      .post(`/api/clans/invites/${inviteId}/respond`)
+      .send({ payload: { action: "accept" } });
+    expect(response.status).toBe(200);
+    expect(response.body.role).toBe("member");
+  });
+
+  it("postLeave success path", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    response = await supertest(app).post(`/api/clans/${clanId}/leave`).send({});
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  it("postUpdateRole success path", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/role`)
+      .send({ payload: { username: "user1", role: "admin" } });
+    expect(response.status).toBe(200);
+    expect(response.body.role).toBe("admin");
+  });
+
+  it("postTransfer success path", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/transfer`)
+      .send({ payload: { newOwnerUsername: "user1" } });
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  it("postUpdate success path", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/update`)
+      .send({ payload: { bio: "updated bio" } });
+    expect(response.status).toBe(200);
+    expect(response.body.bio).toBe("updated bio");
+  });
+
+  it("postJoin private clan + admin responds to request", async () => {
+    const clanId = await freshClan("user0", { isPublic: false });
+
+    // user1 requests to join
+    await loginAs("user1");
+    response = await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+    expect(response.status).toBe(200);
+    expect(response.body.type).toBe("request");
+    const requestId = response.body.inviteId;
+
+    // owner sees pending invites
+    await loginAs("user0");
+    response = await supertest(app).post(`/api/clans/${clanId}/invites`).send({});
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBeGreaterThan(0);
+
+    // owner accepts
+    response = await supertest(app)
+      .post(`/api/clans/invites/${requestId}/respond`)
+      .send({ payload: { action: "accept" } });
+    expect(response.status).toBe(200);
+  });
+
+  it("postCancelInvite success + 404 paths", async () => {
+    const clanId = await freshClan("user0");
+
+    // Invite user1
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/invite`)
+      .send({ payload: { username: "user1" } });
+    const inviteId = response.body.inviteId;
+
+    // Cancel it
+    response = await supertest(app).post(`/api/clans/invites/${inviteId}/cancel`).send({});
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+
+    // 404 for non-existent
+    response = await supertest(app).post(`/api/clans/invites/${randomUUID()}/cancel`).send({});
+    expect(response.status).toBe(404);
+  });
+
+  it("getClanRankings", async () => {
+    response = await supertest(app).get("/api/clans/rankings");
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it("getLeaderboard success + 404", async () => {
+    const clanId = await freshClan("user0");
+
+    response = await supertest(app).get(`/api/clans/${clanId}/leaderboard`);
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+
+    response = await supertest(app).get(`/api/clans/${randomUUID()}/leaderboard`);
+    expect(response.status).toBe(404);
+  });
+
+  it("getById + getMembers success paths", async () => {
+    const clanId = await freshClan("user0");
+
+    response = await supertest(app).get(`/api/clans/${clanId}`);
+    expect(response.status).toBe(200);
+    expect(response.body.clanId).toBeDefined();
+    expect(response.body.members).toBeDefined();
+
+    response = await supertest(app).get(`/api/clans/${clanId}/members`);
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  it("respondInvite reject path (invite type → Invite Declined)", async () => {
+    const clanId = await freshClan("user0");
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/invite`)
+      .send({ payload: { username: "user1" } });
+    const inviteId = response.body.inviteId;
+
+    await loginAs("user1");
+    response = await supertest(app)
+      .post(`/api/clans/invites/${inviteId}/respond`)
+      .send({ payload: { action: "reject" } });
+    expect(response.status).toBe(200);
+  });
+
+  it("respondInvite reject path (request type → Join Request Rejected)", async () => {
+    const clanId = await freshClan("user0", { isPublic: false });
+
+    await loginAs("user1");
+    response = await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+    const requestId = response.body.inviteId;
+
+    await loginAs("user0");
+    response = await supertest(app)
+      .post(`/api/clans/invites/${requestId}/respond`)
+      .send({ payload: { action: "reject" } });
+    expect(response.status).toBe(200);
+  });
+
+  it("postUpdateRole demote path (admin → member notification)", async () => {
+    const clanId = await freshClan("user0");
+    await loginAs("user1");
+    await supertest(app).post(`/api/clans/${clanId}/join`).send({});
+
+    // promote first
+    await loginAs("user0");
+    await supertest(app)
+      .post(`/api/clans/${clanId}/role`)
+      .send({ payload: { username: "user1", role: "admin" } });
+
+    // then demote
+    response = await supertest(app)
+      .post(`/api/clans/${clanId}/role`)
+      .send({ payload: { username: "user1", role: "member" } });
+    expect(response.status).toBe(200);
+    expect(response.body.role).toBe("member");
+  });
+});

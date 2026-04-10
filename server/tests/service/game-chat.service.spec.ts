@@ -1,23 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import * as gameChatService from "../../src/services/game-chat.service.ts";
 import * as userService from "../../src/services/user.service.ts";
 import * as mongooseModels from "../../src/mongoose-models.ts";
-import * as crypto from "node:crypto";
-
-vi.mock("../src/services/user.service.ts", () => ({
-  populateSafeUserInfo: vi.fn(),
-}));
 
 describe("game-chat.service", () => {
   const mockUser = { userId: "u1", username: "jason" };
 
-  beforeEach(() => {
+  afterEach(() => {
     vi.restoreAllMocks();
   });
 
   describe("createChat", () => {
     it("should create a chat and return populated chat info", async () => {
-      vi.spyOn(crypto, "randomUUID").mockReturnValue("1111-1111-111-111111-1111-1");
       vi.spyOn(mongooseModels.GameChatModel, "create").mockResolvedValue({} as never);
       vi.spyOn(mongooseModels.GameChatModel, "findById").mockReturnValue({
         lean: vi.fn().mockResolvedValue({
@@ -29,15 +23,21 @@ describe("game-chat.service", () => {
 
       const result = await gameChatService.createChat(new Date("2026-04-10T00:00:00.000Z"));
 
-      expect(mongooseModels.GameChatModel.create).toHaveBeenCalledWith({
-        _id: "chat-1",
-        createdAt: "2026-04-10T00:00:00.000Z",
-        messages: [],
-        moveLog: [],
-      });
+      expect(mongooseModels.GameChatModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          createdAt: "2026-04-10T00:00:00.000Z",
+          messages: [],
+          moveLog: [],
+        }),
+      );
+
+      const createArg = vi.mocked(mongooseModels.GameChatModel.create).mock.calls[0][0] as {
+        _id: string;
+      };
+      expect(typeof createArg._id).toBe("string");
 
       expect(result).toEqual({
-        chatId: "chat-1",
+        chatId: createArg._id,
         createdAt: new Date("2026-04-10T00:00:00.000Z"),
         messages: [],
         moveLog: [],
@@ -189,7 +189,6 @@ describe("game-chat.service", () => {
 
   describe("createMessage", () => {
     it("should create a message and return populated message info", async () => {
-      vi.spyOn(crypto, "randomUUID").mockReturnValue("msg1-msg1-msg3-msg4-msg5-msg6");
       vi.spyOn(mongooseModels.GameChatMessageModel, "create").mockResolvedValue({} as never);
       vi.spyOn(mongooseModels.GameChatMessageModel, "findById").mockReturnValue({
         lean: vi.fn().mockResolvedValue({
@@ -209,15 +208,21 @@ describe("game-chat.service", () => {
         new Date("2026-04-10T00:00:00.000Z"),
       );
 
-      expect(mongooseModels.GameChatMessageModel.create).toHaveBeenCalledWith({
-        _id: "msg-1",
-        text: "hello",
-        createdAt: "2026-04-10T00:00:00.000Z",
-        createdBy: "u1",
-      });
+      expect(mongooseModels.GameChatMessageModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: "hello",
+          createdAt: "2026-04-10T00:00:00.000Z",
+          createdBy: "u1",
+        }),
+      );
+
+      const createArg = vi.mocked(mongooseModels.GameChatMessageModel.create).mock.calls[0][0] as {
+        _id: string;
+      };
+      expect(typeof createArg._id).toBe("string");
 
       expect(result).toEqual({
-        messageId: "msg-1",
+        messageId: createArg._id,
         text: "hello",
         createdAt: new Date("2026-04-10T00:00:00.000Z"),
         createdBy: {

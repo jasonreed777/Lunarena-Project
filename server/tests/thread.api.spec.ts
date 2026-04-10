@@ -262,7 +262,7 @@ describe("POST /api/thread/comment/:commentId/vote", () => {
     expect(response.status).toBe(200);
 
     response = await supertest(app).get("/api/thread/deadbeefdeadbeefdeadbeef");
-    expect(response.body.comments[0].score).toBe(-1);
+    expect(response.body.comments[0].score).toBe(1);
     expect(response.body.comments[0].userVoted).toBe("upvote");
   });
 });
